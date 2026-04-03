@@ -44,6 +44,13 @@ public class Product {
     private String description;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "product")
+    private List<CartItem> cartItems;
+
+    @OneToMany(mappedBy = "product")
+    private List<OrderItem> orderItems;
 
     @PrePersist
     public void prePersist() {
