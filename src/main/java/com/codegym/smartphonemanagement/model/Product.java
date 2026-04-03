@@ -33,6 +33,9 @@ public class Product {
     @Min(value = 0, message = "Stock không được âm")
     private Integer stock;
 
+    @Column(nullable = false)
+    private Boolean active = true;
+
     private String storage;
     private String color;
 
