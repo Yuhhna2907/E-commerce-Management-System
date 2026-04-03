@@ -4,6 +4,7 @@ import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
