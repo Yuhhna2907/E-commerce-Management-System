@@ -34,7 +34,7 @@ public class ProductController {
         Sort sortObj = Sort.by("id"); // mặc định
         if (sort != null && direction != null) {
             if (direction.equalsIgnoreCase("asc")) {
-                sortObj = Sort.by(sortBy).ascending();
+                sortObj = Sort.by(sort).ascending();
             } else {
                 sortObj = Sort.by(sortBy).descending();
             }
