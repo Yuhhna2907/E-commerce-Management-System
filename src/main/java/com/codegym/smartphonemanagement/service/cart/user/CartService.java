@@ -133,6 +133,14 @@ public class CartService implements ICartService {
         List<CartItemResponseDTO> itemDTOs = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 
+        if (cart.getItems() == null) {
+            return CartResponseDTO.builder()
+                    .cartId(cart.getId())
+                    .items(itemDTOs)
+                    .totalPrice(total)
+                    .build();
+        }
+
         for (CartItem item : cart.getItems()) {
 
             BigDecimal itemTotal = item.getProduct().getPrice()
