@@ -67,16 +67,7 @@ public class ProductController {
         productService.create(dto);
         return "redirect:/admin/products";
     }
-
-    // ===============================
-    // 4. VIEW EDIT FORM
-    // ===============================
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        ProductResponseDTO product = productService.getById(id);
-        model.addAttribute("product", product);
-        return "admin/product/edit";
-    }
+    
 
     // ===============================
     // 5. DELETE
