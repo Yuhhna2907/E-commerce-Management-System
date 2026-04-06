@@ -1,4 +1,4 @@
-package com.codegym.smartphonemanagement.service;
+package com.codegym.smartphonemanagement.service.product.admin;
 
 import com.codegym.smartphonemanagement.model.Product;
 
