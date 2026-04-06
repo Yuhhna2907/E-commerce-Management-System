@@ -82,8 +82,10 @@ public class ProductService implements IProductService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product không tồn tại"));
 
-        Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        // 2️⃣ Kiểm tra category tồn tại
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Category không tồn tại"));
 
         // Nếu có active thì nên check
         if (existing.getActive() != null && !existing.getActive()) {
