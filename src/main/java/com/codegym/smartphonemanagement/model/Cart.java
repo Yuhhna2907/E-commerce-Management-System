@@ -22,7 +22,7 @@ public class Cart {
     private Long id;
 
     // mỗi user 1 cart
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
