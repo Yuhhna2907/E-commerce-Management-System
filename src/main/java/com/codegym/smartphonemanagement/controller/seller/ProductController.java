@@ -36,7 +36,7 @@ public class ProductController {
             if (direction.equalsIgnoreCase("asc")) {
                 sortObj = Sort.by(sort).ascending();
             } else {
-                sortObj = Sort.by(sortBy).descending();
+                sortObj = Sort.by(sort).descending();
             }
         }
 
