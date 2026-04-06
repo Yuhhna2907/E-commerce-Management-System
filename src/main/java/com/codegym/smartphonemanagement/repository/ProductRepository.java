@@ -28,20 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             String name,
             Pageable pageable
     );
-
-    Page<Product> findBySellerIdAndBrandIgnoreCaseAndActiveTrue(
-            Long sellerId,
-            String brand,
-            Pageable pageable
-    );
-
-    Page<Product> findBySellerIdAndPriceBetweenAndActiveTrue(
-            Long sellerId,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            Pageable pageable
-    );
-
+    
     @Query("""
     SELECT p FROM Product p
     WHERE p.active = true
