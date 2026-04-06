@@ -8,7 +8,7 @@ public interface IProductService {
 
     ProductResponseDTO create(ProductRequestDTO request);
 
-    Product updateProduct(Long id, Product product);
+    ProductResponseDTO update(Long id, ProductRequestDTO request);
 
     void deleteProduct(Long id);
 }
