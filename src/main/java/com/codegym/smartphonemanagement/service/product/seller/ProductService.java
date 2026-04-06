@@ -71,6 +71,7 @@ public class ProductService implements IProductService {
                 .price(product.getPrice())
                 .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
+                .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .active(product.getActive())
                 .build();
