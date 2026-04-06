@@ -6,6 +6,9 @@ import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.seller.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +70,7 @@ public class ProductController {
         productService.create(dto);
         return "redirect:/admin/products";
     }
-    
+
 
     // ===============================
     // 5. DELETE
