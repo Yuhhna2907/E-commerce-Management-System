@@ -99,6 +99,8 @@ public class CartService implements ICartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product không tồn tại"));
 
+        checkStock(product, request.getQuantity());
+
         Cart cart = getOrCreateCart(user);
 
         CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
