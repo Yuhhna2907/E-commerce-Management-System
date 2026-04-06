@@ -12,6 +12,9 @@ public class ProductRequestDTO {
     @NotBlank(message = "Tên sản phẩm không được trống")
     private String name;
 
+    @NotBlank(message = "Hãng không được trống")
+    private String brand;
+
     private String description;
 
     @NotNull(message = "Giá không được null")
