@@ -68,6 +68,25 @@
                 </a>
             </div>
 
+            <!-- ================= SEARCH ================= -->
+            <form class="d-flex mb-3" method="get" th:action="@{/admin/products}">
+                <!-- Input tìm kiếm theo tên -->
+                <input class="form-control me-2" type="search" name="keyword" placeholder="Tìm kiếm sản phẩm...">
+
+                <!-- Select danh mục -->
+                <select class="form-select me-2" name="categoryId" style="width: 200px;">
+                    <option value="">-- Chọn danh mục --</option>
+                    <option value="1">Điện thoại</option>
+                    <option value="2">Laptop</option>
+                    <!-- Thêm danh mục khác nếu cần -->
+                </select>
+
+                <!-- Nút tìm kiếm với icon kính lúp -->
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                 <tr class="text-center">
