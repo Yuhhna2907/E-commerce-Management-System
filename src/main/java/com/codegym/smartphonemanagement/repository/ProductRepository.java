@@ -14,7 +14,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
 
-    Optional<Product> findByIdAndSellerId(Long id, Long sellerId);
+    Page<ProductResponseDTO> search(
+            String keyword,
+            Long categoryId,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    )
 
     Page<Product> findBySellerIdAndNameContainingIgnoreCaseAndActiveTrue(
             Long sellerId,
