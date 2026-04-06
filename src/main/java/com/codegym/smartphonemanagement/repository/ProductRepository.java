@@ -14,14 +14,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
 
-    Page<ProductResponseDTO> search(
-            String keyword,
-            Long categoryId,
-            int page,
-            int size,
-            String sortBy,
-            String direction
-    );
+    Page<Product> search(String keyword,
+                         Long categoryId,
+                         Pageable pageable);
 
     @Query("""
     SELECT p FROM Product p
