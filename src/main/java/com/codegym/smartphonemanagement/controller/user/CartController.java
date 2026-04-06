@@ -1,6 +1,5 @@
 package com.codegym.smartphonemanagement.controller.user;
 
-import com.codegym.smartphonemanagement.model.Cart;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;

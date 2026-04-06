@@ -3,110 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <title>Giỏ hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-        .container { width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-        h2 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        table th, table td { padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
-        input[type="number"] { width: 60px; text-align: center; }
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
 
-        .btn { padding: 6px 12px; border-radius: 5px; text-decoration: none; display: inline-block; }
-        .btn-update { background: #2196F3; color: white; }
-        .btn-delete { background: red; color: white; }
-        .btn-clear { background: black; color: white; margin-top: 10px; }
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-        .total { text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold; }
-        .empty { text-align: center; margin-top: 40px; font-size: 18px; }
-        .back { margin-top: 20px; }
+        .page-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        }
+
+        .table > :not(caption) > * > * {
+            vertical-align: middle;
+        }
+
+        .thumb {
+            width: 72px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            background: #f8fafc;
+        }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container py-2">
+        <a class="navbar-brand fw-bold text-dark" th:href="@{/}">
+            <i class="bi bi-shop me-1 text-primary"></i> Smartphone Store
+        </a>
 
-    <h2>🛒 Giỏ hàng của bạn</h2>
-
-    <!-- EMPTY -->
-    <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="empty">
-        Giỏ hàng đang trống 😢 <br><br>
-        <a th:href="@{/}">⬅️ Quay lại mua hàng</a>
+        <div class="ms-auto">
+            <a th:href="@{/}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Tiếp tục mua hàng
+            </a>
+        </div>
     </div>
+</nav>
 
-    <!-- NOT EMPTY -->
-    <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
-
-        <table>
-            <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Tổng</th>
-                <th>Hành động</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <tr th:each="item : ${cart.items}">
-
-                <!-- NAME -->
-                <td th:text="${item.productName}"></td>
-
-                <!-- PRICE -->
-                <td th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
-
-                <!-- UPDATE -->
-                <td>
-                    <form th:action="@{/user/cart/update}" method="post">
-                        <input type="hidden" name="productId" th:value="${item.productId}"/>
-                        <input type="number" name="quantity"
-                               th:value="${item.quantity}" min="1"/>
-
-                        <button class="btn btn-update" type="submit">
-                            Cập nhật
-                        </button>
-                    </form>
-                </td>
-
-                <!-- ITEM TOTAL -->
-                <td th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
-
-                <!-- DELETE -->
-                <td>
-                    <a th:href="@{/user/cart/remove/{id}(id=${item.productId})}"
-                       class="btn btn-delete">
-                        Xoá
-                    </a>
-                </td>
-
-            </tr>
-            </tbody>
-        </table>
-
-        <!-- TOTAL -->
-        <div class="total">
-            Tổng tiền:
-            <span th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+<div class="container py-4">
+    <div class="page-card p-4 p-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="bi bi-cart3 text-primary me-2"></i>Giỏ hàng của bạn</h2>
+                <div class="text-muted">Kiểm tra sản phẩm, cập nhật số lượng và tổng tiền.</div>
+            </div>
+            <a th:href="@{/}" class="btn btn-primary">
+                <i class="bi bi-bag-plus me-1"></i> Mua thêm
+            </a>
         </div>
 
-        <!-- CLEAR -->
-        <div style="text-align: right;">
-            <form th:action="@{/user/cart/clear}" method="post">
-                <button class="btn btn-clear">🗑 Xoá toàn bộ</button>
-            </form>
+        <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="text-center py-5">
+            <i class="bi bi-cart-x display-1 text-secondary"></i>
+            <h4 class="mt-3">Giỏ hàng đang trống</h4>
+            <p class="text-muted">Hãy quay lại trang sản phẩm để thêm món bạn thích.</p>
+            <a th:href="@{/}" class="btn btn-primary mt-2">⬅ Quay lại mua hàng</a>
         </div>
 
-        <!-- BACK -->
-        <div class="back">
-            <a th:href="@{/}">⬅️ Tiếp tục mua hàng</a>
-        </div>
+        <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th class="text-center">Giá</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-center">Thành tiền</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                    </thead>
 
+                    <tbody>
+                    <tr th:each="item : ${cart.items}">
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img class="thumb"
+                                     th:src="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)} ? ${item.imageUrl} : 'https://placehold.co/120x120/e9eef6/64748b?text=No+Image'"
+                                     th:alt="${item.productName}">
+                                <div>
+                                    <div class="fw-semibold" th:text="${item.productName}"></div>
+                                    <div class="text-muted small" th:text="${item.brand != null ? item.brand : ''}"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="text-center"
+                            th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+
+                        <td class="text-center">
+                            <form th:action="@{/user/cart/update}" method="post" class="d-inline-flex gap-2 align-items-center">
+                                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                                <input type="number" name="quantity" class="form-control form-control-sm text-center"
+                                       th:value="${item.quantity}" min="1" style="width: 90px;"/>
+                                <button class="btn btn-sm btn-outline-primary" type="submit">
+                                    Cập nhật
+                                </button>
+                            </form>
+                        </td>
+
+                        <td class="text-center fw-semibold text-primary"
+                            th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+
+                        <td class="text-center">
+                            <a th:href="@{/user/cart/remove/{id}(id=${item.productId})}"
+                               class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Xoá sản phẩm này khỏi giỏ hàng?')">
+                                Xoá
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row justify-content-end mt-4">
+                <div class="col-12 col-lg-5">
+                    <div class="border rounded-4 p-4 bg-light">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tổng tiền</span>
+                            <span class="fw-bold text-primary"
+                                  th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                        </div>
+
+                        <form th:action="@{/user/cart/clear}" method="post" class="d-flex gap-2 justify-content-end mt-3">
+                            <button class="btn btn-outline-secondary" type="button" onclick="history.back()">
+                                Quay lại
+                            </button>
+                            <button class="btn btn-danger" type="submit"
+                                    onclick="return confirm('Bạn chắc chắn muốn xoá toàn bộ giỏ hàng?')">
+                                <i class="bi bi-trash3 me-1"></i> Xoá toàn bộ
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

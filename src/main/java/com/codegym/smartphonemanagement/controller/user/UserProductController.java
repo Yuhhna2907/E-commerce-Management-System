@@ -13,7 +13,7 @@ public class UserProductController {
 
     private final ProductRepository productRepository;
 
-    @GetMapping("/")
+    @GetMapping("/user/products")
     public String viewProducts(Model model) {
         model.addAttribute("products", productRepository.findAll());
         return "user/product/list";

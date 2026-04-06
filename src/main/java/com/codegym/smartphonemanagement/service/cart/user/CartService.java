@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.service.cart.user;
 
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Cart;
 import com.codegym.smartphonemanagement.model.CartItem;
