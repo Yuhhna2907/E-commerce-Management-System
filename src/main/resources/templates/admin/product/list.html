@@ -141,13 +141,13 @@
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-warning btn-sm edit-btn"
-                                data-id="${product.id}"
-                                data-name="${product.name}"
-                                data-price="${product.price}"
-                                data-stock="${product.stock}"
-                                data-image-url="${product.imageUrl}"
-                                data-description="${product.description}"
-                                data-category-id="${product.categoryId}">
+                                th:attr="data-id=${product.id},
+             data-name=${product.name},
+             data-price=${product.price},
+             data-stock=${product.stock},
+             data-image-url=${product.imageUrl},
+             data-description=${product.description},
+             data-category-id=${product.categoryId}">
                             Sửa
                         </button>
                         <a th:href="@{'/admin/products/delete/' + ${product.id}}" class="btn btn-danger btn-sm"
