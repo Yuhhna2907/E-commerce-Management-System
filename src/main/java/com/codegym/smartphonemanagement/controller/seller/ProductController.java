@@ -51,6 +51,8 @@ public class ProductController {
         model.addAttribute("totalPages", productPage.getTotalPages());
         model.addAttribute("keyword", keyword);
         model.addAttribute("categoryId", categoryId);
+        model.addAttribute("sort", sort);
+        model.addAttribute("direction", direction);
         model.addAttribute("categories", categoryRepository.findAll());
 
         return "admin/product/list"; // thymeleaf template
