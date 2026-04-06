@@ -4,7 +4,7 @@ import com.codegym.smartphonemanagement.model.Product;
 
 public interface IProductService {
 
-    Product createProduct(Product product);
+    ProductResponseDTO create(ProductRequestDTO request);
 
     Product updateProduct(Long id, Product product);
 
