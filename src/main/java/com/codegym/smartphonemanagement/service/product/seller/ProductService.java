@@ -26,8 +26,14 @@ public class ProductService implements IProductService {
 
     public ProductResponseDTO create(ProductRequestDTO request) {
 
-        if (product.getStock() != null && product.getStock() < 0) {
-            throw new RuntimeException("Stock không được âm");
+        // 1️⃣ Kiểm tra category tồn tại
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Category không tồn tại"));
+
+        // 2️⃣ Validate nghiệp vụ thêm (phòng trường hợp bypass validation)
+        if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Giá phải lớn hơn 0");
         }
 
         if (request.getStock() < 0) {
