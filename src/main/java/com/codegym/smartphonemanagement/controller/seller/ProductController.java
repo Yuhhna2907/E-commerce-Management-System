@@ -51,6 +51,7 @@ public class ProductController {
         model.addAttribute("productPage", productPage);
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
+        model.addAttribute("brand", brand);
         model.addAttribute("totalPages", productPage.getTotalPages());
         model.addAttribute("keyword", keyword);
         model.addAttribute("categoryId", categoryId);
