@@ -32,7 +32,7 @@ public class ProductController {
     ) {
         // Tạo Sort object dựa trên sort + direction
         Sort sortObj = Sort.by("id"); // mặc định
-        if (sortBy != null && direction != null) {
+        if (sort != null && direction != null) {
             if (direction.equalsIgnoreCase("asc")) {
                 sortObj = Sort.by(sortBy).ascending();
             } else {
