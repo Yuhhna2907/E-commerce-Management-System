@@ -66,9 +66,19 @@ public class ProductController {
     // 3. SAVE PRODUCT
     // ===============================
     @PostMapping("/save")
-    public String saveProduct(@ModelAttribute ProductRequestDTO dto) {
-        productService.create(dto);
-        return "redirect:/admin/products";
+    @ResponseBody
+    public Map<String, Object> saveProduct(@RequestBody ProductRequestDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            ProductResponseDTO saved = productService.create(dto);
+            response.put("status", "success");
+            response.put("message", "Thêm sản phẩm thành công!");
+            response.put("product", saved); // có thể dùng để append vào table nếu muốn
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
     }
 
 
