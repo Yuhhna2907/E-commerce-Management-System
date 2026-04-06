@@ -131,6 +131,7 @@
                         </a>
                     </li>
 
+                    <!-- Page numbers -->
                     <li class="page-item"
                         th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
                         th:classappend="${i == productPage.number} ? 'active'">
