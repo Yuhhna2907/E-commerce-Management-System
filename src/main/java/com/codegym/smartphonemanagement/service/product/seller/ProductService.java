@@ -110,6 +110,7 @@ public class ProductService implements IProductService {
         // 4️⃣ Update field
         product.setName(request.getName());
         product.setDescription(request.getDescription());
+        product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());

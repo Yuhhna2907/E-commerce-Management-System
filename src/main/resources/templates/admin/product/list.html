@@ -6,52 +6,27 @@
 
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        .header-red {
-            background-color: #d70018;
-        }
-
-        .sidebar {
-            min-height: 100vh;
-            border-right: 1px solid #dee2e6;
-        }
-
-        .sidebar a {
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            color: #333;
-            border-radius: 5px;
-        }
-
-        .sidebar a:hover {
-            background-color: #f8f9fa;
-            color: #d70018;
-        }
-
-        .footer {
-            background: #212529;
-            color: white;
-        }
+        .header-red { background-color: #d70018; }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover { background-color: #f8f9fa; color: #d70018; }
+        .footer { background: #212529; color: white; }
     </style>
 </head>
-
 <body>
 
-<!-- ================= HEADER ================= -->
+<!-- HEADER -->
 <nav class="navbar navbar-expand-lg header-red navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold" href="#">SMARTPHONE STORE</a>
-        <div class="text-white">
-            Xin chào Admin
-        </div>
+        <div class="text-white">Xin chào Admin</div>
     </div>
 </nav>
 
-<!-- ================= BODY ================= -->
+<!-- BODY -->
 <div class="container-fluid">
     <div class="row">
 
@@ -72,63 +47,31 @@
                 </button>
             </div>
 
-            <!-- ================= SEARCH ================= -->
+            <!-- SEARCH + FILTER -->
             <form class="d-flex mb-3" method="get" th:action="@{/admin/products}">
-                <!-- Input tìm kiếm theo tên -->
                 <input class="form-control me-2" type="search" name="keyword" placeholder="Tìm kiếm sản phẩm...">
-
-                <!-- Select danh mục -->
-                <select class="form-select me-2" name="categoryId" style="width: 200px;">
+                <select class="form-select me-2" name="categoryId" style="width:200px;">
                     <option value="">-- Chọn danh mục --</option>
                     <option value="1">Điện thoại</option>
                     <option value="2">Laptop</option>
-                    <!-- Thêm danh mục khác nếu cần -->
                 </select>
-
-                <!-- Nút tìm kiếm với icon kính lúp -->
-                <button class="btn btn-outline-secondary" type="submit">
-                    <i class="bi bi-search"></i>
-                </button>
+                <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
             </form>
 
+            <!-- TABLE -->
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                 <tr class="text-center">
                     <th>ID</th>
                     <th>Tên</th>
-                    <th class="text-center">
-                        <a th:href="@{/admin/products(
-        page=${productPage.number},
-        keyword=${keyword},
-        categoryId=${categoryId},
-        sort='price',
-        direction=${direction == 'asc' and sort=='price' ? 'desc' : 'asc'}
-    )}" class="text-decoration-none text-dark">
-                            Giá
-                            <i class="bi"
-                               th:classappend="${sort=='price'} ? (${direction=='asc'} ? 'bi-caret-up-fill' : 'bi-caret-down-fill') : ''"></i>
-                        </a>
-                    </th>
-                    <th class="text-center">
-                        <a th:href="@{/admin/products(
-        page=${productPage.number},
-        keyword=${keyword},
-        categoryId=${categoryId},
-        sort='stock',
-        direction=${direction == 'asc' and sort=='stock' ? 'desc' : 'asc'}
-    )}" class="text-decoration-none text-dark">
-                            Tồn kho
-                            <i class="bi"
-                               th:classappend="${sort=='stock'} ? (${direction=='asc'} ? 'bi-caret-up-fill' : 'bi-caret-down-fill') : ''"></i>
-                        </a>
-                    </th>
+                    <th class="text-center">Giá</th>
+                    <th class="text-center">Tồn kho</th>
                     <th>Danh mục</th>
                     <th>Trạng thái</th>
                     <th width="150">Thao tác</th>
                 </tr>
                 </thead>
-
-                <tbody>
+                <tbody id="productTableBody">
                 <tr th:each="product : ${products}">
                     <td th:text="${product.id}" class="text-center"></td>
                     <td th:text="${product.name}"></td>
@@ -142,12 +85,13 @@
                     <td class="text-center">
                         <button type="button" class="btn btn-warning btn-sm edit-btn"
                                 th:attr="data-id=${product.id},
-             data-name=${product.name},
-             data-price=${product.price},
-             data-stock=${product.stock},
-             data-image-url=${product.imageUrl},
-             data-description=${product.description},
-             data-category-id=${product.categoryId}">
+                                         data-name=${product.name},
+                                         data-price=${product.price},
+                                         data-brand=${product.brand},
+                                         data-stock=${product.stock},
+                                         data-image-url=${product.imageUrl},
+                                         data-description=${product.description},
+                                         data-category-id=${product.categoryId}">
                             Sửa
                         </button>
                         <a th:href="@{'/admin/products/delete/' + ${product.id}}" class="btn btn-danger btn-sm"
@@ -157,124 +101,80 @@
                 </tbody>
             </table>
 
-            <!-- ================= PAGINATION ================= -->
+            <!-- PAGINATION -->
             <nav class="mt-4">
                 <ul class="pagination justify-content-center">
-
-                    <!-- Previous -->
-                    <li class="page-item"
-                        th:classappend="${productPage.first} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/products(
-                    page=${productPage.number - 1},
-                    keyword=${keyword},
-                    categoryId=${categoryId}
-               )}">
-                            Trước
-                        </a>
+                    <li class="page-item" th:classappend="${productPage.first} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number - 1})}">Trước</a>
                     </li>
-
-                    <!-- Page numbers -->
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
                         th:classappend="${i == productPage.number} ? 'active'">
-
-                        <a class="page-link"
-                           th:href="@{/admin/products(
-                    page=${i},
-                    keyword=${keyword},
-                    categoryId=${categoryId}
-               )}"
-                           th:text="${i + 1}">
-                        </a>
+                        <a class="page-link" th:href="@{/admin/products(page=${i})}" th:text="${i + 1}"></a>
                     </li>
-
-                    <!-- Next -->
-                    <li class="page-item"
-                        th:classappend="${productPage.last} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/products(
-                    page=${productPage.number + 1},
-                    keyword=${keyword},
-                    categoryId=${categoryId}
-               )}">
-                            Sau
-                        </a>
+                    <li class="page-item" th:classappend="${productPage.last} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number + 1})}">Sau</a>
                     </li>
-
                 </ul>
             </nav>
 
-            <div class="text-center small text-muted mt-2"
-                 th:if="${productPage.totalElements > 0}">
-                Hiển thị
-                <span th:text="${productPage.number * productPage.size + 1}"></span>
-                -
-                <span th:text="${productPage.number * productPage.size + productPage.numberOfElements}"></span>
-                trong tổng số
-                <span th:text="${productPage.totalElements}"></span>
-                sản phẩm
-            </div>
         </div>
     </div>
 </div>
 
-<!-- ================= POPUP CREATE PRODUCT ================= -->
-<div class="modal fade" id="createProductModal" tabindex="-1" aria-labelledby="createProductModalLabel" aria-hidden="true">
+<!-- TOAST -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="productToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="productToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP CREATE -->
+<div class="modal fade" id="createProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background-color: #f8f9fa;">
-                <h5 class="modal-title" id="createProductModalLabel">Thêm sản phẩm mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Thêm sản phẩm mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <form th:action="@{/admin/products/save}" th:object="${productRequestDTO}" method="post">
+            <form id="createProductForm">
                 <div class="modal-body">
-
                     <div class="row g-3">
-
-                        <!-- Tên sản phẩm -->
                         <div class="col-md-6">
                             <label class="form-label">Tên sản phẩm</label>
-                            <input type="text" class="form-control" th:field="*{name}" placeholder="Nhập tên sản phẩm" required>
+                            <input type="text" class="form-control" name="name" placeholder="Nhập tên sản phẩm" required>
                         </div>
-
-                        <!-- Danh mục -->
+                        <div class="col-md-6">
+                            <label class="form-label">Hãng sản xuất</label>
+                            <input type="text" class="form-control" name="brand" placeholder="Ví dụ: Apple, Samsung" required>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Danh mục</label>
-                            <select class="form-select" th:field="*{categoryId}" required>
+                            <select class="form-select" name="categoryId" required>
                                 <option value="">-- Chọn danh mục --</option>
                                 <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
                             </select>
                         </div>
-
-                        <!-- Giá -->
                         <div class="col-md-6">
                             <label class="form-label">Giá</label>
-                            <input type="number" class="form-control" th:field="*{price}" placeholder="Nhập giá" required>
+                            <input type="number" class="form-control" name="price" placeholder="Nhập giá" required>
                         </div>
-
-                        <!-- Stock -->
                         <div class="col-md-6">
                             <label class="form-label">Tồn kho</label>
-                            <input type="number" class="form-control" th:field="*{stock}" placeholder="Nhập tồn kho" required>
+                            <input type="number" class="form-control" name="stock" placeholder="Nhập tồn kho" required>
                         </div>
-
-                        <!-- URL ảnh -->
                         <div class="col-12">
                             <label class="form-label">URL ảnh</label>
-                            <input type="text" class="form-control" th:field="*{imageUrl}" placeholder="Nhập link ảnh">
+                            <input type="text" class="form-control" name="imageUrl" placeholder="Nhập link ảnh">
                         </div>
-
-                        <!-- Mô tả -->
                         <div class="col-12">
                             <label class="form-label">Mô tả</label>
-                            <textarea class="form-control" th:field="*{description}" rows="3" placeholder="Nhập mô tả"></textarea>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Nhập mô tả"></textarea>
                         </div>
-
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                     <button type="submit" class="btn btn-danger">Lưu sản phẩm</button>
@@ -284,8 +184,7 @@
     </div>
 </div>
 
-
-<!-- ================= POPUP EDIT PRODUCT ================= -->
+<!-- POPUP EDIT -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -293,13 +192,17 @@
                 <h5 class="modal-title">Sửa sản phẩm</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editProductForm" th:action="@{/admin/products/save}" method="post">
+            <form id="editProductForm">
                 <div class="modal-body">
                     <input type="hidden" name="id" id="editProductId">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Tên sản phẩm</label>
                             <input type="text" class="form-control" name="name" id="editProductName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hãng sản xuất</label>
+                            <input type="text" class="form-control" name="brand" id="editProductBrand" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Danh mục</label>
@@ -344,32 +247,73 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const editButtons = document.querySelectorAll('.edit-btn');
 
-        editButtons.forEach(btn => {
+        // EDIT BUTTON
+        document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.getElementById('editProductId').value = btn.dataset.id;
                 document.getElementById('editProductName').value = btn.dataset.name;
                 document.getElementById('editProductPrice').value = btn.dataset.price;
+                document.getElementById('editProductBrand').value = btn.dataset.brand;
                 document.getElementById('editProductStock').value = btn.dataset.stock;
                 document.getElementById('editProductImage').value = btn.dataset.imageUrl;
                 document.getElementById('editProductDescription').value = btn.dataset.description;
                 document.getElementById('editProductCategory').value = btn.dataset.categoryId;
-
-                const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
-                editModal.show();
+                new bootstrap.Modal(document.getElementById('editProductModal')).show();
             });
         });
+
+        // SHOW TOAST
+        function showToast(status, message) {
+            const toastEl = document.getElementById('productToast');
+            const toastMessage = document.getElementById('productToastMessage');
+            toastMessage.textContent = message;
+            toastEl.classList.remove('text-bg-success', 'text-bg-danger');
+            toastEl.classList.add(status === 'success' ? 'text-bg-success' : 'text-bg-danger');
+            new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+        }
+
+        document.getElementById('createProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(this).entries());
+
+            fetch('/admin/products/save', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','Accept':'application/json'},
+                body: JSON.stringify(data)
+            })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.status, res.message); // Hiện thông báo trước
+                    if(res.status === 'success') {
+                        setTimeout(() => { location.reload(); }, 1500); // Đợi 1.5s rồi mới load lại
+                    }
+                })
+                .catch(err => showToast('error', 'Lỗi server!'));
+        });
+
+        // AJAX EDIT
+        document.getElementById('editProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(this).entries());
+
+            // Lưu ý: data.id phải tồn tại trong FormData (cái input hidden id ấy)
+            fetch('/admin/products/update/' + data.id, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','Accept':'application/json'},
+                body: JSON.stringify(data)
+            })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.status, res.message);
+                    if(res.status === 'success') {
+                        setTimeout(() => { location.reload(); }, 1500); // Đợi để kịp nhìn thấy thông báo
+                    }
+                })
+                .catch(err => showToast('error', 'Lỗi server!'));
+        });
+
     });
 </script>
-<!-- ================= FOOTER ================= -->
-<footer class="footer text-center p-3 mt-4">
-    © 2026 Smartphone Store |
-    Hotline: 0909 999 999 |
-    Email: support@smartstore.vn
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
