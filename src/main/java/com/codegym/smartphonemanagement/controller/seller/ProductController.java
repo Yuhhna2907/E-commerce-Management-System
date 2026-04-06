@@ -60,16 +60,6 @@ public class ProductController {
     }
 
     // ===============================
-    // 2. VIEW CREATE FORM
-    // ===============================
-    @GetMapping("/create")
-    public String showCreateForm(Model model) {
-        model.addAttribute("product", new ProductResponseDTO());
-        model.addAttribute("categories", categoryRepository.findAll());
-        return "admin/product/create";
-    }
-
-    // ===============================
     // 3. SAVE PRODUCT
     // ===============================
     @PostMapping("/save")
