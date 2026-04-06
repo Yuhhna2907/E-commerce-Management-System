@@ -14,8 +14,10 @@ public class ProductService implements IProductService {
     private final ProductRepository productRepository;
 
     // 🔹 CREATE
-    @Override
-    public Product createProduct(Product product) {
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+
+    public ProductResponseDTO create(ProductRequestDTO request) {
 
         if (product.getStock() != null && product.getStock() < 0) {
             throw new RuntimeException("Stock không được âm");
