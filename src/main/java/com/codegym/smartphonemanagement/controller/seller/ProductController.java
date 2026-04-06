@@ -54,6 +54,7 @@ public class ProductController {
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
         model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("productRequestDTO", new ProductRequestDTO());
 
         return "admin/product/list"; // thymeleaf template
     }
