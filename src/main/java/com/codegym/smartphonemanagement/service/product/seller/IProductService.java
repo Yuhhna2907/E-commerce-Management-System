@@ -11,6 +11,8 @@ public interface IProductService {
     ProductResponseDTO update(Long id, ProductRequestDTO request);
 
     void deleteProduct(Long id);
+    
+    ProductResponseDTO getById(Long id);
 
     Page<ProductResponseDTO> search(
             String keyword,
