@@ -92,13 +92,18 @@ public class ProductService implements IProductService {
             throw new BadRequestException("Giá phải lớn hơn 0");
         }
 
-        existing.setName(newProduct.getName());
-        existing.setBrand(newProduct.getBrand());
-        existing.setPrice(newProduct.getPrice());
-        existing.setStock(newProduct.getStock());
-        existing.setStorage(newProduct.getStorage());
-        existing.setColor(newProduct.getColor());
-        existing.setDescription(newProduct.getDescription());
+        if (request.getStock() < 0) {
+            throw new BadRequestException("Số lượng không hợp lệ");
+        }
+
+        // 4️⃣ Update field
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStock(request.getStock());
+        product.setImageUrl(request.getImageUrl());
+        product.setCategory(category);
+        product.setUpdatedAt(LocalDateTime.now());
 
         return productRepository.save(existing);
     }
