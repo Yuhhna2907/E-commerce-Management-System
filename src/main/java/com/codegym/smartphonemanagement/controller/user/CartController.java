@@ -26,11 +26,7 @@ public class CartController {
 
         CartResponseDTO cartResponse = cartService.getCart(USER_ID);
 
-        if (cart == null) {
-            cart = new Cart();
-        }
-
-        model.addAttribute("cart", cart);
+        model.addAttribute("cart", cartResponse);
 
         return "user/cart/list"; // file HTML
     }
