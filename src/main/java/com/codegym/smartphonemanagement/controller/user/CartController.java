@@ -24,7 +24,7 @@ public class CartController {
     @GetMapping
     public String viewCart(HttpSession session, Model model) {
 
-        Cart cart = (Cart) session.getAttribute("cart");
+        CartResponseDTO cartResponse = cartService.getCart(USER_ID);
 
         if (cart == null) {
             cart = new Cart();
