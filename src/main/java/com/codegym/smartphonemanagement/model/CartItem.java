@@ -22,12 +22,12 @@ public class CartItem {
     private Integer quantity;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // 🔥 tối ưu
     @JoinColumn(name = "cart_id")
     private Cart cart;
 
     @NotNull(message = "Product không được null")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // 🔥 tối ưu
     @JoinColumn(name = "product_id")
     private Product product;
 }
