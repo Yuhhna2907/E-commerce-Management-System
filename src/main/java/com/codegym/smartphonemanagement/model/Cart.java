@@ -27,6 +27,7 @@ public class Cart {
     private User user;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @JsonIgnore
     @OneToMany(mappedBy = "cart",
