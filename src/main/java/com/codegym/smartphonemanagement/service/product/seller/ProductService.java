@@ -1,5 +1,8 @@
 package com.codegym.smartphonemanagement.service.product.seller;
 
+import com.codegym.smartphonemanagement.exception.product.BadRequestException;
+import com.codegym.smartphonemanagement.exception.product.ResourceNotFoundException;
+import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
