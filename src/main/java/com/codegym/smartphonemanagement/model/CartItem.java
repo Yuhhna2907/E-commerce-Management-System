@@ -30,4 +30,14 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    // Giá sản phẩm tại thời điểm thêm vào giỏ
+    @NotNull
+    @Column(name = "price_at_time", precision = 15, scale = 2)
+    private BigDecimal priceAtTime;
+
+    // Tổng tiền = quantity * priceAtTime
+    @NotNull
+    @Column(name = "total_price", precision = 15, scale = 2)
+    private BigDecimal totalPrice;
 }
