@@ -3,6 +3,7 @@ package com.codegym.smartphonemanagement.service.product.seller;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+import org.springframework.data.domain.Page;
 
 public interface IProductService {
 
@@ -11,7 +12,7 @@ public interface IProductService {
     ProductResponseDTO update(Long id, ProductRequestDTO request);
 
     void deleteProduct(Long id);
-    
+
     ProductResponseDTO getById(Long id);
 
     Page<ProductResponseDTO> search(

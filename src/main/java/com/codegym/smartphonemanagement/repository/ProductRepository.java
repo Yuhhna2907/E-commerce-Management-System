@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
-    
+
     @Query("""
     SELECT p FROM Product p
     WHERE p.active = true
