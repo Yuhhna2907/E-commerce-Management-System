@@ -21,12 +21,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             int size,
             String sortBy,
             String direction
-    )
-
-    Page<Product> findBySellerIdAndNameContainingIgnoreCaseAndActiveTrue(
-            Long sellerId,
-            String name,
-            Pageable pageable
     );
     
     @Query("""
