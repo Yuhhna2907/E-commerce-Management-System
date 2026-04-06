@@ -127,4 +127,31 @@ public class ProductService implements IProductService {
 
         productRepository.save(product);
     }
+
+    @Override
+    public Page<ProductResponseDTO> search(
+            String keyword,
+            Long categoryId,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    ) {
+
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Nếu keyword rỗng thì set null để query dễ xử lý
+        if (keyword != null && keyword.trim().isEmpty()) {
+            keyword = null;
+        }
+
+        Page<Product> productPage =
+                productRepository.searchAndFilter(keyword, categoryId, pageable);
+
+        return productPage.map(this::mapToResponse);
+    }
 }
