@@ -124,7 +124,7 @@
                 <ul class="pagination justify-content-center">
 
                     <li class="page-item"
-                        th:classappend="${products.first}? 'disabled'">
+                        th:classappend="${productPage.first} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/admin/products(
                     page=${productPage.number - 1},
