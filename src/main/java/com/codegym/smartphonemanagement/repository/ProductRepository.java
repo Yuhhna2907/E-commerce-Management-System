@@ -36,19 +36,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     );
 
     @Query("""
-            SELECT p FROM Product p
-            WHERE p.active = true           \s
-              AND (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))
-              AND (:brand IS NULL OR LOWER(p.brand) = LOWER(:brand))
-              AND (:minPrice IS NULL OR p.price >= :minPrice)
-              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-           \s""")
-    Page<Product> searchAdvanced(
-            @Param("sellerId") Long sellerId,
-            @Param("name") String name,
-            @Param("brand") String brand,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
+    SELECT p FROM Product p
+    WHERE p.active = true
+    AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    AND (:categoryId IS NULL OR p.category.id = :categoryId)
+""")
+    Page<Product> searchAndFilter(
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
             Pageable pageable
     );
 }
