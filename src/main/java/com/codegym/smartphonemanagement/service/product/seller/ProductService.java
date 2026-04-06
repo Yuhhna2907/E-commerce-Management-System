@@ -160,4 +160,14 @@ public class ProductService implements IProductService {
 
         return productPage.map(this::mapToResponse);
     }
+
+    @Override
+    public ProductResponseDTO getById(Long id) {
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Product không tồn tại"));
+
+        return mapToResponse(product);
+    }
 }
