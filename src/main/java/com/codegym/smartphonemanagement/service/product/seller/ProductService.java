@@ -105,7 +105,9 @@ public class ProductService implements IProductService {
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());
 
-        return productRepository.save(existing);
+        Product updated = productRepository.save(product);
+
+        return mapToResponse(updated);
     }
 
     // 🔹 DELETE (SOFT DELETE)
