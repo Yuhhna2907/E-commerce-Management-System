@@ -20,9 +20,6 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Transactional
 public class ProductService implements IProductService {
-
-    private final ProductRepository productRepository;
-
     // 🔹 CREATE
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
