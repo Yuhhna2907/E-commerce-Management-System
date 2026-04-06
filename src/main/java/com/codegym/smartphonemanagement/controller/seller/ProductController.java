@@ -64,6 +64,7 @@ public class ProductController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("product", new ProductResponseDTO());
+        model.addAttribute("categories", categoryRepository.findAll());
         return "admin/product/create";
     }
 
