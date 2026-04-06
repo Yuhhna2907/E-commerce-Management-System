@@ -87,9 +87,9 @@ public class ProductService implements IProductService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Category không tồn tại"));
 
-        // Nếu có active thì nên check
-        if (existing.getActive() != null && !existing.getActive()) {
-            throw new RuntimeException("Sản phẩm đã bị xóa");
+        // 3️⃣ Validate nghiệp vụ
+        if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Giá phải lớn hơn 0");
         }
 
         existing.setName(newProduct.getName());
