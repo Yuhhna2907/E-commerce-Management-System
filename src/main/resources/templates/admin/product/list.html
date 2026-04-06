@@ -120,7 +120,7 @@
             </table>
 
             <!-- ================= PAGINATION ================= -->
-            <nav class="mt-4">
+            <nav th:if="${products.totalPages > 1}">
                 <ul class="pagination justify-content-center">
 
                     <!-- Previous -->
