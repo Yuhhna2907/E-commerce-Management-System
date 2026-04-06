@@ -23,7 +23,7 @@ public class Cart {
 
     // mỗi user 1 cart
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
     private LocalDateTime createdAt;
