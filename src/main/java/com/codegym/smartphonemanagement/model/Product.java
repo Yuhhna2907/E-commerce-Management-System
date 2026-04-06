@@ -40,6 +40,8 @@ public class Product {
     private String storage;
     private String color;
 
+    private String imageUrl;
+
     @Size(max = 1000)
     @Column(columnDefinition = "TEXT")
     private String description;
