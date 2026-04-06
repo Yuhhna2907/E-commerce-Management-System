@@ -24,6 +24,20 @@ public class ProductService implements IProductService {
         return productRepository.save(product);
     }
 
+    private ProductResponseDTO mapToResponse(Product product) {
+        return ProductResponseDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .imageUrl(product.getImageUrl())
+                .categoryName(product.getCategory().getName())
+                .active(product.getActive())
+                .build();
+    }
+
+
     // 🔹 UPDATE
     @Override
     public Product updateProduct(Long id, Product newProduct) {
