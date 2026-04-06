@@ -92,8 +92,32 @@
                 <tr class="text-center">
                     <th>ID</th>
                     <th>Tên</th>
-                    <th>Giá</th>
-                    <th>Tồn kho</th>
+                    <th class="text-center">
+                        <a th:href="@{/admin/products(
+        page=${productPage.number},
+        keyword=${keyword},
+        categoryId=${categoryId},
+        sort='price',
+        direction=${direction == 'asc' and sort=='price' ? 'desc' : 'asc'}
+    )}" class="text-decoration-none text-dark">
+                            Giá
+                            <i class="bi"
+                               th:classappend="${sort=='price'} ? (${direction=='asc'} ? 'bi-caret-up-fill' : 'bi-caret-down-fill') : ''"></i>
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a th:href="@{/admin/products(
+        page=${productPage.number},
+        keyword=${keyword},
+        categoryId=${categoryId},
+        sort='stock',
+        direction=${direction == 'asc' and sort=='stock' ? 'desc' : 'asc'}
+    )}" class="text-decoration-none text-dark">
+                            Tồn kho
+                            <i class="bi"
+                               th:classappend="${sort=='stock'} ? (${direction=='asc'} ? 'bi-caret-up-fill' : 'bi-caret-down-fill') : ''"></i>
+                        </a>
+                    </th>
                     <th>Danh mục</th>
                     <th>Trạng thái</th>
                     <th width="150">Thao tác</th>
