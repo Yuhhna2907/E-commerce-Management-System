@@ -123,6 +123,7 @@
             <nav th:if="${products.totalPages > 0}">
                 <ul class="pagination justify-content-center">
 
+                    <!-- Previous -->
                     <li class="page-item"
                         th:classappend="${productPage.first} ? 'disabled'">
                         <a class="page-link"
