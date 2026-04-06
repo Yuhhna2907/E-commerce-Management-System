@@ -49,6 +49,7 @@ public class ProductService implements IProductService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
+                .brand(request.getBrand())
                 .stock(request.getStock())
                 .imageUrl(request.getImageUrl())
                 .category(category)
@@ -68,9 +69,11 @@ public class ProductService implements IProductService {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
+                .brand(product.getBrand())
                 .price(product.getPrice())
                 .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
+                .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .active(product.getActive())
                 .build();
@@ -107,6 +110,7 @@ public class ProductService implements IProductService {
         // 4️⃣ Update field
         product.setName(request.getName());
         product.setDescription(request.getDescription());
+        product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());

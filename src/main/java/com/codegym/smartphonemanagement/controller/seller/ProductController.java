@@ -6,9 +6,15 @@ import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.seller.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/products")
@@ -24,54 +30,62 @@ public class ProductController {
     public String listProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String brand,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "id") String sort,
             @RequestParam(defaultValue = "desc") String direction,
             Model model
     ) {
+        // Tạo Sort object dựa trên sort + direction
+        Sort sortObj = Sort.by("id"); // mặc định
+        if (sort != null && direction != null) {
+            if (direction.equalsIgnoreCase("asc")) {
+                sortObj = Sort.by(sort).ascending();
+            } else {
+                sortObj = Sort.by(sort).descending();
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
 
         Page<ProductResponseDTO> productPage =
-                productService.search(keyword, categoryId, page, size, sortBy, direction);
+                productService.search(keyword, categoryId, page, size, sort, direction);
 
         model.addAttribute("productPage", productPage);
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
+        model.addAttribute("brand", brand);
         model.addAttribute("totalPages", productPage.getTotalPages());
         model.addAttribute("keyword", keyword);
         model.addAttribute("categoryId", categoryId);
+        model.addAttribute("sort", sort);
+        model.addAttribute("direction", direction);
         model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("productRequestDTO", new ProductRequestDTO());
 
         return "admin/product/list"; // thymeleaf template
-    }
-
-    // ===============================
-    // 2. VIEW CREATE FORM
-    // ===============================
-    @GetMapping("/create")
-    public String showCreateForm(Model model) {
-        model.addAttribute("product", new ProductResponseDTO());
-        return "admin/product/create";
     }
 
     // ===============================
     // 3. SAVE PRODUCT
     // ===============================
     @PostMapping("/save")
-    public String saveProduct(@ModelAttribute ProductRequestDTO dto) {
-        productService.create(dto);
-        return "redirect:/admin/products";
+    @ResponseBody
+    public Map<String, Object> saveProduct(@RequestBody ProductRequestDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            ProductResponseDTO saved = productService.create(dto);
+            response.put("status", "success");
+            response.put("message", "Thêm sản phẩm thành công!");
+            response.put("product", saved); // có thể dùng để append vào table nếu muốn
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
     }
 
-    // ===============================
-    // 4. VIEW EDIT FORM
-    // ===============================
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        ProductResponseDTO product = productService.getById(id);
-        model.addAttribute("product", product);
-        return "admin/product/edit";
-    }
 
     // ===============================
     // 5. DELETE

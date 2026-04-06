@@ -14,6 +14,8 @@ public class ProductResponseDTO {
 
     private String name;
 
+    private String brand;
+
     private String description;
 
     private BigDecimal price;
@@ -21,6 +23,8 @@ public class ProductResponseDTO {
     private Integer stock;
 
     private String imageUrl;
+
+    private Long categoryId;
 
     private String categoryName;
 
