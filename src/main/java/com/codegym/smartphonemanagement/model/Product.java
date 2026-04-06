@@ -53,6 +53,10 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
