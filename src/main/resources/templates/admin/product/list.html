@@ -101,7 +101,7 @@
                 </thead>
 
                 <tbody>
-                <tr th:each="product : ${products.content}">
+                <tr th:each="product : ${products}">
                     <td th:text="${product.id}" class="text-center"></td>
                     <td th:text="${product.name}"></td>
                     <td th:text="${product.price}"></td>
