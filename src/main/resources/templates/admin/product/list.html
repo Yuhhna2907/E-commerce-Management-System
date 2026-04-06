@@ -135,8 +135,12 @@
                         th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
                         th:classappend="${i == products.number}? 'active'">
                         <a class="page-link"
-                           th:text="${i + 1}"
-                           th:href="@{/admin/products(page=${i})}">
+                           th:href="@{/admin/products(
+                    page=${i},
+                    keyword=${keyword},
+                    categoryId=${categoryId}
+               )}"
+                           th:text="${i + 1}">
                         </a>
                     </li>
 
