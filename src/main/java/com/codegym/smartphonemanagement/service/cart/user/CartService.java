@@ -78,6 +78,7 @@ public class CartService implements ICartService {
             checkStock(product, newQuantity);
             item.setQuantity(item.getQuantity() + request.getQuantity());
         } else {
+            checkStock(product, request.getQuantity());
             item = CartItem.builder()
                     .cart(cart)
                     .product(product)
