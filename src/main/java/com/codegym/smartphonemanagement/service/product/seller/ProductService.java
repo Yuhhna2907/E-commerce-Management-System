@@ -87,6 +87,10 @@ public class ProductService implements IProductService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Category không tồn tại"));
 
+        if (!product.getActive()) {
+            throw new BadRequestException("Không thể cập nhật sản phẩm đã bị xoá");
+        }
+
         // 3️⃣ Validate nghiệp vụ
         if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Giá phải lớn hơn 0");
