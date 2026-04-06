@@ -43,7 +43,7 @@ public class ProductController {
         Pageable pageable = PageRequest.of(page, size, sortObj);
 
         Page<ProductResponseDTO> productPage =
-                productService.search(keyword, categoryId, page, size, sortBy, direction);
+                productService.search(keyword, categoryId, page, size, sort, direction);
 
         model.addAttribute("productPage", productPage);
         model.addAttribute("products", productPage.getContent());
