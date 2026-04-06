@@ -22,7 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             String sortBy,
             String direction
     );
-    
+
     @Query("""
     SELECT p FROM Product p
     WHERE p.active = true
