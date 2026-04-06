@@ -19,5 +19,5 @@ public interface IProductService {
             int size,
             String sortBy,
             String direction
-    )
+    );
 }
