@@ -7,9 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
