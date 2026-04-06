@@ -141,7 +141,7 @@
                     </li>
 
                     <li class="page-item"
-                        th:classappend="${products.last}? 'disabled'">
+                        th:classappend="${productPage.last} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/admin/products(
                     page=${productPage.number + 1},
