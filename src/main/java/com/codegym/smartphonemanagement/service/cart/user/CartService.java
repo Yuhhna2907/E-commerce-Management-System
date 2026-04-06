@@ -41,6 +41,14 @@ public class CartService implements ICartService {
                 });
     }
 
+    private void checkStock(Product product, int quantity) {
+        if (product.getStock() < quantity) {
+            throw new BadRequestException(
+                    "Sản phẩm '" + product.getName() + "' chỉ còn " + product.getStock() + " sản phẩm"
+            );
+        }
+    }
+
     @Override
     public CartResponseDTO getCart(Long userId) {
         User user = userRepository.findById(userId)
