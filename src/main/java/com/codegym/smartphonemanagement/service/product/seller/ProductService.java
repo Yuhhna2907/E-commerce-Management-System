@@ -6,6 +6,9 @@ import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.CategoryRepository;
 import com.codegym.smartphonemanagement.repository.ProductRepository;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
