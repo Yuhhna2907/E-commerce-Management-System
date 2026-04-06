@@ -21,7 +21,27 @@ public class ProductService implements IProductService {
             throw new RuntimeException("Stock không được âm");
         }
 
-        return productRepository.save(product);
+        if (request.getStock() < 0) {
+            throw new BadRequestException("Số lượng không hợp lệ");
+        }
+
+        // 3️⃣ Tạo entity
+        Product product = Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .stock(request.getStock())
+                .imageUrl(request.getImageUrl())
+                .category(category)
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        Product saved = productRepository.save(product);
+
+        // 4️⃣ Convert sang ResponseDTO
+        return mapToResponse(saved);
     }
 
     private ProductResponseDTO mapToResponse(Product product) {
