@@ -75,7 +75,12 @@ public class ProductService implements IProductService {
 
     // 🔹 UPDATE
     @Override
-    public Product updateProduct(Long id, Product newProduct) {
+    public ProductResponseDTO update(Long id, ProductRequestDTO request) {
+
+        // 1️⃣ Kiểm tra product tồn tại
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Product không tồn tại"));
 
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
