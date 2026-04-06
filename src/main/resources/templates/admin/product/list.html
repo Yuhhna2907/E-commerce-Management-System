@@ -275,6 +275,76 @@
     </div>
 </div>
 
+
+<!-- ================= POPUP EDIT PRODUCT ================= -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #f8f9fa;">
+                <h5 class="modal-title">Sửa sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm" th:action="@{/admin/products/save}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editProductId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" name="name" id="editProductName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" name="categoryId" id="editProductCategory" required>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giá</label>
+                            <input type="number" class="form-control" name="price" id="editProductPrice" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tồn kho</label>
+                            <input type="number" class="form-control" name="stock" id="editProductStock" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">URL ảnh</label>
+                            <input type="text" class="form-control" name="imageUrl" id="editProductImage">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" name="description" id="editProductDescription" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editButtons = document.querySelectorAll('.edit-btn');
+
+        editButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('editProductId').value = btn.dataset.id;
+                document.getElementById('editProductName').value = btn.dataset.name;
+                document.getElementById('editProductPrice').value = btn.dataset.price;
+                document.getElementById('editProductStock').value = btn.dataset.stock;
+                document.getElementById('editProductImage').value = btn.dataset.imageUrl;
+                document.getElementById('editProductDescription').value = btn.dataset.description;
+                document.getElementById('editProductCategory').value = btn.dataset.categoryId;
+
+                const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+                editModal.show();
+            });
+        });
+    });
+</script>
 <!-- ================= FOOTER ================= -->
 <footer class="footer text-center p-3 mt-4">
     © 2026 Smartphone Store |
