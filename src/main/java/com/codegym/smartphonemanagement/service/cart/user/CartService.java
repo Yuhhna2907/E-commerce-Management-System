@@ -14,6 +14,7 @@ import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
