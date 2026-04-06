@@ -40,6 +40,8 @@ public class Product {
     private String storage;
     private String color;
 
+    private String imageUrl;
+
     @Size(max = 1000)
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -52,6 +54,10 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @PrePersist
     public void prePersist() {
