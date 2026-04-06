@@ -205,6 +205,67 @@
                 sản phẩm
             </div>
 
+<!-- ================= POPUP CREATE PRODUCT ================= -->
+<div class="modal fade" id="createProductModal" tabindex="-1" aria-labelledby="createProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #f8f9fa;">
+                <h5 class="modal-title" id="createProductModalLabel">Thêm sản phẩm mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form th:action="@{/admin/products/save}" th:object="${productRequestDTO}" method="post">
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <!-- Tên sản phẩm -->
+                        <div class="col-md-6">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" th:field="*{name}" placeholder="Nhập tên sản phẩm" required>
+                        </div>
+
+                        <!-- Danh mục -->
+                        <div class="col-md-6">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" th:field="*{categoryId}" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Giá -->
+                        <div class="col-md-6">
+                            <label class="form-label">Giá</label>
+                            <input type="number" class="form-control" th:field="*{price}" placeholder="Nhập giá" required>
+                        </div>
+
+                        <!-- Stock -->
+                        <div class="col-md-6">
+                            <label class="form-label">Tồn kho</label>
+                            <input type="number" class="form-control" th:field="*{stock}" placeholder="Nhập tồn kho" required>
+                        </div>
+
+                        <!-- URL ảnh -->
+                        <div class="col-12">
+                            <label class="form-label">URL ảnh</label>
+                            <input type="text" class="form-control" th:field="*{imageUrl}" placeholder="Nhập link ảnh">
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" th:field="*{description}" rows="3" placeholder="Nhập mô tả"></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Lưu sản phẩm</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
