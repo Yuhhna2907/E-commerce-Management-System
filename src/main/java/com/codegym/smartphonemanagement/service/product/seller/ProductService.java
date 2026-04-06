@@ -49,6 +49,7 @@ public class ProductService implements IProductService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
+                .brand(request.getBrand())
                 .stock(request.getStock())
                 .imageUrl(request.getImageUrl())
                 .category(category)
