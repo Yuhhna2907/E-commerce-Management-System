@@ -115,7 +115,8 @@ public class ProductService implements IProductService {
     public void deleteProduct(Long id) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Product không tồn tại"));
 
         // Nếu đã có active thì dùng soft delete
         if (product.getActive() != null) {
