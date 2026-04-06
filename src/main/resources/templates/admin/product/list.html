@@ -123,17 +123,8 @@
             <nav th:if="${products.totalPages > 1}">
                 <ul class="pagination justify-content-center">
 
-                    <!-- Previous -->
-                    <li class="page-item"
-                        th:classappend="${productPage.first} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/products(
-                    page=${productPage.number - 1},
-                    keyword=${keyword},
-                    categoryId=${categoryId}
-               )}">
-                            Trước
-                        </a>
+                    <li class="page-item" th:classappend="${products.first}? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/products(page=${products.number - 1})}">Trước</a>
                     </li>
 
                     <!-- Page numbers -->
