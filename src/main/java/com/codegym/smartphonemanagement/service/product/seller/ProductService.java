@@ -1,7 +1,7 @@
 package com.codegym.smartphonemanagement.service.product.seller;
 
-import com.codegym.smartphonemanagement.exception.product.BadRequestException;
-import com.codegym.smartphonemanagement.exception.product.ResourceNotFoundException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.CategoryRepository;
