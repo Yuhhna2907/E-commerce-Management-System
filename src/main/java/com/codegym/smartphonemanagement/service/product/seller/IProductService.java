@@ -11,4 +11,13 @@ public interface IProductService {
     ProductResponseDTO update(Long id, ProductRequestDTO request);
 
     void deleteProduct(Long id);
+
+    Page<ProductResponseDTO> search(
+            String keyword,
+            Long categoryId,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    )
 }
