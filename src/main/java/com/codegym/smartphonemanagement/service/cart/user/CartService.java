@@ -74,6 +74,8 @@ public class CartService implements ICartService {
                 .orElse(null);
 
         if (item != null) {
+            int newQuantity = item.getQuantity() + request.getQuantity();
+            checkStock(product, newQuantity);
             item.setQuantity(item.getQuantity() + request.getQuantity());
         } else {
             item = CartItem.builder()
