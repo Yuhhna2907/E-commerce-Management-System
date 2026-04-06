@@ -30,6 +30,17 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String direction,
             Model model
     ) {
+        // Tạo Sort object dựa trên sort + direction
+        Sort sortObj = Sort.by("id"); // mặc định
+        if (sortBy != null && direction != null) {
+            if (direction.equalsIgnoreCase("asc")) {
+                sortObj = Sort.by(sortBy).ascending();
+            } else {
+                sortObj = Sort.by(sortBy).descending();
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
 
         Page<ProductResponseDTO> productPage =
                 productService.search(keyword, categoryId, page, size, sortBy, direction);
