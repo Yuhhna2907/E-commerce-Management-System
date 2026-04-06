@@ -108,10 +108,8 @@
                     <td th:text="${product.stock}" class="text-center"></td>
                     <td th:text="${product.categoryName}"></td>
                     <td class="text-center">
-                        <span class="badge bg-success"
-                              th:if="${product.active}">Hoạt động</span>
-                        <span class="badge bg-secondary"
-                              th:unless="${product.active}">Đã ẩn</span>
+                        <span class="badge bg-success" th:if="${product.active}">Hoạt động</span>
+                        <span class="badge bg-secondary" th:unless="${product.active}">Đã ẩn</span>
                     </td>
                     <td class="text-center">
                         <a th:href="@{'/admin/products/edit/' + ${product.id}}"
