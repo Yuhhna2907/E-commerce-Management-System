@@ -118,13 +118,13 @@ public class ProductService implements IProductService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product không tồn tại"));
 
-        // Nếu đã có active thì dùng soft delete
-        if (product.getActive() != null) {
-            product.setActive(false);
-            productRepository.save(product);
-        } else {
-            // fallback nếu chưa có field active
-            productRepository.delete(product);
+        if (!product.getActive()) {
+            throw new BadRequestException("Product đã bị xoá trước đó");
         }
+
+        product.setActive(false);
+        product.setUpdatedAt(LocalDateTime.now());
+
+        productRepository.save(product);
     }
 }
