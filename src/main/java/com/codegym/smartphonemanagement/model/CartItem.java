@@ -22,8 +22,8 @@ public class CartItem {
     private Integer quantity;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY) // 🔥 tối ưu
-    @JoinColumn(name = "cart_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
     @NotNull(message = "Product không được null")
