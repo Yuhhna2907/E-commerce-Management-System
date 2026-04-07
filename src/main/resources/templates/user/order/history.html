@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử đơn hàng - HoangHa Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#f4f4f4] py-10 px-4">
+
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center gap-4 mb-8">
+        <a href="/" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-[#00918e]">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1 class="text-2xl font-bold">Lịch sử mua hàng</h1>
+    </div>
+
+    <div class="space-y-6">
+        <div th:each="o : ${orders}" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50/50">
+                <div class="flex items-center gap-4">
+                    <span class="bg-emerald-100 text-[#00918e] text-[10px] font-extrabold px-3 py-1 rounded-full uppercase" th:text="${o.status}"></span>
+                    <span class="text-gray-400 text-sm" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                </div>
+                <p class="font-bold text-gray-800" th:text="'Đơn hàng #' + ${o.id}"></p>
+            </div>
+
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div th:each="item : ${o.items}" class="flex items-center gap-4">
+                        <img th:src="${item.imageUrl}" class="w-16 h-16 object-contain border rounded-lg">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm" th:text="${item.productName}"></h4>
+                            <p class="text-xs text-gray-500" th:text="'Số lượng: ' + ${item.quantity}"></p>
+                        </div>
+                        <p class="text-sm font-semibold" th:text="${#numbers.formatDecimal(item.price, 0, 'POINT', 0, 'COMMA')} + ' ₫'"></p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t flex justify-between items-center">
+                    <p class="text-gray-500 text-sm">Tổng số tiền:</p>
+                    <p class="text-xl font-extrabold text-[#e11b1b]" th:text="${#numbers.formatDecimal(o.totalPrice, 0, 'POINT', 0, 'COMMA')} + ' ₫'"></p>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${orders.isEmpty()}" class="bg-white rounded-3xl p-20 text-center shadow-sm">
+            <i class="fa-solid fa-box-open text-6xl text-gray-200 mb-4"></i>
+            <p class="text-gray-500">Bạn chưa có đơn hàng nào!</p>
+            <a href="/" class="inline-block mt-4 text-[#00918e] font-bold underline">Mua sắm ngay</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
