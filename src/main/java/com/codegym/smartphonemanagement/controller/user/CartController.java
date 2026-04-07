@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.controller.user;
 
-import com.codegym.smartphonemanagement.model.Cart;
+import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
@@ -10,12 +11,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/user/cart")
 public class CartController {
 
     private final ICartService cartService;
+    private final ProductRepository productRepository;
 
     // ⚠️ Demo: hardcode userId (sau này thay bằng Security)
     private final Long USER_ID = 1L;
@@ -24,22 +29,39 @@ public class CartController {
     @GetMapping
     public String viewCart(HttpSession session, Model model) {
 
-        Cart cart = (Cart) session.getAttribute("cart");
+        CartResponseDTO cartResponse = cartService.getCart(USER_ID);
 
-        if (cart == null) {
-            cart = new Cart();
-        }
-
-        model.addAttribute("cart", cart);
+        model.addAttribute("cart", cartResponse);
 
         return "user/cart/list"; // file HTML
     }
 
-    // Thêm sản phẩm vào giỏ
     @PostMapping("/add")
-    public String addToCart(@ModelAttribute CartItemRequestDTO request) {
-        cartService.addToCart(USER_ID, request);
-        return "redirect:/user/cart";
+    @ResponseBody
+    public Map<String, Object> addToCart(@RequestBody CartItemRequestDTO request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            cartService.addToCart(USER_ID, request);
+
+            // Tìm sản phẩm từ Repo để lấy đủ thông tin
+            Product product = productRepository.findById(request.getProductId()).get();
+
+            response.put("success", true);
+            response.put("productName", product.getName());
+            response.put("productPrice", product.getPrice());
+            response.put("productImage", product.getImageUrl());
+
+            // Bổ sung các trường bro vừa nhắc
+            response.put("brand", product.getBrand());
+            response.put("color", product.getColor());
+            response.put("storage", product.getStorage());
+
+            response.put("message", "Thêm vào giỏ hàng thành công!");
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống!");
+        }
+        return response;
     }
 
     // Update số lượng
@@ -50,7 +72,7 @@ public class CartController {
     }
 
     // Xoá item
-    @GetMapping("/remove/{productId}")
+    @PostMapping("/remove/{productId}")
     public String removeItem(@PathVariable Long productId) {
         cartService.removeItem(USER_ID, productId);
         return "redirect:/user/cart";

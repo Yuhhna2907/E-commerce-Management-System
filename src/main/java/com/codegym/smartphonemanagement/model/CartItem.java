@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "cart_items")
 @Getter
@@ -22,12 +24,22 @@ public class CartItem {
     private Integer quantity;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY) // 🔥 tối ưu
-    @JoinColumn(name = "cart_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
     @NotNull(message = "Product không được null")
-    @ManyToOne(fetch = FetchType.LAZY) // 🔥 tối ưu
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    // Giá sản phẩm tại thời điểm thêm vào giỏ
+    @NotNull
+    @Column(name = "price_at_time", precision = 15, scale = 2)
+    private BigDecimal priceAtTime;
+
+    // Tổng tiền = quantity * priceAtTime
+    @NotNull
+    @Column(name = "total_price", precision = 15, scale = 2)
+    private BigDecimal totalPrice;
 }

@@ -2,111 +2,322 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Giỏ hàng</title>
+    <title>Giỏ hàng - Smartphone Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-        .container { width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-        h2 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        table th, table td { padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
-        input[type="number"] { width: 60px; text-align: center; }
+        body {
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
 
-        .btn { padding: 6px 12px; border-radius: 5px; text-decoration: none; display: inline-block; }
-        .btn-update { background: #2196F3; color: white; }
-        .btn-delete { background: red; color: white; }
-        .btn-clear { background: black; color: white; margin-top: 10px; }
+        .cart-wrapper {
+            max-width: 640px;
+            margin: 30px auto;
+        }
 
-        .total { text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold; }
-        .empty { text-align: center; margin-top: 40px; font-size: 18px; }
-        .back { margin-top: 20px; }
+        .cart-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .cart-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-link {
+            position: absolute;
+            left: 20px;
+            top: 15px;
+            font-size: 14px;
+            color: #288ad6;
+            text-decoration: none;
+        }
+
+        .cart-item {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .product-img {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin-right: 15px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .product-name:hover {
+            color: #288ad6;
+        }
+
+        .price-new {
+            color: #d0021c;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .price-old {
+            color: #888;
+            font-size: 13px;
+            text-decoration: line-through;
+            margin-left: 8px;
+        }
+
+        .quantity-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 10px;
+        }
+
+        .quantity-box button {
+            border: none;
+            background: #fff;
+            width: 32px;
+            height: 32px;
+            color: #288ad6;
+        }
+
+        .quantity-box input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            height: 32px;
+            font-size: 14px;
+        }
+
+        .remove-link {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            font-size: 13px;
+            color: #999;
+            text-decoration: none;
+        }
+
+        .remove-link:hover {
+            color: #d0021c;
+        }
+
+        .cart-summary {
+            padding: 20px;
+            background: #fff;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .summary-total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #d0021c;
+        }
+
+        .btn-checkout {
+            background: #fb6e2e;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .btn-checkout:hover {
+            background: #e65c1e;
+        }
+
+        .empty-cart {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-cart img {
+            width: 110px;
+            opacity: 0.8;
+        }
     </style>
 </head>
-
 <body>
 
-<div class="container">
+<div th:replace="fragments/header :: header"></div>
+<div class="cart-wrapper">
 
-    <h2>🛒 Giỏ hàng của bạn</h2>
+    <div class="cart-card">
 
-    <!-- EMPTY -->
-    <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="empty">
-        Giỏ hàng đang trống 😢 <br><br>
-        <a th:href="@{/}">⬅️ Quay lại mua hàng</a>
-    </div>
+        <div class="cart-header">
+            <a th:href="@{/user/products}" class="back-link">
+                <i class="bi bi-chevron-left"></i> Mua thêm
+            </a>
+            Giỏ hàng của bạn
+        </div>
 
-    <!-- NOT EMPTY -->
-    <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
+        <!-- EMPTY -->
+        <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="empty-cart">
+            <img src="https://cdn.tgdd.vn/mwgcart/mwg-core/Content/desktop/images/empty-cart.png">
+            <p class="mt-3">Giỏ hàng của bạn đang trống</p>
+            <a th:href="@{/user/products}" class="btn btn-warning mt-3 fw-bold text-white">
+                VỀ TRANG CHỦ
+            </a>
+        </div>
 
-        <table>
-            <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Tổng</th>
-                <th>Hành động</th>
-            </tr>
-            </thead>
+        <!-- ITEMS -->
+        <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
 
-            <tbody>
-            <tr th:each="item : ${cart.items}">
+            <div th:each="item : ${cart.items}" class="cart-item">
+                <!--/*
+ <img class="product-img"
+      th:src="${item.imageUrl != null} ? ${item.imageUrl} : 'https://via.placeholder.com/120'"
+      alt="product">
+ */-->
+                <div class="flex-grow-1">
 
-                <!-- NAME -->
-                <td th:text="${item.productName}"></td>
+                    <a href="#" class="product-name"
+                       th:text="${item.productName}">
+                        Tên sản phẩm
+                    </a>
 
-                <!-- PRICE -->
-                <td th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                    <div class="mt-1">
+                        <span class="price-new"
+                              th:text="${#numbers.formatDecimal(item.price,0,'COMMA',0,'POINT')} + '₫'">
+                        </span>
+                    </div>
 
-                <!-- UPDATE -->
-                <td>
-                    <form th:action="@{/user/cart/update}" method="post">
-                        <input type="hidden" name="productId" th:value="${item.productId}"/>
-                        <input type="number" name="quantity"
-                               th:value="${item.quantity}" min="1"/>
+                    <!-- Quantity -->
+                    <form th:action="@{/user/cart/update}" method="post"
+                          class="quantity-box mt-2">
 
-                        <button class="btn btn-update" type="submit">
-                            Cập nhật
+                        <input type="hidden" name="productId"
+                               th:value="${item.productId}"/>
+
+                        <button type="submit"
+                                name="quantity"
+                                th:value="${item.quantity - 1}"
+                                th:disabled="${item.quantity <= 1}">
+                            -
+                        </button>
+
+                        <input type="text"
+                               th:value="${item.quantity}"
+                               readonly>
+
+                        <button type="submit"
+                                name="quantity"
+                                th:value="${item.quantity + 1}">
+                            +
                         </button>
                     </form>
-                </td>
 
-                <!-- ITEM TOTAL -->
-                <td th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                </div>
 
-                <!-- DELETE -->
-                <td>
-                    <a th:href="@{/user/cart/remove/{id}(id=${item.productId})}"
-                       class="btn btn-delete">
-                        Xoá
-                    </a>
-                </td>
+                <a href="#"
+                   class="remove-link text-danger"
+                   data-bs-toggle="modal"
+                   data-bs-target="#confirmDeleteModal"
+                   th:attr="data-product-id=${item.productId}">
+                    Xóa
+                </a>
+            </div>
 
-            </tr>
-            </tbody>
-        </table>
+            <!-- SUMMARY -->
+            <div class="cart-summary">
 
-        <!-- TOTAL -->
-        <div class="total">
-            Tổng tiền:
-            <span th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
-        </div>
+                <div class="summary-row">
+                    <span>Tạm tính (<span th:text="${#lists.size(cart.items)}">0</span> sản phẩm)</span>
+                    <span class="summary-total"
+                          th:text="${#numbers.formatDecimal(cart.totalPrice,0,'COMMA',0,'POINT')} + '₫'">
+                    </span>
+                </div>
 
-        <!-- CLEAR -->
-        <div style="text-align: right;">
-            <form th:action="@{/user/cart/clear}" method="post">
-                <button class="btn btn-clear">🗑 Xoá toàn bộ</button>
-            </form>
-        </div>
+                <button class="btn-checkout">
+                    ĐẶT HÀNG NGAY
+                </button>
 
-        <!-- BACK -->
-        <div class="back">
-            <a th:href="@{/}">⬅️ Tiếp tục mua hàng</a>
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Giao hàng tận nơi nhanh chóng
+                    </small>
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
 </div>
 
+<div th:replace="fragments/footer :: footer"></div>
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+
+            <div class="modal-body text-center">
+                <p class="mb-3 fw-semibold">
+                    Bạn chắc chắn muốn xóa sản phẩm này?
+                </p>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+                        Không xóa
+                    </button>
+
+                    <form id="deleteForm" method="post">
+                        <button type="submit"
+                                class="btn btn-danger px-4">
+                            Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const deleteModal = document.getElementById('confirmDeleteModal');
+
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute('data-product-id');
+
+        const form = document.getElementById('deleteForm');
+        form.action = '/user/cart/remove/' + productId;
+    });
+</script>
 </body>
 </html>
