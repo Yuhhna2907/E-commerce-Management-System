@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Giỏ hàng</title>
+    <title>Giỏ hàng - Smartphone Store</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -10,153 +10,314 @@
 
     <style>
         body {
-            background: #f4f7fb;
-            color: #1f2937;
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+            color: #333;
         }
 
-        .navbar {
+        .cart-wrapper {
+            max-width: 640px;
+            margin: 30px auto;
+        }
+
+        .cart-card {
             background: #fff;
-            border-bottom: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
         }
 
-        .page-card {
+        .cart-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-link {
+            position: absolute;
+            left: 20px;
+            top: 15px;
+            font-size: 14px;
+            color: #288ad6;
+            text-decoration: none;
+        }
+
+        .cart-item {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .product-img {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin-right: 15px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .product-name:hover {
+            color: #288ad6;
+        }
+
+        .price-new {
+            color: #d0021c;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .price-old {
+            color: #888;
+            font-size: 13px;
+            text-decoration: line-through;
+            margin-left: 8px;
+        }
+
+        .quantity-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 10px;
+        }
+
+        .quantity-box button {
+            border: none;
             background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+            width: 32px;
+            height: 32px;
+            color: #288ad6;
         }
 
-        .table > :not(caption) > * > * {
-            vertical-align: middle;
+        .quantity-box input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            height: 32px;
+            font-size: 14px;
         }
 
-        .thumb {
-            width: 72px;
-            height: 72px;
-            object-fit: cover;
-            border-radius: 14px;
-            border: 1px solid #e5e7eb;
-            background: #f8fafc;
+        .remove-link {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            font-size: 13px;
+            color: #999;
+            text-decoration: none;
+        }
+
+        .remove-link:hover {
+            color: #d0021c;
+        }
+
+        .cart-summary {
+            padding: 20px;
+            background: #fff;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .summary-total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #d0021c;
+        }
+
+        .btn-checkout {
+            background: #fb6e2e;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .btn-checkout:hover {
+            background: #e65c1e;
+        }
+
+        .empty-cart {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-cart img {
+            width: 110px;
+            opacity: 0.8;
         }
     </style>
 </head>
-
 <body>
 
-<nav class="navbar navbar-expand-lg sticky-top">
-    <div class="container py-2">
-        <a class="navbar-brand fw-bold text-dark" th:href="@{/}">
-            <i class="bi bi-shop me-1 text-primary"></i> Smartphone Store
-        </a>
+<div th:replace="fragments/header :: header"></div>
+<div class="cart-wrapper">
 
-        <div class="ms-auto">
-            <a th:href="@{/}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Tiếp tục mua hàng
+    <div class="cart-card">
+
+        <div class="cart-header">
+            <a th:href="@{/user/products}" class="back-link">
+                <i class="bi bi-chevron-left"></i> Mua thêm
             </a>
+            Giỏ hàng của bạn
         </div>
-    </div>
-</nav>
 
-<div class="container py-4">
-    <div class="page-card p-4 p-lg-5">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div>
-                <h2 class="fw-bold mb-1"><i class="bi bi-cart3 text-primary me-2"></i>Giỏ hàng của bạn</h2>
-                <div class="text-muted">Kiểm tra sản phẩm, cập nhật số lượng và tổng tiền.</div>
-            </div>
-            <a th:href="@{/}" class="btn btn-primary">
-                <i class="bi bi-bag-plus me-1"></i> Mua thêm
+        <!-- EMPTY -->
+        <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="empty-cart">
+            <img src="https://cdn.tgdd.vn/mwgcart/mwg-core/Content/desktop/images/empty-cart.png">
+            <p class="mt-3">Giỏ hàng của bạn đang trống</p>
+            <a th:href="@{/user/products}" class="btn btn-warning mt-3 fw-bold text-white">
+                VỀ TRANG CHỦ
             </a>
         </div>
 
-        <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="text-center py-5">
-            <i class="bi bi-cart-x display-1 text-secondary"></i>
-            <h4 class="mt-3">Giỏ hàng đang trống</h4>
-            <p class="text-muted">Hãy quay lại trang sản phẩm để thêm món bạn thích.</p>
-            <a th:href="@{/}" class="btn btn-primary mt-2">⬅ Quay lại mua hàng</a>
-        </div>
-
+        <!-- ITEMS -->
         <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Sản phẩm</th>
-                        <th class="text-center">Giá</th>
-                        <th class="text-center">Số lượng</th>
-                        <th class="text-center">Thành tiền</th>
-                        <th class="text-center">Hành động</th>
-                    </tr>
-                    </thead>
 
-                    <tbody>
-                    <tr th:each="item : ${cart.items}">
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img class="thumb"
-                                     th:src="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)} ? ${item.imageUrl} : 'https://placehold.co/120x120/e9eef6/64748b?text=No+Image'"
-                                     th:alt="${item.productName}">
-                                <div>
-                                    <div class="fw-semibold" th:text="${item.productName}"></div>
-                                    <div class="text-muted small" th:text="${item.brand != null ? item.brand : ''}"></div>
-                                </div>
-                            </div>
-                        </td>
+            <div th:each="item : ${cart.items}" class="cart-item">
+                <!--/*
+ <img class="product-img"
+      th:src="${item.imageUrl != null} ? ${item.imageUrl} : 'https://via.placeholder.com/120'"
+      alt="product">
+ */-->
+                <div class="flex-grow-1">
 
-                        <td class="text-center"
-                            th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                    <a href="#" class="product-name"
+                       th:text="${item.productName}">
+                        Tên sản phẩm
+                    </a>
 
-                        <td class="text-center">
-                            <form th:action="@{/user/cart/update}" method="post" class="d-inline-flex gap-2 align-items-center">
-                                <input type="hidden" name="productId" th:value="${item.productId}"/>
-                                <input type="number" name="quantity" class="form-control form-control-sm text-center"
-                                       th:value="${item.quantity}" min="1" style="width: 90px;"/>
-                                <button class="btn btn-sm btn-outline-primary" type="submit">
-                                    Cập nhật
-                                </button>
-                            </form>
-                        </td>
+                    <div class="mt-1">
+                        <span class="price-new"
+                              th:text="${#numbers.formatDecimal(item.price,0,'COMMA',0,'POINT')} + '₫'">
+                        </span>
+                    </div>
 
-                        <td class="text-center fw-semibold text-primary"
-                            th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                    <!-- Quantity -->
+                    <form th:action="@{/user/cart/update}" method="post"
+                          class="quantity-box mt-2">
 
-                        <td class="text-center">
-                            <a th:href="@{/user/cart/remove/{id}(id=${item.productId})}"
-                               class="btn btn-sm btn-outline-danger"
-                               onclick="return confirm('Xoá sản phẩm này khỏi giỏ hàng?')">
-                                Xoá
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                        <input type="hidden" name="productId"
+                               th:value="${item.productId}"/>
+
+                        <button type="submit"
+                                name="quantity"
+                                th:value="${item.quantity - 1}"
+                                th:disabled="${item.quantity <= 1}">
+                            -
+                        </button>
+
+                        <input type="text"
+                               th:value="${item.quantity}"
+                               readonly>
+
+                        <button type="submit"
+                                name="quantity"
+                                th:value="${item.quantity + 1}">
+                            +
+                        </button>
+                    </form>
+
+                </div>
+
+                <a href="#"
+                   class="remove-link text-danger"
+                   data-bs-toggle="modal"
+                   data-bs-target="#confirmDeleteModal"
+                   th:attr="data-product-id=${item.productId}">
+                    Xóa
+                </a>
             </div>
 
-            <div class="row justify-content-end mt-4">
-                <div class="col-12 col-lg-5">
-                    <div class="border rounded-4 p-4 bg-light">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Tổng tiền</span>
-                            <span class="fw-bold text-primary"
-                                  th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
-                        </div>
+            <!-- SUMMARY -->
+            <div class="cart-summary">
 
-                        <form th:action="@{/user/cart/clear}" method="post" class="d-flex gap-2 justify-content-end mt-3">
-                            <button class="btn btn-outline-secondary" type="button" onclick="history.back()">
-                                Quay lại
-                            </button>
-                            <button class="btn btn-danger" type="submit"
-                                    onclick="return confirm('Bạn chắc chắn muốn xoá toàn bộ giỏ hàng?')">
-                                <i class="bi bi-trash3 me-1"></i> Xoá toàn bộ
-                            </button>
-                        </form>
-                    </div>
+                <div class="summary-row">
+                    <span>Tạm tính (<span th:text="${#lists.size(cart.items)}">0</span> sản phẩm)</span>
+                    <span class="summary-total"
+                          th:text="${#numbers.formatDecimal(cart.totalPrice,0,'COMMA',0,'POINT')} + '₫'">
+                    </span>
+                </div>
+
+                <button class="btn-checkout">
+                    ĐẶT HÀNG NGAY
+                </button>
+
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Giao hàng tận nơi nhanh chóng
+                    </small>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+
+            <div class="modal-body text-center">
+                <p class="mb-3 fw-semibold">
+                    Bạn chắc chắn muốn xóa sản phẩm này?
+                </p>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+                        Không xóa
+                    </button>
+
+                    <form id="deleteForm" method="post">
+                        <button type="submit"
+                                class="btn btn-danger px-4">
+                            Xóa
+                        </button>
+                    </form>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const deleteModal = document.getElementById('confirmDeleteModal');
+
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute('data-product-id');
+
+        const form = document.getElementById('deleteForm');
+        form.action = '/user/cart/remove/' + productId;
+    });
+</script>
 </body>
 </html>

@@ -15,6 +15,8 @@ public class ProductRequestDTO {
     @NotBlank(message = "Hãng không được trống")
     private String brand;
 
+    private String color;
+
     private String description;
 
     @NotNull(message = "Giá không được null")

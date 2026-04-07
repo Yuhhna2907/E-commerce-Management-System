@@ -12,12 +12,23 @@
             --tgdd-black: #212529;
             --price-red: #d70018;
         }
-        body { background-color: #f8f9fa; }
+
+        body {
+            background-color: #f8f9fa;
+        }
 
         /* Header Custom */
-        .navbar-custom { background-color: var(--tgdd-black); }
-        .nav-link, .navbar-brand { color: white !important; }
-        .navbar-brand b { color: var(--tgdd-yellow); }
+        .navbar-custom {
+            background-color: var(--tgdd-black);
+        }
+
+        .nav-link, .navbar-brand {
+            color: white !important;
+        }
+
+        .navbar-brand b {
+            color: var(--tgdd-yellow);
+        }
 
         /* Product Card */
         .product-card {
@@ -27,10 +38,12 @@
             background: #fff;
             overflow: hidden;
         }
+
         .product-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
+
         .img-container {
             height: 220px;
             display: flex;
@@ -38,11 +51,13 @@
             justify-content: center;
             padding: 20px;
         }
+
         .product-img {
             max-height: 100%;
             max-width: 100%;
             object-fit: contain;
         }
+
         .product-name {
             font-size: 0.95rem;
             font-weight: 600;
@@ -55,7 +70,11 @@
             color: #333;
             text-decoration: none;
         }
-        .product-name:hover { color: #007bff; }
+
+        .product-name:hover {
+            color: #007bff;
+        }
+
         .price-now {
             color: var(--price-red);
             font-size: 1.15rem;
@@ -70,6 +89,7 @@
             font-weight: 600;
             transition: 0.2s;
         }
+
         .btn-buy:hover {
             background-color: #e5a800;
             transform: scale(1.02);
@@ -84,27 +104,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-custom sticky-top shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/user/products">
-            <i class="bi bi-phone-vibrate text-warning"></i> <b>SMARTPHONE</b> STORE
-        </a>
-
-        <div class="d-flex align-items-center">
-            <a href="/user/cart" class="btn btn-outline-light position-relative me-3 border-0">
-                <i class="bi bi-cart3 fs-5"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill cart-badge"
-                      th:if="${cart != null and cart.items != null}"
-                      th:text="${#lists.size(cart.items)}">0</span>
-            </a>
-
-            <div class="text-white d-none d-md-block">
-                <small class="text-secondary d-block" style="font-size: 0.7rem;">Xin chào,</small>
-                <span class="fw-bold text-warning" th:text="${userName ?: 'Luong Anh Huy'}"></span>
-            </div>
-        </div>
-    </div>
-</nav>
+<div th:replace="fragments/header :: header"></div>
 
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
@@ -117,9 +117,70 @@
         </nav>
     </div>
 
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <!-- SEARCH -->
+        <form class="d-flex" method="get" action="/user/products" onsubmit="saveSearchHistory()">
+            <div class="input-group" style="width: 320px;">
+            <span class="input-group-text bg-white">
+                <i class="bi bi-search"></i>
+            </span>
+                <input type="text"
+                       class="form-control"
+                       name="keyword"
+                       id="searchInput"
+                       placeholder="Tìm iPhone, Samsung..."
+                       th:value="${keyword}">
+            </div>
+        </form>
+
+        <!-- RIGHT SIDE -->
+        <div class="d-flex gap-3 align-items-center">
+
+            <!-- SORT -->
+            <div>
+                <span class="me-2 fw-semibold">Sắp xếp theo:</span>
+
+                <a th:href="@{/user/products(
+                        page=0,
+                        keyword=${keyword},
+                        brand=${brand},
+                        minPrice=${minPrice},
+                        maxPrice=${maxPrice},
+                        sort='asc'
+                    )}"
+                   class="text-decoration-none me-2">
+                    Giá <i class="bi bi-arrow-up"></i>
+                </a>
+
+                <a th:href="@{/user/products(
+                        page=0,
+                        keyword=${keyword},
+                        brand=${brand},
+                        minPrice=${minPrice},
+                        maxPrice=${maxPrice},
+                        sort='desc'
+                    )}"
+                   class="text-decoration-none">
+                    Giá <i class="bi bi-arrow-down"></i>
+                </a>
+            </div>
+
+            <!-- FILTER BUTTON -->
+            <button class="btn btn-outline-dark"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#filterCanvas">
+                <i class="bi bi-funnel"></i> Lọc
+            </button>
+
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-6 col-md-4 col-lg-3" th:each="product : ${products}">
-            <div class="card h-100 product-card shadow-sm">
+            <div class="card h-100 product-card shadow-sm"
+                 style="cursor: pointer;"
+                 th:attr="data-id=${product.id}">
 
                 <div class="img-container">
                     <img th:src="${product.imageUrl != null && !product.imageUrl.isEmpty() ? product.imageUrl : 'https://via.placeholder.com/200x200?text=Smartphone'}"
@@ -127,7 +188,7 @@
                 </div>
 
                 <div class="card-body p-3 d-flex flex-column">
-                    <a href="#" class="product-name mb-2" th:text="${product.name}">Tên sản phẩm điện thoại xịn</a>
+                    <a href="javascript:void(0);" class="product-name mb-2" th:text="${product.name}">Tên sản phẩm</a>
 
                     <div class="mt-auto">
                         <div class="price-now mb-3"
@@ -135,54 +196,373 @@
                             10.000.000 ₫
                         </div>
 
-                        <form th:action="@{/user/cart/add}" method="post">
-                            <input type="hidden" name="productId" th:value="${product.id}">
-                            <input type="hidden" name="quantity" value="1">
-
-                            <button type="submit" class="btn btn-buy w-100 py-2 rounded-pill shadow-sm"
-                                    th:disabled="${product.stock <= 0}">
+                        <div class="d-grid">
+                            <button type="button"
+                                    class="btn btn-buy w-100 py-2 rounded-pill shadow-sm"
+                                    th:disabled="${product.stock <= 0}"
+                                    th:onclick="|addToCart(${product.id})|">
                                 <span th:if="${product.stock > 0}"><i class="bi bi-bag-plus"></i> THÊM GIỎ HÀNG</span>
                                 <span th:unless="${product.stock > 0}">HẾT HÀNG</span>
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<nav class="mt-5" th:if="${totalPages > 1}">
+    <ul class="pagination justify-content-center">
 
-<footer class="bg-dark text-white pt-5 pb-3 mt-5">
-    <div class="container">
-        <div class="row text-center text-md-start">
-            <div class="col-md-4 mb-4">
-                <h5 class="text-warning fw-bold">SMARTPHONE STORE</h5>
-                <p class="small text-secondary">Hệ thống quản lý bán hàng Smartphone hàng đầu Việt Nam.</p>
+        <li class="page-item"
+            th:classappend="${currentPage == 0} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{/user/products(
+                    page=${currentPage - 1},
+                    keyword=${keyword},
+                    brand=${brand},
+                    minPrice=${minPrice},
+                    maxPrice=${maxPrice},
+                    sort=${sort}
+               )}">Trước</a>
+        </li>
+
+        <li class="page-item"
+            th:each="i : ${#numbers.sequence(0, (totalPages - 1))}"
+            th:classappend="${i == currentPage} ? 'active'">
+            <a class="page-link"
+               th:text="${i + 1}"
+               th:href="@{/user/products(
+                    page=${i},
+                    keyword=${keyword},
+                    brand=${brand},
+                    minPrice=${minPrice},
+                    maxPrice=${maxPrice},
+                    sort=${sort}
+               )}">
+            </a>
+        </li>
+
+        <li class="page-item"
+            th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{/user/products(
+                    page=${currentPage + 1},
+                    keyword=${keyword},
+                    brand=${brand},
+                    minPrice=${minPrice},
+                    maxPrice=${maxPrice},
+                    sort=${sort}
+               )}">Sau</a>
+        </li>
+
+    </ul>
+</nav>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+
+            <div class="modal-header bg-success text-white" style="border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-check-circle-fill me-2"></i> Thêm vào giỏ hàng thành công!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
-            <div class="col-md-4 mb-4">
-                <h6>HỖ TRỢ KHÁCH HÀNG</h6>
-                <ul class="list-unstyled small text-secondary">
-                    <li>Hotline: 1900 6000</li>
-                    <li>Email: support@smartstore.vn</li>
-                </ul>
-            </div>
-            <div class="col-md-4 mb-4">
-                <h6>KẾT NỐI</h6>
-                <div class="fs-4">
-                    <i class="bi bi-facebook me-2"></i>
-                    <i class="bi bi-youtube me-2"></i>
-                    <i class="bi bi-tiktok"></i>
+
+            <div class="modal-body p-4">
+                <div class="d-flex gap-3 align-items-start">
+                    <div class="flex-shrink-0">
+                        <img id="modalProductImg" src="" class="img-thumbnail shadow-sm"
+                             style="width: 110px; height: 110px; object-fit: contain; border-radius: 12px;">
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h6 id="modalProductName" class="fw-bold mb-1 text-dark fs-5">Tên điện thoại</h6>
+                        <div class="small text-muted mb-2">
+                            <span class="badge bg-light text-dark border">Hãng: <b id="modalBrand"></b></span>
+                            <span class="badge bg-light text-dark border">Màu: <b id="modalColor"></b></span>
+                        </div>
+                        <div class="mb-3">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"
+                                  id="modalStorage"></span>
+                        </div>
+                        <div id="modalProductPrice" class="text-danger fw-bold fs-5">0 ₫</div>
+                    </div>
+                </div>
+
+                <hr class="my-3 opacity-50">
+
+                <div class="text-center text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> Sản phẩm đã được tự động cập nhật vào giỏ hàng của bạn.
                 </div>
             </div>
-        </div>
-        <hr class="border-secondary">
-        <div class="text-center small text-secondary">
-            © 2026 Smartphone Store - Design by <b>Huy</b>
+
+            <div class="modal-footer border-0 pb-4 justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold"
+                        data-bs-dismiss="modal">
+                    <i class="bi bi-cart-plus me-1"></i> Tiếp tục mua sắm
+                </button>
+
+                <a href="/user/cart" class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm"
+                   style="background-color: #ffbc05; border: none; color: #000;">
+                    Vào giỏ hàng ngay <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
         </div>
     </div>
-</footer>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="filterCanvas">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">
+            <i class="bi bi-funnel-fill"></i> Bộ lọc sản phẩm
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+
+    <div class="offcanvas-body">
+        <form method="get" action="/user/products">
+
+            <!-- Brand -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Hãng</label>
+                <select class="form-select" name="brand">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Apple">Apple</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Xiaomi">Xiaomi</option>
+                </select>
+            </div>
+
+            <!-- Price Range -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Giá từ</label>
+                <input type="number" class="form-control" name="minPrice" placeholder="0">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Đến</label>
+                <input type="number" class="form-control" name="maxPrice" placeholder="50000000">
+            </div>
+
+            <button class="btn btn-warning w-100 fw-bold">
+                Áp dụng bộ lọc
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="detailProductName">Tên sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-4">
+
+                    <!-- LEFT IMAGE -->
+                    <div class="col-md-5 d-flex justify-content-center align-items-center">
+                        <img id="detailProductImg"
+                             src="https://via.placeholder.com/250"
+                             class="img-fluid shadow-sm rounded-3"
+                             style="max-height: 300px; object-fit: contain;">
+                    </div>
+
+                    <!-- RIGHT DETAILS -->
+                    <div class="col-md-7">
+                        <!-- Brand + Product Code -->
+                        <div class="mb-2 text-muted small">
+                            <span id="detailBrand">Brand: N/A</span> |
+                            <span id="detailProductId">Mã SP: 0</span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <span id="detailPrice" class="fs-4 fw-bold text-danger">0 ₫</span>
+                            <span id="detailOldPrice" class="text-muted text-decoration-line-through ms-2"></span>
+                        </div>
+
+                        <!-- Key Specs -->
+                        <div class="mb-3" id="detailSpecs">
+                            <!-- Badge sẽ được fill JS -->
+                        </div>
+
+                        <!-- Description -->
+                        <p class="text-truncate"
+                           style="-webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;"
+                           id="detailDescription">
+                            Mô tả sản phẩm...
+                        </p>
+
+                        <!-- Actions -->
+                        <div class="mt-4">
+                            <button type="button"
+                                    class="btn btn-buy rounded-pill px-4 py-2 me-2"
+                                    id="detailAddCartBtn">
+                                <i class="bi bi-bag-plus"></i> Thêm giỏ hàng
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-secondary rounded-pill px-4 py-2"
+                                    data-bs-dismiss="modal">
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function addToCart(productId) {
+
+        fetch('/user/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: productId,
+                quantity: 1
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const modalTitle = document.querySelector(".modal-title");
+
+
+                if (data.success) {
+                    // Đổ thông tin sản phẩm
+                    document.getElementById("modalProductName").innerText = data.productName;
+                    document.getElementById("modalProductImg").src = data.productImage || 'https://via.placeholder.com/150';
+
+                    // Định dạng tiền tệ VNĐ
+                    document.getElementById("modalProductPrice").innerText =
+                        new Intl.NumberFormat('vi-VN').format(data.productPrice) + " ₫";
+
+                    // Đổ dữ liệu chi tiết
+                    document.getElementById("modalBrand").innerText = data.brand || "N/A";
+                    document.getElementById("modalColor").innerText = data.color || "Tiêu chuẩn";
+                    document.getElementById("modalStorage").innerText = data.storage || "N/A";
+
+
+                }
+                const modal = new bootstrap.Modal(document.getElementById('cartModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error("Lỗi Fetch:", error);
+                document.getElementById("cartModalMessage").innerText = "Không thể kết nối đến máy chủ!";
+                const modal = new bootstrap.Modal(document.getElementById('cartModal'));
+                modal.show();
+            });
+    }
+
+    function saveSearchHistory() {
+        const keyword = document.getElementById("searchInput").value;
+        if (!keyword) return;
+
+        let history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+
+        if (!history.includes(keyword)) {
+            history.unshift(keyword);
+        }
+
+        if (history.length > 5) {
+            history.pop();
+        }
+
+        localStorage.setItem("searchHistory", JSON.stringify(history));
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+
+        const input = document.getElementById("searchInput");
+
+        input.addEventListener("focus", function () {
+            if (history.length === 0) return;
+
+            const dropdown = document.createElement("div");
+            dropdown.className = "list-group position-absolute w-100";
+            dropdown.style.zIndex = 1000;
+
+            history.forEach(item => {
+                const option = document.createElement("a");
+                option.className = "list-group-item list-group-item-action";
+                option.innerText = item;
+                option.onclick = () => {
+                    input.value = item;
+                };
+                dropdown.appendChild(option);
+            });
+
+            input.parentElement.appendChild(dropdown);
+        });
+    });
+
+    function showProductDetail(productId) {
+        fetch(`/user/products/${productId}`) // endpoint trả về ProductResponseDTO JSON
+            .then(res => res.json())
+            .then(product => {
+                // Header
+                document.getElementById("detailProductName").innerText = product.name;
+                document.getElementById("detailBrand").innerText = `Hãng: ${product.brand}`;
+                document.getElementById("detailProductId").innerText = `Mã SP: ${product.id}`;
+
+                // Image
+                document.getElementById("detailProductImg").src = product.imageUrl || 'https://via.placeholder.com/250';
+
+                // Price
+                document.getElementById("detailPrice").innerText =
+                    new Intl.NumberFormat('vi-VN').format(product.price) + " ₫";
+
+                // Specs badges
+                const specsDiv = document.getElementById("detailSpecs");
+                specsDiv.innerHTML = '';
+                if (product.color) specsDiv.innerHTML += `<span class="badge bg-primary me-1">${product.color}</span>`;
+                if (product.categoryName) specsDiv.innerHTML += `<span class="badge bg-secondary me-1">${product.categoryName}</span>`;
+                if (product.stock !== undefined) specsDiv.innerHTML += `<span class="badge bg-success me-1">Còn ${product.stock}</span>`;
+
+                // Description (cắt 2-3 dòng)
+                document.getElementById("detailDescription").innerText = product.description || 'Chưa có mô tả';
+
+                // Thêm giỏ hàng
+                const addCartBtn = document.getElementById("detailAddCartBtn");
+                addCartBtn.onclick = () => addToCart(product.id);
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+                modal.show();
+            })
+            .catch(err => console.error("Lỗi load chi tiết SP:", err));
+    }
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', function(e){
+            // Nếu click vào button trong card, không mở modal
+            if(e.target.closest('button')) return;
+
+            const productId = this.getAttribute('data-id');
+            showProductDetail(productId);
+        });
+    });
+</script>
+
 
 </body>
 </html>

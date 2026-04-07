@@ -6,10 +6,10 @@ import com.codegym.smartphonemanagement.model.Cart;
 import com.codegym.smartphonemanagement.model.CartItem;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.User;
-import com.codegym.smartphonemanagement.repository.CartItemRepository;
-import com.codegym.smartphonemanagement.repository.CartRepository;
-import com.codegym.smartphonemanagement.repository.ProductRepository;
-import com.codegym.smartphonemanagement.repository.UserRepository;
+import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
+import com.codegym.smartphonemanagement.repository.user.CartRepository;
+import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemResponseDTO;
@@ -74,16 +74,22 @@ public class CartService implements ICartService {
         CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElse(null);
 
+        BigDecimal currentPrice = product.getPrice();
+
         if (item != null) {
             int newQuantity = item.getQuantity() + request.getQuantity();
             checkStock(product, newQuantity);
             item.setQuantity(item.getQuantity() + request.getQuantity());
+            item.setPriceAtTime(currentPrice);
+            item.setTotalPrice(currentPrice.multiply(new BigDecimal(newQuantity)));
         } else {
             checkStock(product, request.getQuantity());
             item = CartItem.builder()
                     .cart(cart)
                     .product(product)
                     .quantity(request.getQuantity())
+                    .priceAtTime(currentPrice)
+                    .totalPrice(currentPrice.multiply(new BigDecimal(request.getQuantity())))
                     .build();
         }
 
@@ -126,10 +132,14 @@ public class CartService implements ICartService {
 
         Cart cart = getOrCreateCart(user);
 
-        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Item không tồn tại"));
 
-        cartItemRepository.delete(item);
+        cart.getItems().remove(item);
+
+        cartRepository.save(cart);
     }
 
     @Override
@@ -168,6 +178,7 @@ public class CartService implements ICartService {
                     CartItemResponseDTO.builder()
                             .productId(item.getProduct().getId())
                             .productName(item.getProduct().getName())
+                            .imageUrl(item.getProduct().getImageUrl())
                             .price(item.getProduct().getPrice())
                             .quantity(item.getQuantity())
                             .total(itemTotal)
