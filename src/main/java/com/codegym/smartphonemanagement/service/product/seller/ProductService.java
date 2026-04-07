@@ -4,8 +4,8 @@ import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
-import com.codegym.smartphonemanagement.repository.CategoryRepository;
-import com.codegym.smartphonemanagement.repository.ProductRepository;
+import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
+import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 
@@ -50,6 +50,7 @@ public class ProductService implements IProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .brand(request.getBrand())
+                .color(request.getColor())
                 .stock(request.getStock())
                 .imageUrl(request.getImageUrl())
                 .category(category)
@@ -68,6 +69,7 @@ public class ProductService implements IProductService {
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .color(product.getColor())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .price(product.getPrice())
@@ -110,6 +112,7 @@ public class ProductService implements IProductService {
         // 4️⃣ Update field
         product.setName(request.getName());
         product.setDescription(request.getDescription());
+        product.setColor(request.getColor());
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());

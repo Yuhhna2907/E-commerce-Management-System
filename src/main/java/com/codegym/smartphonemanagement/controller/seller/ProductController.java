@@ -1,6 +1,6 @@
 package com.codegym.smartphonemanagement.controller.seller;
 
-import com.codegym.smartphonemanagement.repository.CategoryRepository;
+import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.seller.ProductService;

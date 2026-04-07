@@ -16,6 +16,8 @@ public class ProductResponseDTO {
 
     private String brand;
 
+    private String color;
+
     private String description;
 
     private BigDecimal price;

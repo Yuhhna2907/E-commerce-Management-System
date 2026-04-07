@@ -1,4 +1,4 @@
-package com.codegym.smartphonemanagement.repository;
+package com.codegym.smartphonemanagement.repository.user;
 
 import com.codegym.smartphonemanagement.model.Cart;
 import com.codegym.smartphonemanagement.model.User;

@@ -1,4 +1,4 @@
-package com.codegym.smartphonemanagement.repository;
+package com.codegym.smartphonemanagement.repository.user;
 
 import com.codegym.smartphonemanagement.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
