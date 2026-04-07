@@ -13,9 +13,13 @@ public class UserProductController {
 
     private final ProductRepository productRepository;
 
-    @GetMapping("/user/products")
-    public String viewProducts(Model model) {
-        model.addAttribute("products", productRepository.findAll());
+        // Giữ lại filter để không mất khi phân trang
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("brand", brand);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("sort", sort);
+
         return "user/product/list";
     }
 }
