@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -41,25 +42,35 @@ public class CartController {
     public Map<String, Object> addToCart(@RequestBody CartItemRequestDTO request) {
         Map<String, Object> response = new HashMap<>();
         try {
-            cartService.addToCart(USER_ID, request);
+            if (request == null || request.getProductId() == null) {
+                response.put("success", false);
+                response.put("message", "Dữ liệu gửi lên không hợp lệ!");
+                return response;
+            }
 
-            // Tìm sản phẩm từ Repo để lấy đủ thông tin
-            Product product = productRepository.findById(request.getProductId()).get();
+            Optional<Product> productOpt = productRepository.findById(request.getProductId());
 
-            response.put("success", true);
-            response.put("productName", product.getName());
-            response.put("productPrice", product.getPrice());
-            response.put("productImage", product.getImageUrl());
+            if (productOpt.isPresent()) {
+                Product product = productOpt.get();
+                // Duy nhớ kiểm tra USER_ID = 1L có tồn tại trong bảng User chưa nhé
+                cartService.addToCart(USER_ID, request);
 
-            // Bổ sung các trường bro vừa nhắc
-            response.put("brand", product.getBrand());
-            response.put("color", product.getColor());
-            response.put("storage", product.getStorage());
-
-            response.put("message", "Thêm vào giỏ hàng thành công!");
+                response.put("success", true);
+                response.put("productName", product.getName());
+                response.put("productPrice", product.getPrice());
+                response.put("productImage", product.getImageUrl());
+                response.put("brand", product.getBrand());
+                response.put("color", product.getColor());
+                response.put("storage", product.getStorage());
+                response.put("message", "Thêm thành công!");
+            } else {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy sản phẩm ID: " + request.getProductId());
+            }
         } catch (Exception e) {
+            e.printStackTrace(); // Nhìn vào IntelliJ tab Run để xem lỗi đỏ ở đây
             response.put("success", false);
-            response.put("message", "Lỗi hệ thống!");
+            response.put("message", "Lỗi Server: " + e.getMessage());
         }
         return response;
     }

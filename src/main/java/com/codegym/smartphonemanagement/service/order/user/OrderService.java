@@ -1,9 +1,8 @@
 package com.codegym.smartphonemanagement.service.order.user;
 
 import com.codegym.smartphonemanagement.model.*;
-import com.codegym.smartphonemanagement.repository.CartRepository;
-import com.codegym.smartphonemanagement.repository.OrderRepository;
-import com.codegym.smartphonemanagement.repository.UserRepository;
+import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
+import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderItemResponseDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -16,62 +15,87 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class OrderService implements IOrderService{
+public class OrderService implements IOrderService {
+
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final CartItemRepository cartItemRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     @Transactional
-    public OrderResponseDTO checkout(Long userId) {
-        // 1. Tìm giỏ hàng
+    public OrderResponseDTO createOrder(Long userId, String receiverName, String receiverPhone,
+                                        String shippingAddress, String note) {
+
+        // 1. Lấy giỏ hàng của User
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại!"));
 
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng của bạn đang trống!");
+            throw new RuntimeException("Giỏ hàng đang trống!");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
 
-        // --- TÍNH TỔNG TIỀN NGAY TẠI ĐÂY ---
-        BigDecimal totalAmount = cart.getItems().stream()
+        // 2. TÍNH TỔNG TIỀN (Logic tại Service)
+        BigDecimal total = cart.getItems().stream()
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 2. Khởi tạo Order
+        // 3. Khởi tạo Order (Sử dụng các trường đúng như Entity của Duy)
         Order order = Order.builder()
                 .user(user)
-                .totalPrice(totalAmount) // Gán tổng tiền vừa tính vào đây
+                .receiverName(receiverName)
+                .receiverPhone(receiverPhone)
+                .shippingAddress(shippingAddress)
+                .note(note)
+                .totalPrice(total)
                 .status(OrderStatus.PENDING)
+                // createdAt đã có @PrePersist trong Entity nên không cần set thủ công
                 .build();
 
-        // 3. Chuyển CartItem sang OrderItem & Trừ kho
+        // Lưu đơn hàng trước
+        Order savedOrder = orderRepository.save(order);
+
+        // 4. Chuyển CartItem sang OrderItem & Trừ kho
         List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
             Product product = cartItem.getProduct();
 
+            // Kiểm tra tồn kho
             if (product.getStock() < cartItem.getQuantity()) {
                 throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng!");
             }
+
+            // Cập nhật số lượng mới cho kho
             product.setStock(product.getStock() - cartItem.getQuantity());
+            productRepository.save(product);
 
             return OrderItem.builder()
-                    .order(order)
+                    .order(savedOrder)
                     .product(product)
                     .quantity(cartItem.getQuantity())
-                    .price(product.getPrice())
+                    .price(product.getPrice()) // Lưu giá tại thời điểm mua
                     .build();
         }).collect(Collectors.toList());
 
-        order.setItems(orderItems);
+        // Lưu danh sách chi tiết đơn hàng
+        orderItemRepository.saveAll(orderItems);
+        savedOrder.setItems(orderItems);
 
-        // 4. Lưu và Xóa giỏ
-        Order savedOrder = orderRepository.save(order);
-        cart.getItems().clear();
-        cartRepository.save(cart);
+        // 5. Xóa sạch giỏ hàng sau khi đặt thành công
+        cartItemRepository.deleteAllByCartId(cart.getId());
 
         return mapToResponseDTO(savedOrder);
+    }
+
+    @Override
+    public OrderResponseDTO getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+        return mapToResponseDTO(order);
     }
 
     @Override
@@ -80,28 +104,25 @@ public class OrderService implements IOrderService{
                 .stream().map(this::mapToResponseDTO).collect(Collectors.toList());
     }
 
-    @Override
-    public OrderResponseDTO getOrderById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-        return mapToResponseDTO(order);
-    }
-
     private OrderResponseDTO mapToResponseDTO(Order order) {
         return OrderResponseDTO.builder()
                 .id(order.getId())
                 .totalPrice(order.getTotalPrice())
-                .status(order.getStatus())
+                // Sửa lỗi: Gọi .name() để chuyển từ Enum OrderStatus sang String
+                .status(order.getStatus() != null ? order.getStatus().name() : null)
                 .createdAt(order.getCreatedAt())
-                // SỬA Ở ĐÂY: User của bạn dùng username chứ không phải name
-                .customerName(order.getUser() != null ? order.getUser().getUsername() : "N/A")
+                .customerName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .shippingAddress(order.getShippingAddress())
+                .note(order.getNote())
                 .items(order.getItems().stream().map(item -> OrderItemResponseDTO.builder()
                         .productName(item.getProduct().getName())
                         .imageUrl(item.getProduct().getImageUrl())
                         .quantity(item.getQuantity())
                         .price(item.getPrice())
-                        .subTotal(item.getPrice().multiply(java.math.BigDecimal.valueOf(item.getQuantity())))
-                        .build()).toList())
+                        // Tính subTotal bằng cách lấy đơn giá nhân số lượng
+                        .subTotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                        .build()).collect(Collectors.toList()))
                 .build();
     }
 }

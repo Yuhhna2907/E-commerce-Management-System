@@ -18,8 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,15 +31,9 @@ public class CartService implements ICartService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
-    // Lấy hoặc tạo cart
     private Cart getOrCreateCart(User user) {
         return cartRepository.findByUser(user)
-                .orElseGet(() -> {
-                    Cart cart = Cart.builder()
-                            .user(user)
-                            .build();
-                    return cartRepository.save(cart);
-                });
+                .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
     }
 
     private void checkStock(Product product, int quantity) {
@@ -54,137 +48,133 @@ public class CartService implements ICartService {
     public CartResponseDTO getCart(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-
         Cart cart = getOrCreateCart(user);
-
-        return mapToResponse(cart);
+        return mapToResponseDTO(cart);
     }
 
     @Override
-    public CartResponseDTO addToCart(Long userId, CartItemRequestDTO request) {
+    public CartResponseDTO getCartByUserId(Long userId) {
+        return getCart(userId);
+    }
 
+    @Override
+    @Transactional
+    public CartResponseDTO addToCart(Long userId, CartItemRequestDTO request) {
+        // 1. Tìm User và Product
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
+        // 2. Lấy hoặc tạo mới giỏ hàng
         Cart cart = getOrCreateCart(user);
 
-        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElse(null);
+        // 3. Kiểm tra sản phẩm đã có trong giỏ chưa
+        CartItem item = cartItemRepository.findByCartAndProduct(cart, product).orElse(null);
 
+        // Lấy giá hiện tại của sản phẩm để tính toán
         BigDecimal currentPrice = product.getPrice();
+        if (currentPrice == null) {
+            throw new BadRequestException("Sản phẩm chưa có giá bán, không thể thêm vào giỏ!");
+        }
 
         if (item != null) {
+            // TRƯỜNG HỢP 1: Sản phẩm ĐÃ CÓ trong giỏ -> Tăng số lượng
             int newQuantity = item.getQuantity() + request.getQuantity();
             checkStock(product, newQuantity);
-            item.setQuantity(item.getQuantity() + request.getQuantity());
-            item.setPriceAtTime(currentPrice);
-            item.setTotalPrice(currentPrice.multiply(new BigDecimal(newQuantity)));
+
+            item.setQuantity(newQuantity);
+
+            // Cần kiểm tra priceAtTime của item cũ (đề phòng dữ liệu rác bị null)
+            if (item.getPriceAtTime() == null) {
+                item.setPriceAtTime(currentPrice);
+            }
+
+            // Tính lại tổng tiền: PriceAtTime * Quantity
+            item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(newQuantity)));
         } else {
+            // TRƯỜNG HỢP 2: Sản phẩm CHƯA CÓ trong giỏ -> Tạo mới hoàn toàn
             checkStock(product, request.getQuantity());
+
             item = CartItem.builder()
                     .cart(cart)
                     .product(product)
                     .quantity(request.getQuantity())
-                    .priceAtTime(currentPrice)
-                    .totalPrice(currentPrice.multiply(new BigDecimal(request.getQuantity())))
+                    .priceAtTime(currentPrice) // Đảm bảo gán giá trị tại đây
+                    .totalPrice(currentPrice.multiply(BigDecimal.valueOf(request.getQuantity())))
                     .build();
         }
 
+        // 4. Lưu vào Database
         cartItemRepository.save(item);
 
-        return mapToResponse(cart);
+        // 5. Trả về thông tin giỏ hàng mới nhất
+        return mapToResponseDTO(cart);
     }
 
     @Override
+    @Transactional
     public CartResponseDTO updateQuantity(Long userId, CartItemRequestDTO request) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+
+        Cart cart = getOrCreateCart(user);
+        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
 
         checkStock(product, request.getQuantity());
 
-        Cart cart = getOrCreateCart(user);
-
-        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElseThrow(() -> new ResourceNotFoundException("Item không tồn tại"));
-
         item.setQuantity(request.getQuantity());
-
+        item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(request.getQuantity())));
         cartItemRepository.save(item);
 
-        return mapToResponse(cart);
+        return mapToResponseDTO(cart);
     }
 
     @Override
+    @Transactional
     public void removeItem(Long userId, Long productId) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
         Cart cart = getOrCreateCart(user);
+        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
 
-        CartItem item = cart.getItems().stream()
-                .filter(i -> i.getProduct().getId().equals(productId))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Item không tồn tại"));
-
-        cart.getItems().remove(item);
-
-        cartRepository.save(cart);
+        cartItemRepository.delete(item);
     }
 
     @Override
+    @Transactional
     public void clearCart(Long userId) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-
         Cart cart = getOrCreateCart(user);
-
-        cartItemRepository.deleteAll(cart.getItems());
+        cartItemRepository.deleteAllByCart(cart);
     }
 
-    // ================= MAP =================
-    private CartResponseDTO mapToResponse(Cart cart) {
+    private CartResponseDTO mapToResponseDTO(Cart cart) {
+        if (cart == null) return null;
 
-        List<CartItemResponseDTO> itemDTOs = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
+        List<CartItemResponseDTO> itemDTOs = cart.getItems().stream()
+                .map(item -> CartItemResponseDTO.builder()
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getName())
+                        .imageUrl(item.getProduct().getImageUrl())
+                        .price(item.getPriceAtTime())
+                        .quantity(item.getQuantity())
+                        .subTotal(item.getTotalPrice())
+                        .build())
+                .collect(Collectors.toList());
 
-        if (cart.getItems() == null) {
-            return CartResponseDTO.builder()
-                    .cartId(cart.getId())
-                    .items(itemDTOs)
-                    .totalPrice(total)
-                    .build();
-        }
-
-        for (CartItem item : cart.getItems()) {
-
-            BigDecimal itemTotal = item.getProduct().getPrice()
-                    .multiply(BigDecimal.valueOf(item.getQuantity()));
-
-            total = total.add(itemTotal);
-
-            itemDTOs.add(
-                    CartItemResponseDTO.builder()
-                            .productId(item.getProduct().getId())
-                            .productName(item.getProduct().getName())
-                            .imageUrl(item.getProduct().getImageUrl())
-                            .price(item.getProduct().getPrice())
-                            .quantity(item.getQuantity())
-                            .total(itemTotal)
-                            .build()
-            );
-        }
+        // Tính tổng tiền giỏ hàng từ danh sách items (vì Cart của Duy không có trường totalPrice)
+        BigDecimal total = itemDTOs.stream()
+                .map(CartItemResponseDTO::getSubTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartResponseDTO.builder()
                 .cartId(cart.getId())
