@@ -34,6 +34,11 @@ public class Product {
     @Min(value = 0, message = "Stock không được âm")
     private Integer stock;
 
+    @Min(value = 0, message = "Sold không được âm")
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer sold = 0;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -63,6 +68,10 @@ public class Product {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+
+        if (this.sold == null) {
+            this.sold = 0;
+        }
     }
 
     @PreUpdate

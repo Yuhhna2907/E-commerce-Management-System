@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,7 @@ public class CartController {
 
     private final ICartService cartService;
     private final ProductRepository productRepository;
+    private final DiscountService discountService;
 
     // ⚠️ Demo: hardcode userId (sau này thay bằng Security)
     private final Long USER_ID = 1L;
@@ -52,23 +54,33 @@ public class CartController {
 
             if (productOpt.isPresent()) {
                 Product product = productOpt.get();
-                // Duy nhớ kiểm tra USER_ID = 1L có tồn tại trong bảng User chưa nhé
+
+                // Thực hiện thêm vào giỏ hàng (giữ từ nhánh develop)
                 cartService.addToCart(USER_ID, request);
 
                 response.put("success", true);
+                response.put("message", "Thêm thành công!");
+
+                // Thông tin cơ bản
                 response.put("productName", product.getName());
                 response.put("productPrice", product.getPrice());
                 response.put("productImage", product.getImageUrl());
+
+                // Thông tin chi tiết (giữ từ nhánh develop)
                 response.put("brand", product.getBrand());
                 response.put("color", product.getColor());
                 response.put("storage", product.getStorage());
-                response.put("message", "Thêm thành công!");
+
+                // Logic giảm giá của bạn (thêm vào)
+                response.put("discountPrice", discountService.applyDiscount(product));
+                response.put("discountLabel", discountService.getDiscountLabel(product));
+
             } else {
                 response.put("success", false);
                 response.put("message", "Không tìm thấy sản phẩm ID: " + request.getProductId());
             }
         } catch (Exception e) {
-            e.printStackTrace(); // Nhìn vào IntelliJ tab Run để xem lỗi đỏ ở đây
+            e.printStackTrace();
             response.put("success", false);
             response.put("message", "Lỗi Server: " + e.getMessage());
         }
