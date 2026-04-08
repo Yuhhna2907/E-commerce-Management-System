@@ -43,4 +43,16 @@ public class Order {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Column(name = "receiver_name")
+    private String receiverName;
+
+    @Column(name = "receiver_phone")
+    private String receiverPhone;
+
+    @Column(name = "shipping_address")
+    private String shippingAddress;
+
+    @Column(name = "note")
+    private String note;
 }

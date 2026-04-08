@@ -14,4 +14,6 @@ public class CartItemResponseDTO {
     private String imageUrl;
     private Integer quantity;
     private BigDecimal total;
+
+    private BigDecimal subTotal;
 }
