@@ -5,6 +5,7 @@ import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,18 +21,29 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    // mỗi user 1 cart
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
-    private List<CartItem> items;
+    @OneToMany(mappedBy = "cart",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true) // 🔥 quan trọng
+    @Builder.Default // 🔥 fix null khi dùng builder
+    private List<CartItem> items = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

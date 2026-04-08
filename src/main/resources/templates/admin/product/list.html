@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý sản phẩm - Smartphone Store</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .header-red { background-color: #d70018; }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover { background-color: #f8f9fa; color: #d70018; }
+        .footer { background: #212529; color: white; }
+        .img-preview { max-height: 150px; display: none; border: 1px dashed #ccc; padding: 5px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
+        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold">Danh mục quản lý</h6>
+            <a href="#"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
+            <a href="#"><i class="bi bi-tags me-2"></i> Danh mục</a>
+            <hr>
+            <a href="/" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Thoát</a>
+        </div>
+
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark">Danh sách sản phẩm</h3>
+                <button type="button" class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#createProductModal">
+                    <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+                </button>
+            </div>
+
+            <form class="d-flex mb-4 bg-light p-3 rounded shadow-sm" method="get" th:action="@{/admin/products}">
+                <input class="form-control me-2" type="search" name="keyword" placeholder="Tìm tên sản phẩm, hãng...">
+                <select class="form-select me-2" name="categoryId" style="width:250px;">
+                    <option value="">-- Tất cả danh mục --</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                </select>
+                <button class="btn btn-dark" type="submit"><i class="bi bi-search"></i> Tìm kiếm</button>
+            </form>
+
+            <div class="table-responsive bg-white shadow-sm rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th>ID</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Giá</th>
+                        <th>Tồn kho</th>
+                        <th>Danh mục</th>
+                        <th>Trạng thái</th>
+                        <th width="150">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="product : ${products}">
+                        <td th:text="${product.id}" class="text-center fw-bold"></td>
+                        <td th:text="${product.name}"></td>
+                        <td class="text-end text-danger fw-bold" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                        <td th:text="${product.stock}" class="text-center"></td>
+                        <td th:text="${product.categoryName}"></td>
+                        <td class="text-center">
+                            <span class="badge bg-success" th:if="${product.active}">Hoạt động</span>
+                            <span class="badge bg-secondary" th:unless="${product.active}">Đã ẩn</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-info btn-sm view-btn"
+                                        title="Xem chi tiết"
+                                        th:attr="data-name=${product.name}, data-brand=${product.brand}, data-price=${product.price}, data-stock=${product.stock}, data-description=${product.description}, data-image-url=${product.imageUrl}, data-category=${product.categoryName}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm edit-btn"
+                                        title="Sửa"
+                                        th:attr="data-id=${product.id}, data-name=${product.name}, data-price=${product.price}, data-brand=${product.brand}, data-stock=${product.stock}, data-image-url=${product.imageUrl}, data-description=${product.description}, data-category-id=${product.categoryId}">
+                                    <i class="bi bi-wrench"></i>
+                                </button>
+                                <a th:href="@{'/admin/products/delete/' + ${product.id}}"
+                                   class="btn btn-outline-danger btn-sm"
+                                   title="Xóa"
+                                   onclick="return confirm('Bạn chắc chắn muốn xoá sản phẩm này?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav class="mt-4" th:if="${productPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${productPage.first} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number - 1})}">Trước</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
+                        th:classappend="${i == productPage.number} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/products(page=${i})}" th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${productPage.last} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number + 1})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="productToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="productToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-info-circle me-2"></i>Chi tiết sản phẩm</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row">
+                    <div class="col-md-5 text-center bg-light rounded p-3 mb-3 mb-md-0">
+                        <img id="viewProductImage" src="" class="img-fluid rounded shadow-sm" alt="Sản phẩm" style="max-height: 300px; object-fit: contain;">
+                    </div>
+                    <div class="col-md-7">
+                        <h2 id="viewProductName" class="text-dark fw-bold mb-2"></h2>
+                        <div class="p-3 border rounded bg-white">
+                            <p class="mb-2"><strong>Hãng:</strong> <span id="viewProductBrand" class="text-muted"></span></p>
+                            <p class="mb-2"><strong>Danh mục:</strong> <span id="viewProductCategory" class="badge bg-primary"></span></p>
+                            <p class="mb-2"><strong>Giá bán:</strong> <span id="viewProductPrice" class="text-danger fs-4 fw-bold"></span> ₫</p>
+                            <p class="mb-2"><strong>Số lượng kho:</strong> <span id="viewProductStock" class="fw-bold text-success"></span> máy</p>
+                            <hr>
+                            <p class="mb-1 fw-bold text-dark">Mô tả sản phẩm:</p>
+                            <div id="viewProductDescription" class="text-secondary small" style="white-space: pre-line; max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Thêm sản phẩm mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createProductForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hãng sản xuất</label>
+                            <input type="text" class="form-control" name="brand" placeholder="Apple, Samsung..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" name="categoryId" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giá (₫)</label>
+                            <input type="number" class="form-control" name="price" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số lượng tồn</label>
+                            <input type="number" class="form-control" name="stock" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Ảnh sản phẩm</label>
+                            <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(this, 'createImagePreview')">
+                            <div class="text-center mt-2">
+                                <img id="createImagePreview" src="" class="img-preview img-thumbnail shadow-sm">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger px-4">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold text-dark">Chỉnh sửa sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editProductId">
+                    <input type="hidden" name="imageUrl" id="editProductImageUrlHidden">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" name="name" id="editProductName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hãng sản xuất</label>
+                            <input type="text" class="form-control" name="brand" id="editProductBrand" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" name="categoryId" id="editProductCategory" required>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giá (₫)</label>
+                            <input type="number" class="form-control" name="price" id="editProductPrice" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tồn kho</label>
+                            <input type="number" class="form-control" name="stock" id="editProductStock" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Thay đổi ảnh (Để trống nếu giữ ảnh cũ)</label>
+                            <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(this, 'editImagePreview')">
+                            <div class="text-center mt-2">
+                                <img id="editImagePreview" src="" class="img-preview img-thumbnail shadow-sm">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" name="description" id="editProductDescription" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning px-4">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer class="footer text-center p-3 mt-4 shadow-sm">
+    <div class="container">
+        <small>© 2026 Smartphone Store | Admin Dashboard System</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // 1. HÀM XEM TRƯỚC ẢNH (Dùng chung)
+        window.previewImage = function(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'inline-block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 2. NÚT SỬA (Lấy dữ liệu từ Table -> Modal)
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('editProductId').value = btn.dataset.id;
+                document.getElementById('editProductName').value = btn.dataset.name;
+                document.getElementById('editProductPrice').value = btn.dataset.price;
+                document.getElementById('editProductBrand').value = btn.dataset.brand;
+                document.getElementById('editProductStock').value = btn.dataset.stock;
+                document.getElementById('editProductDescription').value = btn.dataset.description;
+                document.getElementById('editProductCategory').value = btn.dataset.categoryId;
+                document.getElementById('editProductImageUrlHidden').value = btn.dataset.imageUrl;
+
+                const editPreview = document.getElementById('editImagePreview');
+                if (btn.dataset.imageUrl) {
+                    editPreview.src = btn.dataset.imageUrl;
+                    editPreview.style.display = 'inline-block';
+                } else {
+                    editPreview.style.display = 'none';
+                }
+
+                new bootstrap.Modal(document.getElementById('editProductModal')).show();
+            });
+        });
+
+        // 3. THÔNG BÁO (Toast)
+        function showToast(status, message) {
+            const toastEl = document.getElementById('productToast');
+            const toastMessage = document.getElementById('productToastMessage');
+            toastMessage.textContent = message;
+            toastEl.classList.remove('text-bg-success', 'text-bg-danger');
+            toastEl.classList.add(status === 'success' ? 'text-bg-success' : 'text-bg-danger');
+            new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+        }
+
+        // 4. THỰC THI GỬI DỮ LIỆU (Fetch API - Multipart/form-data)
+        function handleFormSubmit(formId, url) {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                fetch(url, {
+                    method: 'POST',
+                    body: formData // File được tự động xử lý bởi FormData
+                })
+                    .then(r => r.json())
+                    .then(res => {
+                        showToast(res.status, res.message);
+                        if(res.status === 'success') {
+                            setTimeout(() => { location.reload(); }, 1200);
+                        }
+                    })
+                    .catch(() => showToast('error', 'Lỗi hệ thống!'));
+            });
+        }
+
+        handleFormSubmit('createProductForm', '/admin/products/save');
+
+        // Đoạn update cần thêm ID vào URL
+        const editForm = document.getElementById('editProductForm');
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editProductId').value;
+            const formData = new FormData(this);
+
+            fetch('/admin/products/update/' + id, {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(res => {
+                    showToast(res.status, res.message);
+                    if(res.status === 'success') {
+                        setTimeout(() => { location.reload(); }, 1200);
+                    }
+                })
+                .catch(() => showToast('error', 'Lỗi hệ thống!'));
+        });
+
+        // 5. XỬ LÝ NÚT XEM CHI TIẾT
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('viewProductName').textContent = btn.dataset.name;
+                document.getElementById('viewProductBrand').textContent = btn.dataset.brand;
+                document.getElementById('viewProductCategory').textContent = btn.dataset.category;
+                document.getElementById('viewProductStock').textContent = btn.dataset.stock;
+                document.getElementById('viewProductDescription').textContent = btn.dataset.description || 'Chưa có thông tin mô tả.';
+
+                const price = parseFloat(btn.dataset.price).toLocaleString('vi-VN');
+                document.getElementById('viewProductPrice').textContent = price;
+                document.getElementById('viewProductImage').src = btn.dataset.imageUrl || 'https://via.placeholder.com/300?text=No+Image';
+
+                new bootstrap.Modal(document.getElementById('viewProductModal')).show();
+            });
+        });
+    });
+</script>
+</body>
+</html>
