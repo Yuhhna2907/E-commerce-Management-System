@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ public class CartController {
 
     private final ICartService cartService;
     private final ProductRepository productRepository;
+    private final DiscountService discountService;
 
     // ⚠️ Demo: hardcode userId (sau này thay bằng Security)
     private final Long USER_ID = 1L;
@@ -49,6 +51,8 @@ public class CartController {
             response.put("success", true);
             response.put("productName", product.getName());
             response.put("productPrice", product.getPrice());
+            response.put("discountPrice", discountService.applyDiscount(product));
+            response.put("discountLabel", discountService.getDiscountLabel(product));
             response.put("productImage", product.getImageUrl());
 
             // Bổ sung các trường bro vừa nhắc

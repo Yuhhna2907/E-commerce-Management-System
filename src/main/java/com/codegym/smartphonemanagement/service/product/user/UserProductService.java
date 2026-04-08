@@ -2,6 +2,7 @@ package com.codegym.smartphonemanagement.service.product.user;
 
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.user.ProductRepositoryUser;
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 public class UserProductService implements IUserProductService {
 
     private final ProductRepositoryUser productRepository;
+    private final DiscountService discountService;
 
     @Override
     public Page<ProductResponseDTO> searchProducts(
@@ -57,6 +59,12 @@ public class UserProductService implements IUserProductService {
 
     private ProductResponseDTO convertToDTO(Product product) {
 
+        BigDecimal discountPrice = discountService.applyDiscount(product);
+        String discountLabel = discountService.getDiscountLabel(product);
+        Integer stock = product.getStock() != null ? product.getStock() : 0;
+        Integer sold = product.getSold() != null ? product.getSold() : 0;
+        Integer totalQuantity = stock + sold;
+
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -64,7 +72,11 @@ public class UserProductService implements IUserProductService {
                 .color(product.getColor())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .stock(product.getStock())
+                .discountPrice(discountPrice)
+                .discountLabel(discountLabel)
+                .stock(stock)
+                .sold(sold)
+                .totalQuantity(totalQuantity)
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
@@ -76,6 +88,12 @@ public class UserProductService implements IUserProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
+        BigDecimal discountPrice = discountService.applyDiscount(product);
+        String discountLabel = discountService.getDiscountLabel(product);
+        Integer stock = product.getStock() != null ? product.getStock() : 0;
+        Integer sold = product.getSold() != null ? product.getSold() : 0;
+        Integer totalQuantity = stock + sold;
+
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -83,10 +101,14 @@ public class UserProductService implements IUserProductService {
                 .color(product.getColor())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .stock(product.getStock())
+                .discountPrice(discountPrice)
+                .discountLabel(discountLabel)
+                .stock(stock)
+                .sold(sold)
+                .totalQuantity(totalQuantity)
                 .imageUrl(product.getImageUrl())
-                .categoryId(product.getCategory().getId())
-                .categoryName(product.getCategory().getName())
+                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .active(product.getActive())
                 .build();
     }

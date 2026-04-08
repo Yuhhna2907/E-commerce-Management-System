@@ -22,7 +22,15 @@ public class ProductResponseDTO {
 
     private BigDecimal price;
 
+    private BigDecimal discountPrice;
+
+    private String discountLabel;
+
     private Integer stock;
+
+    private Integer sold;
+
+    private Integer totalQuantity;
 
     private String imageUrl;
 

@@ -13,6 +13,7 @@ import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemResponseDTO;
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class CartService implements ICartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final DiscountService discountService;
 
     // Lấy hoặc tạo cart
     private Cart getOrCreateCart(User user) {
@@ -127,8 +129,6 @@ public class CartService implements ICartService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product không tồn tại"));
 
         Cart cart = getOrCreateCart(user);
 
@@ -168,7 +168,9 @@ public class CartService implements ICartService {
         }
 
         for (CartItem item : cart.getItems()) {
-
+            Product product = item.getProduct();
+            BigDecimal discountPrice = discountService.applyDiscount(product);
+            String discountLabel = discountService.getDiscountLabel(product);
             BigDecimal itemTotal = item.getProduct().getPrice()
                     .multiply(BigDecimal.valueOf(item.getQuantity()));
 
@@ -180,6 +182,8 @@ public class CartService implements ICartService {
                             .productName(item.getProduct().getName())
                             .imageUrl(item.getProduct().getImageUrl())
                             .price(item.getProduct().getPrice())
+                            .discountPrice(discountPrice)
+                            .discountLabel(discountLabel)
                             .quantity(item.getQuantity())
                             .total(itemTotal)
                             .build()

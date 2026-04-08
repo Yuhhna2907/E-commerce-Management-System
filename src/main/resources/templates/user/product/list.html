@@ -100,6 +100,60 @@
             background-color: var(--price-red);
             font-size: 0.7rem;
         }
+        /* Custom Search History Dropdown */
+        #searchHistoryDropdown {
+            top: 100%; /* Đẩy xuống ngay dưới input */
+            left: 0;
+            right: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0 0 12px 12px;
+            border-top: none;
+            overflow: hidden;
+        }
+
+        /* Đảm bảo input-group là mốc để căn position */
+        .input-group {
+            position: relative;
+        }
+
+        .flash-sale-progress {
+            height: 18px;
+            background-color: #ffde91; /* Màu nền thanh (vàng nhạt) */
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #ffbc05;
+        }
+
+        .flash-sale-progress .progress-bar {
+            background: linear-gradient(90deg, #ff8a00, #ffbc05); /* Hiệu ứng gradient từ cam sang vàng */
+            border-radius: 10px;
+            transition: width 0.6s ease;
+        }
+
+        .flash-sale-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 18px;
+            color: #333;
+            z-index: 2;
+            text-transform: uppercase;
+        }
+
+        .bi-fire {
+            color: #e6211e;
+            margin-right: 4px;
+            /* Hiệu ứng lửa nhấp nháy */
+            animation: fire-flicker 1s infinite alternate;
+        }
+
+        @keyframes fire-flicker {
+            from { opacity: 0.8; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.1); }
+        }
     </style>
 </head>
 <body>
@@ -191,9 +245,36 @@
                     <a href="javascript:void(0);" class="product-name mb-2" th:text="${product.name}">Tên sản phẩm</a>
 
                     <div class="mt-auto">
-                        <div class="price-now mb-3"
-                             th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'COMMA') + ' ₫'}">
-                            10.000.000 ₫
+                        <div class="price-now mb-3">
+                            <span class="text-danger fw-bold fs-5"
+                                  th:text="${#numbers.formatDecimal(product.discountPrice,0,'POINT',0,'COMMA') + ' ₫'}">
+                                10.000.000 ₫
+                            </span>
+                            <span class="text-muted text-decoration-line-through ms-2"
+                                  th:text="${#numbers.formatDecimal(product.price,0,'POINT',0,'COMMA') + ' ₫'}">
+                                12.000.000 ₫
+                            </span>
+                            <span class="badge bg-danger ms-2 d-inline-flex align-items-center justify-content-center">
+                                <i class="bi bi-arrow-down" style="font-size: 12px; font-weight: bold;"></i>
+                                <span th:text="${product.discountLabel}">-15%</span>
+                            </span>
+                        </div>
+
+                        <div class="flash-sale-container mb-3" th:if="${product.stock > 0}">
+                            <div class="flash-sale-progress">
+                                <div class="flash-sale-text">
+                                    <i class="bi bi-fire"></i>
+                                    Còn <span th:text="${product.stock}">0</span>/<span th:text="${product.totalQuantity}">20</span> suất
+                                </div>
+
+                                <div class="progress-bar"
+                                     role="progressbar"
+                                     th:style="'width: ' + (${product.sold != null and (product.sold + product.stock) > 0 ? (product.sold * 100.0 / (product.sold + product.stock)) : 0}) + '%'"
+                                     th:attr="aria-valuenow=${product.sold != null and (product.sold + product.stock) > 0 ? (product.sold * 100.0 / (product.sold + product.stock)) : 0}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="d-grid">
@@ -258,7 +339,6 @@
 
     </ul>
 </nav>
-</div>
 
 <div th:replace="fragments/footer :: footer"></div>
 
@@ -389,7 +469,11 @@
                         <!-- Price -->
                         <div class="mb-3">
                             <span id="detailPrice" class="fs-4 fw-bold text-danger">0 ₫</span>
-                            <span id="detailOldPrice" class="text-muted text-decoration-line-through ms-2"></span>
+                            <span id="detailOldPrice" class="text-muted text-decoration-line-through ms-2">0 ₫</span>
+                            <span id="detailDiscountLabel" class="badge bg-danger ms-2 d-inline-flex align-items-center justify-content-center">
+                                <i class="bi bi-arrow-down" style="font-size: 12px; font-weight: bold;"></i>
+                                <span id="detailDiscountText" class="ms-1">-15%</span>
+                            </span>
                         </div>
 
                         <!-- Key Specs -->
@@ -442,17 +526,22 @@
         })
             .then(response => response.json())
             .then(data => {
-                const modalTitle = document.querySelector(".modal-title");
-
-
                 if (data.success) {
                     // Đổ thông tin sản phẩm
                     document.getElementById("modalProductName").innerText = data.productName;
                     document.getElementById("modalProductImg").src = data.productImage || 'https://via.placeholder.com/150';
 
-                    // Định dạng tiền tệ VNĐ
-                    document.getElementById("modalProductPrice").innerText =
-                        new Intl.NumberFormat('vi-VN').format(data.productPrice) + " ₫";
+                    const price = Number(data.productPrice ?? data.price) || 0;
+                    const discountPrice = Number(data.discountPrice) || 0;
+                    const discountLabel = data.discountLabel || "";
+
+                    document.getElementById("modalProductPrice").innerHTML =
+                        `<span class="text-danger fw-bold">${new Intl.NumberFormat('vi-VN').format(discountPrice)} ₫</span>` +
+                        `<span class="text-muted text-decoration-line-through ms-2">${new Intl.NumberFormat('vi-VN').format(price)} ₫</span>` +
+                        `<span class="badge bg-danger ms-2 d-inline-flex align-items-center justify-content-center">
+                                <i class="bi bi-arrow-down" style="font-size: 12px; font-weight: bold;"></i>
+                                <span class="ms-1">${discountLabel}</span>
+                            </span>`
 
                     // Đổ dữ liệu chi tiết
                     document.getElementById("modalBrand").innerText = data.brand || "N/A";
@@ -490,28 +579,42 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
-
         const input = document.getElementById("searchInput");
 
         input.addEventListener("focus", function () {
+            const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
             if (history.length === 0) return;
 
+            const oldDropdown = document.getElementById("searchHistoryDropdown");
+            if (oldDropdown) oldDropdown.remove();
+
             const dropdown = document.createElement("div");
+            dropdown.id = "searchHistoryDropdown"; // Gán ID để dễ quản lý
             dropdown.className = "list-group position-absolute w-100";
-            dropdown.style.zIndex = 1000;
+            dropdown.style.zIndex = "1050";
 
             history.forEach(item => {
                 const option = document.createElement("a");
-                option.className = "list-group-item list-group-item-action";
-                option.innerText = item;
-                option.onclick = () => {
+                option.className = "list-group-item list-group-item-action py-2";
+                option.href = "javascript:void(0);";
+                option.innerHTML = `<i class="bi bi-clock-history me-2 text-muted"></i> ${item}`;
+
+                option.onmousedown = (e) => {
+                    // Dùng mousedown để sự kiện chạy trước khi blur input
                     input.value = item;
+                    input.closest('form').submit(); // Tự search luôn cho tiện
                 };
                 dropdown.appendChild(option);
             });
 
             input.parentElement.appendChild(dropdown);
+        });
+
+        input.addEventListener("blur", function () {
+            setTimeout(() => {
+                const dropdown = document.getElementById("searchHistoryDropdown");
+                if (dropdown) dropdown.remove();
+            }, 200);
         });
     });
 
@@ -529,7 +632,10 @@
 
                 // Price
                 document.getElementById("detailPrice").innerText =
+                    new Intl.NumberFormat('vi-VN').format(product.discountPrice) + " ₫";
+                document.getElementById("detailOldPrice").innerText =
                     new Intl.NumberFormat('vi-VN').format(product.price) + " ₫";
+                document.getElementById("detailDiscountText").innerText = product.discountLabel || "";
 
                 // Specs badges
                 const specsDiv = document.getElementById("detailSpecs");
