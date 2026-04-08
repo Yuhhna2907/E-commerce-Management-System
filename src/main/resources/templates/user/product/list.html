@@ -363,14 +363,17 @@
 
                     <div class="flex-grow-1">
                         <h6 id="modalProductName" class="fw-bold mb-1 text-dark fs-5">Tên điện thoại</h6>
+
                         <div class="small text-muted mb-2">
                             <span class="badge bg-light text-dark border">Hãng: <b id="modalBrand"></b></span>
                             <span class="badge bg-light text-dark border">Màu: <b id="modalColor"></b></span>
                         </div>
+
                         <div class="mb-3">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"
-                                  id="modalStorage"></span>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"
+              id="modalStorage"></span>
                         </div>
+
                         <div id="modalProductPrice" class="text-danger fw-bold fs-5">0 ₫</div>
                     </div>
                 </div>
@@ -512,24 +515,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // 1. HÀM THÊM VÀO GIỎ HÀNG (GIỮ LOGIC CỦA BẠN)
     function addToCart(productId) {
-
         fetch('/user/cart/add', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                productId: productId,
-                quantity: 1
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: productId, quantity: 1 })
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Đổ thông tin sản phẩm
                     document.getElementById("modalProductName").innerText = data.productName;
-                    document.getElementById("modalProductImg").src = data.productImage || 'https://via.placeholder.com/150';
 
                     const price = Number(data.productPrice ?? data.price) || 0;
                     const discountPrice = Number(data.discountPrice) || 0;
@@ -541,26 +537,80 @@
                         `<span class="badge bg-danger ms-2 d-inline-flex align-items-center justify-content-center">
                                 <i class="bi bi-arrow-down" style="font-size: 12px; font-weight: bold;"></i>
                                 <span class="ms-1">${discountLabel}</span>
-                            </span>`
+                            </span>`;
 
-                    // Đổ dữ liệu chi tiết
+                    let imgPath = data.productImage;
+                    if (imgPath && !imgPath.startsWith('http') && !imgPath.startsWith('/')) {
+                        imgPath = '/images/' + imgPath;
+                    }
+                    document.getElementById("modalProductImg").src = imgPath || 'https://via.placeholder.com/150';
+
                     document.getElementById("modalBrand").innerText = data.brand || "N/A";
                     document.getElementById("modalColor").innerText = data.color || "Tiêu chuẩn";
-                    document.getElementById("modalStorage").innerText = data.storage || "N/A";
 
+                    const storageEl = document.getElementById("modalStorage");
+                    if (storageEl) storageEl.innerText = data.storage || "Bản tiêu chuẩn";
 
+                    const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+                    cartModal.show();
+                } else {
+                    alert("Lỗi: " + data.message);
                 }
-                const modal = new bootstrap.Modal(document.getElementById('cartModal'));
-                modal.show();
             })
             .catch(error => {
-                console.error("Lỗi Fetch:", error);
-                document.getElementById("cartModalMessage").innerText = "Không thể kết nối đến máy chủ!";
-                const modal = new bootstrap.Modal(document.getElementById('cartModal'));
-                modal.show();
+                console.error("Lỗi kết nối:", error);
+                alert("Không thể kết nối đến máy chủ!");
             });
     }
 
+    // 2. CHI TIẾT SẢN PHẨM
+    function showProductDetail(productId) {
+        fetch(`/user/products/${productId}`)
+            .then(res => res.json())
+            .then(product => {
+                document.getElementById("detailProductName").innerText = product.name;
+                document.getElementById("detailBrand").innerText = `Hãng: ${product.brand}`;
+                document.getElementById("detailProductId").innerText = `Mã SP: ${product.id}`;
+
+                let imgPath = product.imageUrl;
+                if (imgPath && !imgPath.startsWith('http') && !imgPath.startsWith('/')) {
+                    imgPath = '/images/' + imgPath;
+                }
+                document.getElementById("detailProductImg").src = imgPath || 'https://via.placeholder.com/250';
+
+                document.getElementById("detailPrice").innerText =
+                    new Intl.NumberFormat('vi-VN').format(product.discountPrice) + " ₫";
+                document.getElementById("detailOldPrice").innerText =
+                    new Intl.NumberFormat('vi-VN').format(product.price) + " ₫";
+                document.getElementById("detailDiscountText").innerText = product.discountLabel || "";
+
+                const specsDiv = document.getElementById("detailSpecs");
+                specsDiv.innerHTML = '';
+                if (product.color) specsDiv.innerHTML += `<span class="badge bg-primary me-1">${product.color}</span>`;
+                if (product.categoryName) specsDiv.innerHTML += `<span class="badge bg-secondary me-1">${product.categoryName}</span>`;
+                if (product.stock !== undefined) specsDiv.innerHTML += `<span class="badge bg-success me-1">Còn ${product.stock}</span>`;
+
+                document.getElementById("detailDescription").innerText = product.description || 'Chưa có mô tả';
+
+                const addCartBtn = document.getElementById("detailAddCartBtn");
+                addCartBtn.onclick = () => addToCart(product.id);
+
+                const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+                modal.show();
+            })
+            .catch(err => console.error("Lỗi load chi tiết SP:", err));
+    }
+
+    // 3. XỬ LÝ CLICK CARD
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('button')) return;
+            const productId = this.getAttribute('data-id');
+            showProductDetail(productId);
+        });
+    });
+
+    // 4. LƯU LỊCH SỬ TÌM KIẾM
     function saveSearchHistory() {
         const keyword = document.getElementById("searchInput").value;
         if (!keyword) return;
@@ -589,7 +639,7 @@
             if (oldDropdown) oldDropdown.remove();
 
             const dropdown = document.createElement("div");
-            dropdown.id = "searchHistoryDropdown"; // Gán ID để dễ quản lý
+            dropdown.id = "searchHistoryDropdown";
             dropdown.className = "list-group position-absolute w-100";
             dropdown.style.zIndex = "1050";
 
@@ -599,11 +649,11 @@
                 option.href = "javascript:void(0);";
                 option.innerHTML = `<i class="bi bi-clock-history me-2 text-muted"></i> ${item}`;
 
-                option.onmousedown = (e) => {
-                    // Dùng mousedown để sự kiện chạy trước khi blur input
+                option.onmousedown = () => {
                     input.value = item;
-                    input.closest('form').submit(); // Tự search luôn cho tiện
+                    input.closest('form').submit();
                 };
+
                 dropdown.appendChild(option);
             });
 
@@ -615,56 +665,6 @@
                 const dropdown = document.getElementById("searchHistoryDropdown");
                 if (dropdown) dropdown.remove();
             }, 200);
-        });
-    });
-
-    function showProductDetail(productId) {
-        fetch(`/user/products/${productId}`) // endpoint trả về ProductResponseDTO JSON
-            .then(res => res.json())
-            .then(product => {
-                // Header
-                document.getElementById("detailProductName").innerText = product.name;
-                document.getElementById("detailBrand").innerText = `Hãng: ${product.brand}`;
-                document.getElementById("detailProductId").innerText = `Mã SP: ${product.id}`;
-
-                // Image
-                document.getElementById("detailProductImg").src = product.imageUrl || 'https://via.placeholder.com/250';
-
-                // Price
-                document.getElementById("detailPrice").innerText =
-                    new Intl.NumberFormat('vi-VN').format(product.discountPrice) + " ₫";
-                document.getElementById("detailOldPrice").innerText =
-                    new Intl.NumberFormat('vi-VN').format(product.price) + " ₫";
-                document.getElementById("detailDiscountText").innerText = product.discountLabel || "";
-
-                // Specs badges
-                const specsDiv = document.getElementById("detailSpecs");
-                specsDiv.innerHTML = '';
-                if (product.color) specsDiv.innerHTML += `<span class="badge bg-primary me-1">${product.color}</span>`;
-                if (product.categoryName) specsDiv.innerHTML += `<span class="badge bg-secondary me-1">${product.categoryName}</span>`;
-                if (product.stock !== undefined) specsDiv.innerHTML += `<span class="badge bg-success me-1">Còn ${product.stock}</span>`;
-
-                // Description (cắt 2-3 dòng)
-                document.getElementById("detailDescription").innerText = product.description || 'Chưa có mô tả';
-
-                // Thêm giỏ hàng
-                const addCartBtn = document.getElementById("detailAddCartBtn");
-                addCartBtn.onclick = () => addToCart(product.id);
-
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
-                modal.show();
-            })
-            .catch(err => console.error("Lỗi load chi tiết SP:", err));
-    }
-
-    document.querySelectorAll('.product-card').forEach(card => {
-        card.addEventListener('click', function(e){
-            // Nếu click vào button trong card, không mở modal
-            if(e.target.closest('button')) return;
-
-            const productId = this.getAttribute('data-id');
-            showProductDetail(productId);
         });
     });
 </script>

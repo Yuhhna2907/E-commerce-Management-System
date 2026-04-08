@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
     <meta charset="UTF-8">
     <title>Giỏ hàng - Smartphone Store</title>
@@ -182,7 +182,7 @@
 
         <!-- EMPTY -->
         <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="empty-cart">
-            <img src="https://cdn.tgdd.vn/mwgcart/mwg-core/Content/desktop/images/empty-cart.png">
+            <img src="https://cdn.tgdd.vn/mwgcart/mwg-core/Content/desktop/images/empty-cart.png" alt="cart">
             <p class="mt-3">Giỏ hàng của bạn đang trống</p>
             <a th:href="@{/user/products}" class="btn btn-warning mt-3 fw-bold text-white">
                 VỀ TRANG CHỦ
@@ -257,9 +257,11 @@
                     </span>
                 </div>
 
-                <button class="btn-checkout">
-                    ĐẶT HÀNG NGAY
-                </button>
+                <a th:href="@{/user/order/checkout}" class="text-decoration-none">
+                    <button class="btn-checkout">
+                        ĐẶT HÀNG NGAY
+                    </button>
+                </a>
 
                 <div class="text-center mt-2">
                     <small class="text-muted">

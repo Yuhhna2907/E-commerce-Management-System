@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -43,27 +44,45 @@ public class CartController {
     public Map<String, Object> addToCart(@RequestBody CartItemRequestDTO request) {
         Map<String, Object> response = new HashMap<>();
         try {
-            cartService.addToCart(USER_ID, request);
+            if (request == null || request.getProductId() == null) {
+                response.put("success", false);
+                response.put("message", "Dữ liệu gửi lên không hợp lệ!");
+                return response;
+            }
 
-            // Tìm sản phẩm từ Repo để lấy đủ thông tin
-            Product product = productRepository.findById(request.getProductId()).get();
+            Optional<Product> productOpt = productRepository.findById(request.getProductId());
 
-            response.put("success", true);
-            response.put("productName", product.getName());
-            response.put("productPrice", product.getPrice());
-            response.put("discountPrice", discountService.applyDiscount(product));
-            response.put("discountLabel", discountService.getDiscountLabel(product));
-            response.put("productImage", product.getImageUrl());
+            if (productOpt.isPresent()) {
+                Product product = productOpt.get();
 
-            // Bổ sung các trường bro vừa nhắc
-            response.put("brand", product.getBrand());
-            response.put("color", product.getColor());
-            response.put("storage", product.getStorage());
+                // Thực hiện thêm vào giỏ hàng (giữ từ nhánh develop)
+                cartService.addToCart(USER_ID, request);
 
-            response.put("message", "Thêm vào giỏ hàng thành công!");
+                response.put("success", true);
+                response.put("message", "Thêm thành công!");
+
+                // Thông tin cơ bản
+                response.put("productName", product.getName());
+                response.put("productPrice", product.getPrice());
+                response.put("productImage", product.getImageUrl());
+
+                // Thông tin chi tiết (giữ từ nhánh develop)
+                response.put("brand", product.getBrand());
+                response.put("color", product.getColor());
+                response.put("storage", product.getStorage());
+
+                // Logic giảm giá của bạn (thêm vào)
+                response.put("discountPrice", discountService.applyDiscount(product));
+                response.put("discountLabel", discountService.getDiscountLabel(product));
+
+            } else {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy sản phẩm ID: " + request.getProductId());
+            }
         } catch (Exception e) {
+            e.printStackTrace();
             response.put("success", false);
-            response.put("message", "Lỗi hệ thống!");
+            response.put("message", "Lỗi Server: " + e.getMessage());
         }
         return response;
     }

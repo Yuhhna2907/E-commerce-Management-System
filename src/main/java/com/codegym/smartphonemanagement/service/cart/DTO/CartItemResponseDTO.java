@@ -16,4 +16,7 @@ public class CartItemResponseDTO {
     private String imageUrl;
     private Integer quantity;
     private BigDecimal total;
+    private String brand;
+    private String color;
+    private BigDecimal subTotal;
 }
