@@ -30,6 +30,8 @@ public class ProductController {
     public String listProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String brand,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -37,21 +39,25 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String direction,
             Model model
     ) {
-        // Tạo Sort object dựa trên sort + direction
-        Sort sortObj = Sort.by("id"); // mặc định
-        if (sort != null && direction != null) {
-            if (direction.equalsIgnoreCase("asc")) {
-                sortObj = Sort.by(sort).ascending();
-            } else {
-                sortObj = Sort.by(sort).descending();
-            }
-        }
+        // 1. Xử lý phân trang và sắp xếp
+        Sort sortObj = direction.equalsIgnoreCase("asc") ?
+                Sort.by(sort).ascending() : Sort.by(sort).descending();
 
-        Pageable pageable = PageRequest.of(page, size, sortObj);
-
+        // 2. Gọi service lấy danh sách sản phẩm (đã có tìm kiếm/phân trang)
         Page<ProductResponseDTO> productPage =
-                productService.search(keyword, categoryId, page, size, sort, direction);
+                productService.search(keyword, categoryId, minPrice, maxPrice, page, size, sort, direction);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
 
+        // 3. LẤY DỮ LIỆU THỐNG KÊ (Phần mới thêm)
+        java.util.Map<String, Object> stats = productService.getDashboardStats();
+
+        // 4. Đổ dữ liệu thống kê ra giao diện
+        model.addAttribute("totalProducts", stats.get("totalProducts"));
+        model.addAttribute("lowStockCount", stats.get("lowStockCount"));
+        model.addAttribute("inventoryValue", stats.get("inventoryValue"));
+
+        // 5. Đổ dữ liệu danh sách và các tham số filter
         model.addAttribute("productPage", productPage);
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
@@ -61,10 +67,14 @@ public class ProductController {
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
+
+        // 6. Dữ liệu bổ trợ cho Form và Sidebar
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("productRequestDTO", new ProductRequestDTO());
 
-        return "admin/product/list"; // thymeleaf template
+        model.addAttribute("pageTitle", "order");
+
+        return "admin/product/list";
     }
 
     // ===============================
@@ -150,6 +160,22 @@ public class ProductController {
     public String deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return "redirect:/admin/products";
+    }
+
+    @PostMapping("/toggle-status/{id}")
+    @ResponseBody
+    public Map<String, Object> toggleProductStatus(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean newStatus = productService.toggleStatus(id);
+            response.put("status", "success");
+            response.put("newStatus", newStatus);
+            response.put("message", "Đã cập nhật trạng thái!");
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
     }
 }
 

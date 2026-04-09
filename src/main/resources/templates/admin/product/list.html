@@ -8,7 +8,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        .header-red { background-color: #d70018; }
+        .header-red {
+            background-color: #d70018;
+            position: sticky; /* Giữ thanh này ở trên cùng */
+            top: 0;           /* Vị trí dính là sát mép trên */
+            z-index: 1000;    /* Đảm bảo nó luôn nằm trên các nội dung khác khi cuộn */
+        }
         .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
         .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
         .sidebar a:hover { background-color: #f8f9fa; color: #d70018; }
@@ -20,7 +25,9 @@
 
 <nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="#"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
+        <a class="navbar-brand fw-bold" th:href="@{/admin/products}">
+            <i class="bi bi-phone"></i> SMARTPHONE STORE
+        </a>
         <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
     </div>
 </nav>
@@ -30,10 +37,24 @@
 
         <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
             <h6 class="text-muted text-uppercase fw-bold">Danh mục quản lý</h6>
-            <a href="#"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
-            <a href="#"><i class="bi bi-tags me-2"></i> Danh mục</a>
+
+            <a th:href="@{/admin/dashboard}" class="sidebar-link"
+               th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+
+            <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product'} ? 'active'">
+                <i class="bi bi-box-seam me-2"></i> Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category'} ? 'active'">
+                <i class="bi bi-tags me-2"></i> Danh mục
+            </a>
+
+            <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
+                <i class="bi bi-cart-check me-2"></i> Đơn hàng
+            </a>
             <hr>
-            <a href="/" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Thoát</a>
         </div>
 
         <div class="col-md-10 p-4">
@@ -44,13 +65,84 @@
                 </button>
             </div>
 
-            <form class="d-flex mb-4 bg-light p-3 rounded shadow-sm" method="get" th:action="@{/admin/products}">
-                <input class="form-control me-2" type="search" name="keyword" placeholder="Tìm tên sản phẩm, hãng...">
-                <select class="form-select me-2" name="categoryId" style="width:250px;">
-                    <option value="">-- Tất cả danh mục --</option>
-                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
-                </select>
-                <button class="btn btn-dark" type="submit"><i class="bi bi-search"></i> Tìm kiếm</button>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-primary text-white p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="fs-1 me-3"><i class="bi bi-box-seam"></i></div>
+                            <div>
+                                <div class="small opacity-75">TỔNG MÃ SẢN PHẨM</div>
+                                <h3 class="fw-bold mb-0" th:text="${totalProducts}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-warning text-dark p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="fs-1 me-3"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div>
+                                <div class="small opacity-75">SẮP HẾT HÀNG (&lt; 5)</div>
+                                <h3 class="fw-bold mb-0" th:text="${lowStockCount}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm bg-success text-white p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="fs-1 me-3"><i class="bi bi-currency-dollar"></i></div>
+                            <div>
+                                <div class="small opacity-75">TỔNG GIÁ TRỊ KHO</div>
+                                <h3 class="fw-bold mb-0" th:text="${#numbers.formatDecimal(inventoryValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form class="bg-light p-3 rounded shadow-sm mb-4" method="get" th:action="@{/admin/products}">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <input class="form-control" type="search" name="keyword" th:value="${keyword}" placeholder="Tìm tên sản phẩm...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="categoryId">
+                            <option value="">-- Danh mục --</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == categoryId}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" name="minPrice" th:value="${minPrice}" placeholder="Giá từ">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" name="maxPrice" th:value="${maxPrice}" placeholder="đến">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button class="btn btn-dark w-100" type="submit"><i class="bi bi-search"></i> Lọc</button>
+                        <a th:href="@{/admin/products}" class="btn btn-outline-secondary" title="Xóa lọc"><i class="bi bi-arrow-clockwise"></i></a>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center bg-white p-2 rounded border">
+        <span class="text-muted me-3 small fw-bold text-uppercase" style="font-size: 0.75rem;">
+            <i class="bi bi-sort-down"></i> Sắp xếp:
+        </span>
+
+                    <div class="btn-group">
+                        <a th:href="@{/admin/products(sort='id', direction='desc', keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                           class="btn btn-sm btn-outline-secondary" th:classappend="${sort == 'id'} ? 'active'">Mới nhất</a>
+
+                        <a th:href="@{/admin/products(sort='price', direction='asc', keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                           class="btn btn-sm btn-outline-secondary" th:classappend="${sort == 'price' && direction == 'asc'} ? 'active'">Giá thấp ↑</a>
+
+                        <a th:href="@{/admin/products(sort='price', direction='desc', keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                           class="btn btn-sm btn-outline-secondary" th:classappend="${sort == 'price' && direction == 'desc'} ? 'active'">Giá cao ↓</a>
+
+                        <a th:href="@{/admin/products(sort='stock', direction='asc', keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                           class="btn btn-sm btn-outline-secondary" th:classappend="${sort == 'stock'} ? 'active'">Tồn kho ít</a>
+                    </div>
+                </div>
             </form>
 
             <div class="table-responsive bg-white shadow-sm rounded">
@@ -74,8 +166,14 @@
                         <td th:text="${product.stock}" class="text-center"></td>
                         <td th:text="${product.categoryName}"></td>
                         <td class="text-center">
-                            <span class="badge bg-success" th:if="${product.active}">Hoạt động</span>
-                            <span class="badge bg-secondary" th:unless="${product.active}">Đã ẩn</span>
+    <span th:data-id="${product.id}"
+          th:classappend="${product.active ? 'bg-success' : 'bg-secondary'}"
+          class="badge toggle-active"
+          style="cursor: pointer; transition: 0.3s; user-select: none;"
+          onmouseover="this.style.opacity='0.8'"
+          onmouseout="this.style.opacity='1'"
+          th:text="${product.active ? 'Hoạt động' : 'Đã ẩn'}">
+    </span>
                         </td>
                         <td class="text-center">
                             <div class="btn-group">
@@ -105,14 +203,20 @@
             <nav class="mt-4" th:if="${productPage.totalPages > 1}">
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${productPage.first} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number - 1})}">Trước</a>
+                        <a class="page-link"
+                           th:href="@{/admin/products(page=${productPage.number - 1}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, sort=${sort}, direction=${direction})}">Trước</a>
                     </li>
+
                     <li class="page-item" th:each="i : ${#numbers.sequence(0, productPage.totalPages - 1)}"
                         th:classappend="${i == productPage.number} ? 'active'">
-                        <a class="page-link" th:href="@{/admin/products(page=${i})}" th:text="${i + 1}"></a>
+                        <a class="page-link"
+                           th:href="@{/admin/products(page=${i}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, sort=${sort}, direction=${direction})}"
+                           th:text="${i + 1}"></a>
                     </li>
+
                     <li class="page-item" th:classappend="${productPage.last} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/products(page=${productPage.number + 1})}">Sau</a>
+                        <a class="page-link"
+                           th:href="@{/admin/products(page=${productPage.number + 1}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, sort=${sort}, direction=${direction})}">Sau</a>
                     </li>
                 </ul>
             </nav>
@@ -387,6 +491,30 @@
                 document.getElementById('viewProductImage').src = btn.dataset.imageUrl || 'https://via.placeholder.com/300?text=No+Image';
 
                 new bootstrap.Modal(document.getElementById('viewProductModal')).show();
+            });
+        });
+
+        document.querySelectorAll('.toggle-active').forEach(badge => {
+            badge.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const currentBadge = this;
+
+                fetch(`/admin/products/toggle-status/${id}`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Đổi màu và chữ ngay lập tức mà không cần F5 trang
+                            if (data.newStatus) {
+                                currentBadge.classList.replace('bg-secondary', 'bg-success');
+                                currentBadge.textContent = 'Hoạt động';
+                            } else {
+                                currentBadge.classList.replace('bg-success', 'bg-secondary');
+                                currentBadge.textContent = 'Đã ẩn';
+                            }
+                        } else {
+                            showToast('error', data.message);
+                        }
+                    });
             });
         });
     });

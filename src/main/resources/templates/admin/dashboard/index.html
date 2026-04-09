@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tổng quan hệ thống - Smartphone Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .header-red { background-color: #d70018; position: sticky; top: 0; z-index: 1000; }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+        .card-stat { border: none; border-radius: 10px; transition: transform 0.3s; }
+        .card-stat:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/admin/dashboard}"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
+        <div class="text-white">Chào, <span class="fw-bold">Admin Duy</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold small mb-3">Quản lý</h6>
+            <a th:href="@{/admin/dashboard}" class="sidebar-link"
+               th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+
+            <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product'} ? 'active'">
+                <i class="bi bi-box-seam me-2"></i> Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category'} ? 'active'">
+                <i class="bi bi-tags me-2"></i> Danh mục
+            </a>
+
+            <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
+                <i class="bi bi-cart-check me-2"></i> Đơn hàng
+            </a>
+
+            <a th:href="@{/admin/products}" class="text-danger">
+                <i class="bi bi-box-arrow-left me-2"></i> Thoát
+            </a>
+        </div>
+
+        <div class="col-md-10 p-4 bg-light">
+            <h3 class="fw-bold mb-4">Báo cáo hệ thống</h3>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card card-stat bg-primary text-white p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="small">Doanh thu</div>
+                                <h4 class="fw-bold mb-0" th:text="${#numbers.formatDecimal(stats.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' đ'}"></h4>
+                            </div>
+                            <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-stat bg-success text-white p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="small">Đơn hàng thành công</div>
+                                <h4 class="fw-bold mb-0" th:text="${stats.totalOrders}"></h4>
+                            </div>
+                            <i class="bi bi-bag-check fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-stat bg-info text-white p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="small">Tổng sản phẩm</div>
+                                <h4 class="fw-bold mb-0" th:text="${stats.totalProducts}"></h4>
+                            </div>
+                            <i class="bi bi-box fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-stat bg-warning text-dark p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="small">Sắp hết hàng</div>
+                                <h4 class="fw-bold mb-0" th:text="${stats.lowStockCount}"></h4>
+                            </div>
+                            <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8 mb-4">
+                    <div class="card border-0 shadow-sm p-3">
+                        <h6 class="fw-bold mb-3">Doanh thu 7 ngày gần nhất</h6>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-sm p-3">
+                        <h6 class="fw-bold mb-3">Top 5 Bán chạy</h6>
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Dữ liệu từ Spring Boot đổ ra
+    const revenueLabels = /*[[${stats.revenueLabels}]]*/ [];
+    const revenueValues = /*[[${stats.revenueValues}]]*/ [];
+    const topProductNames = /*[[${stats.topProductNames}]]*/ [];
+    const topProductSales = /*[[${stats.topProductSales}]]*/ [];
+
+    // 1. Biểu đồ doanh thu (Line Chart)
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: 'Doanh thu (đ)',
+                data: revenueValues,
+                borderColor: '#d70018',
+                backgroundColor: 'rgba(215, 0, 24, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        }
+    });
+
+    // 2. Biểu đồ sản phẩm (Doughnut Chart)
+    new Chart(document.getElementById('topProductsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: topProductNames,
+            datasets: [{
+                data: topProductSales,
+                backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#0dcaf0', '#6c757d']
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+</script>
+</body>
+</html>
