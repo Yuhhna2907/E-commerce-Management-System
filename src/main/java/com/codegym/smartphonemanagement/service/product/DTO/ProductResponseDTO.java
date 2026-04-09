@@ -3,6 +3,7 @@ package com.codegym.smartphonemanagement.service.product.DTO;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,17 +17,15 @@ public class ProductResponseDTO {
 
     private String brand;
 
-    private String color;
-
     private String description;
 
     private BigDecimal price;
 
+    private Integer stock;
+
     private BigDecimal discountPrice;
 
     private String discountLabel;
-
-    private Integer stock;
 
     private Integer sold;
 
@@ -43,4 +42,6 @@ public class ProductResponseDTO {
     private Double averageRating;
 
     private Integer totalReviews;
+
+    private List<ProductVariantResponseDTO> variants;
 }

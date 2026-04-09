@@ -9,6 +9,7 @@ import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -50,8 +52,6 @@ public class ProductService implements IProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .brand(request.getBrand())
-                .color(request.getColor())
-                .stock(request.getStock())
                 .imageUrl(request.getImageUrl())
                 .category(category)
                 .active(true)
@@ -66,18 +66,36 @@ public class ProductService implements IProductService {
     }
 
     private ProductResponseDTO mapToResponse(Product product) {
+        // Map danh sách biến thể sang DTO
+        List<ProductVariantResponseDTO> variantDTOs = product.getVariants()
+                .stream()
+                .map(variant -> ProductVariantResponseDTO.builder()
+                        .variantId(variant.getVariantId())
+                        .productId(product.getId())
+                        .sku(variant.getSku())
+                        .variantName(variant.getVariantName())
+                        .color(variant.getColor())
+                        .storage(variant.getStorage())
+                        .ram(variant.getRam())
+                        .costPrice(variant.getCostPrice())
+                        .salePrice(variant.getSalePrice())
+                        .stockQuantity(variant.getStockQuantity())
+                        .active(variant.getIsActive())
+                        .build()
+                )
+                .toList();
+
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
-                .color(product.getColor())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .price(product.getPrice())
-                .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .active(product.getActive())
+                .variants(variantDTOs) // thêm danh sách biến thể
                 .build();
     }
 
@@ -112,10 +130,8 @@ public class ProductService implements IProductService {
         // 4️⃣ Update field
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-        product.setColor(request.getColor());
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
-        product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());

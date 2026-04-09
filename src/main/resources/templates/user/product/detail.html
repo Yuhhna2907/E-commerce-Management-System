@@ -57,6 +57,41 @@
         .review-card {
             border-radius: 18px;
         }
+         .option-btn {
+             min-width: 84px;
+             padding: 10px 14px;
+             border-radius: 10px;
+             border: 1px solid #d9d9d9;
+             background: #fff;
+             color: #333;
+         }
+
+        .option-btn.active,
+        .option-btn.btn-dark {
+            border-color: #0d6efd;
+            background: #fff;
+            color: #0d6efd;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+        }
+        .color-swatch {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            padding: 0;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.06);
+        }
+
+        .color-swatch.selected-swatch {
+            box-shadow: 0 0 0 3px #0d6efd;
+            border-color: #0d6efd;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -85,25 +120,53 @@
 
                 <h2 class="fw-bold mb-3" th:text="${product.name}">Tên sản phẩm</h2>
 
-                <div class="mb-3">
-                    <span class="detail-price fw-bold text-danger"
-                          th:text="${#numbers.formatDecimal(product.discountPrice, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
-                        0 ₫
-                    </span>
-                    <span class="text-muted text-decoration-line-through ms-2"
-                          th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
-                        0 ₫
-                    </span>
-                    <span class="badge bg-danger ms-2" th:text="${product.discountLabel}">-15%</span>
+                <div class="mb-4">
+                    <div class="fw-semibold mb-2">Chọn màu sắc</div>
+                    <div class="d-flex flex-wrap gap-3" id="colorOptions"></div>
                 </div>
 
-                <div class="mb-3 d-flex flex-wrap gap-2">
-                    <span class="badge bg-primary" th:if="${product.color != null}" th:text="${product.color}"></span>
-                    <span class="badge bg-secondary" th:if="${product.categoryName != null}" th:text="${product.categoryName}"></span>
-                    <span class="badge bg-success" th:text="'Còn ' + ${product.stock} + ' sản phẩm'"></span>
+                <!-- Dung lượng -->
+                <div class="mb-4">
+                    <div class="fw-semibold mb-2">Chọn dung lượng</div>
+                    <div class="d-flex flex-wrap gap-2" id="storageOptions"></div>
                 </div>
 
-                <div class="mt-auto pt-2">
+                <!-- RAM -->
+                <div class="mb-4">
+                    <div class="fw-semibold mb-2">Chọn RAM</div>
+                    <div class="d-flex flex-wrap gap-2" id="ramOptions"></div>
+                </div>
+
+                <div class="mb-3 p-3 bg-light rounded-3">
+                    <div class="small text-muted mb-1">Biến thể đang chọn</div>
+                    <div class="fw-bold mb-2" id="selectedVariantName">Chưa chọn</div>
+
+                    <div class="d-flex align-items-baseline gap-2 flex-wrap">
+                        <div class="text-danger fw-bold fs-4" id="selectedVariantPrice"></div>
+
+                        <del class="text-muted small" id="originalVariantPrice" style="display: none;"></del>
+
+                        <span th:if="${product.discountLabel != null}"
+                              class="badge bg-danger"
+                              style="font-size: 0.8rem; padding: 4px 8px; display: none; background-color: #eb5757 !important;">
+                              id="productDiscountLabel">
+                            [[${product.discountLabel}]]
+                        </span>
+                    </div>
+
+                    <div class="text-success small mt-1" id="selectedVariantStock"></div>
+                </div>
+
+                <input type="hidden" id="selectedVariantId" name="variantId">
+
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button type="button"
+                            class="btn btn-warning fw-bold px-4"
+                            id="addToCartBtn"
+                            disabled>
+                        <i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng
+                    </button>
+
                     <a th:href="@{/user/products}" class="btn btn-outline-secondary px-4">
                         Quay lại
                     </a>
@@ -164,9 +227,227 @@
     </div>
 </div>
 
+<div class="modal fade" id="addToCartSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-2">Thêm vào giỏ hàng thành công!</h4>
+                <p class="text-muted">Sản phẩm đã được thêm vào giỏ hàng của bạn.</p>
+                <div class="d-grid gap-2 mt-4">
+                    <a href="/user/cart" class="btn btn-warning fw-bold py-2" style="border-radius: 10px;">
+                        Đi đến giỏ hàng
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary py-2" data-bs-dismiss="modal" style="border-radius: 10px;">
+                        Tiếp tục mua sắm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="fragments/footer :: footer"></div>
+
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        const variants = /*[[${product.variants}]]*/ [];
+        const selectedVariantIdEl = document.getElementById("selectedVariantId");
+        const selectedVariantNameEl = document.getElementById("selectedVariantName");
+        const selectedVariantPriceEl = document.getElementById("selectedVariantPrice");
+        const selectedVariantStockEl = document.getElementById("selectedVariantStock");
+        const addToCartBtn = document.getElementById("addToCartBtn");
+
+        const colorOptionsEl = document.getElementById("colorOptions");
+        const storageOptionsEl = document.getElementById("storageOptions");
+        const ramOptionsEl = document.getElementById("ramOptions");
+
+        let selectedColor = null;
+        let selectedStorage = null;
+        let selectedRam = null;
+
+        const uniqueValues = (arr, key) => [...new Set(arr.map(v => v[key]).filter(Boolean))];
+
+        function colorToHex(color) {
+            const map = {
+                "Gray": "#d9d9d9",
+                "Blue": "#8db4e2",
+                "Black": "#111111"
+            };
+            return map[color] || "#cccccc";
+        }
+
+        function renderColorOptions(container, values) {
+            container.innerHTML = values.map(value => {
+                const hex = colorToHex(value);
+                const isGray = value === "Gray";
+                return `
+                    <button type="button"
+                            class="color-swatch option-btn"
+                            data-type="color"
+                            data-value="${value}"
+                            title="${value}"
+                            style="background:${hex}; ${isGray ? 'border:1px solid #cfcfcf;' : ''}">
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function renderOptions(container, values, type) {
+            container.innerHTML = values.map(value => `
+                <button type="button"
+                        class="btn btn-outline-secondary option-btn"
+                        data-type="${type}"
+                        data-value="${value}">
+                    ${value}
+                </button>
+            `).join("");
+        }
+
+        function findVariant() {
+            return variants.find(v =>
+                v.color === selectedColor &&
+                v.storage === selectedStorage &&
+                v.ram === selectedRam
+            );
+        }
+
+        function updateVariantInfo() {
+            const matched = findVariant();
+            const originalPriceEl = document.getElementById("originalVariantPrice");
+            const labelEl = document.getElementById("productDiscountLabel");
+
+            if (!matched) {
+                selectedVariantIdEl.value = "";
+                selectedVariantNameEl.textContent = "Chưa chọn đủ biến thể";
+                selectedVariantPriceEl.textContent = "";
+                originalPriceEl.style.display = "none";
+                if (labelEl) labelEl.style.display = "none";
+                selectedVariantStockEl.textContent = "";
+                addToCartBtn.disabled = true;
+                return;
+            }
+
+            selectedVariantIdEl.value = matched.variantId;
+            selectedVariantNameEl.textContent = matched.variantName || "Biến thể đã chọn";
+            const salePrice = matched.salePrice;
+            const discountPrice = matched.discountPrice || salePrice;
+
+            if (labelEl) labelEl.style.display = "inline-block";
+
+            selectedVariantPriceEl.textContent = new Intl.NumberFormat('vi-VN').format(discountPrice) + " ₫";
+
+            if (discountPrice < salePrice) {
+                originalPriceEl.textContent = new Intl.NumberFormat('vi-VN').format(salePrice) + " ₫";
+                originalPriceEl.style.display = "inline";
+            } else {
+                originalPriceEl.style.display = "none";
+            }
+
+            const stock = matched.stockQuantity != null ? matched.stockQuantity : 0;
+
+            if (stock > 0) {
+                selectedVariantStockEl.className = "small text-success";
+                selectedVariantStockEl.textContent = `Còn ${stock} sản phẩm`;
+                addToCartBtn.disabled = false;
+            } else {
+                selectedVariantStockEl.className = "small text-danger fw-semibold";
+                selectedVariantStockEl.textContent = "Hết sản phẩm. Vui lòng quay lại sau";
+                addToCartBtn.disabled = true;
+            }
+        }
+
+        function setActive(container, type, value) {
+            container.querySelectorAll(`.option-btn[data-type="${type}"]`).forEach(btn => {
+                btn.classList.remove("active", "btn-dark", "selected-swatch");
+            });
+
+            const activeBtn = container.querySelector(`.option-btn[data-type="${type}"][data-value="${value}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add("active");
+                if (type === "color") {
+                    activeBtn.classList.add("selected-swatch");
+                } else {
+                    activeBtn.classList.add("btn-dark");
+                }
+            }
+        }
+
+        colorOptionsEl.addEventListener("click", function (e) {
+            const btn = e.target.closest(".option-btn");
+            if (!btn) return;
+            selectedColor = btn.getAttribute("data-value");
+            setActive(colorOptionsEl, "color", selectedColor);
+            updateVariantInfo();
+        });
+
+        storageOptionsEl.addEventListener("click", function (e) {
+            const btn = e.target.closest(".option-btn");
+            if (!btn) return;
+            selectedStorage = btn.getAttribute("data-value");
+            setActive(storageOptionsEl, "storage", selectedStorage);
+            updateVariantInfo();
+        });
+
+        ramOptionsEl.addEventListener("click", function (e) {
+            const btn = e.target.closest(".option-btn");
+            if (!btn) return;
+            selectedRam = btn.getAttribute("data-value");
+            setActive(ramOptionsEl, "ram", selectedRam);
+            updateVariantInfo();
+        });
+
+        const colors = uniqueValues(variants, "color");
+        const storages = uniqueValues(variants, "storage");
+        const rams = uniqueValues(variants, "ram");
+
+        renderColorOptions(colorOptionsEl, colors);
+        renderOptions(storageOptionsEl, storages, "storage");
+        renderOptions(ramOptionsEl, rams, "ram");
+
+        const cartModal = new bootstrap.Modal(document.getElementById('addToCartSuccessModal'));
+        addToCartBtn.addEventListener("click", function () {
+            const variantId = selectedVariantIdEl.value;
+
+            if (!variantId || variantId === "0") {
+                alert("Vui lòng chọn đủ màu sắc, dung lượng và RAM.");
+                return;
+            }
+            addToCartBtn.disabled = true;
+            addToCartBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang xử lý...`;
+
+            fetch('/user/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: /*[[${product.id}]]*/ 0,
+                    variantId: Number(variantId),
+                    quantity: 1
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = `<i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng`;
+                    if (data.success) {
+                        cartModal.show();
+                    } else {
+                        alert(data.message || "Thêm giỏ hàng thất bại!");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = `<i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng`;
+                    alert("Không thể kết nối đến máy chủ!");
+                });
+        });
+    });
+</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
 </html>

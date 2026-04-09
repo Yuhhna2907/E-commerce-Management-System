@@ -42,9 +42,6 @@ public class Product {
     @Column(nullable = false)
     private Boolean active = true;
 
-    private String storage;
-    private String color;
-
     private String imageUrl;
 
     @Column
@@ -72,6 +69,9 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants;
 
     @PrePersist
     public void prePersist() {
