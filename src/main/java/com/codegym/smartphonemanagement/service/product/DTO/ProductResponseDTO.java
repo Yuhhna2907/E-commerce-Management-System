@@ -22,7 +22,15 @@ public class ProductResponseDTO {
 
     private BigDecimal price;
 
+    private BigDecimal discountPrice;
+
+    private String discountLabel;
+
     private Integer stock;
+
+    private Integer sold;
+
+    private Integer totalQuantity;
 
     private String imageUrl;
 
@@ -31,4 +39,8 @@ public class ProductResponseDTO {
     private String categoryName;
 
     private Boolean active;
+
+    private Double averageRating;
+
+    private Integer totalReviews;
 }

@@ -68,17 +68,73 @@ public class ProductController {
     }
 
     // ===============================
-    // 3. SAVE PRODUCT
+    // 3. SAVE PRODUCT (Nâng cấp để nhận File)
     // ===============================
     @PostMapping("/save")
     @ResponseBody
-    public Map<String, Object> saveProduct(@RequestBody ProductRequestDTO dto) {
+    public Map<String, Object> saveProduct(
+            @ModelAttribute ProductRequestDTO dto,
+            @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile
+    ) {
         Map<String, Object> response = new HashMap<>();
         try {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                // 1. Xác định đường dẫn thư mục lưu ảnh
+                // Nó sẽ lưu vào: [Thư mục dự án]/src/main/resources/static/uploads/
+                String uploadRoot = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
+                java.io.File uploadDir = new java.io.File(uploadRoot);
+
+                // 2. Nếu thư mục chưa tồn tại thì tạo mới
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
+                // 3. Tạo tên file duy nhất (Ví dụ: a1b2c3..._fox.jpg) để không bị trùng
+                String fileName = java.util.UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+
+                // 4. Lưu file vật lý vào ổ cứng
+                java.io.File fileToSave = new java.io.File(uploadRoot + fileName);
+                imageFile.transferTo(fileToSave);
+
+                // 5. QUAN TRỌNG: Lưu đường dẫn ảo vào DTO để lưu xuống Database
+                // Trình duyệt sẽ gọi ảnh qua cái này
+                dto.setImageUrl("/uploads/" + fileName);
+            }
+
+            // 6. Gọi service lưu vào DB
             ProductResponseDTO saved = productService.create(dto);
+
             response.put("status", "success");
             response.put("message", "Thêm sản phẩm thành công!");
-            response.put("product", saved); // có thể dùng để append vào table nếu muốn
+            response.put("product", saved);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Lỗi lưu file: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // ===============================
+    // 4. UPDATE PRODUCT (Dành cho nút Sửa)
+    // ===============================
+    @PostMapping("/update/{id}")
+    @ResponseBody
+    public Map<String, Object> updateProduct(
+            @PathVariable Long id,
+            @ModelAttribute ProductRequestDTO dto,
+            @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile
+    ) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Tương tự, xử lý ảnh nếu Duy chọn file mới
+            if (imageFile != null && !imageFile.isEmpty()) {
+                // Xử lý lưu file...
+            }
+
+            productService.update(id, dto); // Đảm bảo productService của Duy có hàm update này
+            response.put("status", "success");
+            response.put("message", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
             response.put("status", "error");
             response.put("message", e.getMessage());

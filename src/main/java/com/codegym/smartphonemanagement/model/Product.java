@@ -34,6 +34,11 @@ public class Product {
     @Min(value = 0, message = "Stock không được âm")
     private Integer stock;
 
+    @Min(value = 0, message = "Sold không được âm")
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer sold = 0;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -41,6 +46,12 @@ public class Product {
     private String color;
 
     private String imageUrl;
+
+    @Column
+    private Double averageRating = 0.0;
+
+    @Column
+    private Integer totalReviews = 0;
 
     @Size(max = 1000)
     @Column(columnDefinition = "TEXT")
@@ -59,10 +70,17 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+
+        if (this.sold == null) {
+            this.sold = 0;
+        }
     }
 
     @PreUpdate

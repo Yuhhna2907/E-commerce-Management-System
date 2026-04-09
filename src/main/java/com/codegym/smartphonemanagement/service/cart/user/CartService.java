@@ -13,6 +13,7 @@ import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemResponseDTO;
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class CartService implements ICartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final DiscountService discountService;
 
     private Cart getOrCreateCart(User user) {
         return cartRepository.findByUser(user)
@@ -138,14 +140,14 @@ public class CartService implements ICartService {
     public void removeItem(Long userId, Long productId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
-
         Cart cart = getOrCreateCart(user);
-        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
 
-        cartItemRepository.delete(item);
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Item không tồn tại"));
+        cart.getItems().remove(item);
+        cartRepository.save(cart);
     }
 
     @Override
@@ -160,22 +162,39 @@ public class CartService implements ICartService {
     private CartResponseDTO mapToResponseDTO(Cart cart) {
         if (cart == null) return null;
 
+        // 1. Dùng Stream để xử lý danh sách item và tính toán discount luôn một thể
         List<CartItemResponseDTO> itemDTOs = cart.getItems().stream()
-                .map(item -> CartItemResponseDTO.builder()
-                        .productId(item.getProduct().getId())
-                        .productName(item.getProduct().getName())
-                        .imageUrl(item.getProduct().getImageUrl())
-                        .price(item.getPriceAtTime())
-                        .quantity(item.getQuantity())
-                        .subTotal(item.getTotalPrice())
-                        .build())
+                .map(item -> {
+                    Product product = item.getProduct();
+
+                    // Tính toán giá sau giảm và nhãn giảm giá của bạn
+                    BigDecimal discountPrice = discountService.applyDiscount(product);
+                    String discountLabel = discountService.getDiscountLabel(product);
+
+                    // Tính tổng tiền cho từng item (Giá sau giảm * số lượng)
+                    BigDecimal itemTotal = discountPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+
+                    return CartItemResponseDTO.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .imageUrl(product.getImageUrl())
+                            .price(product.getPrice()) // Giá gốc
+                            .discountPrice(discountPrice) // Giá sau giảm
+                            .discountLabel(discountLabel) // Nhãn -15%, -12%...
+                            .quantity(item.getQuantity())
+                            .subTotal(itemTotal) // Thành tiền của món này
+                            .brand(product.getBrand())
+                            .color(product.getColor())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
-        // Tính tổng tiền giỏ hàng từ danh sách items (vì Cart của Duy không có trường totalPrice)
+        // 2. Tính tổng cộng (Total) của cả giỏ hàng (Kế thừa cách viết gọn của develop)
         BigDecimal total = itemDTOs.stream()
                 .map(CartItemResponseDTO::getSubTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // 3. Trả về DTO cuối cùng
         return CartResponseDTO.builder()
                 .cartId(cart.getId())
                 .items(itemDTOs)
