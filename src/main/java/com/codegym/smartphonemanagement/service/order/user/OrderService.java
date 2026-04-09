@@ -25,6 +25,8 @@ public class OrderService implements IOrderService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
 
+    // ======================== CHỨC NĂNG CHO USER ========================
+
     @Override
     @Transactional
     public OrderResponseDTO createOrder(Long userId, OrderRequestDTO orderDTO) {
@@ -92,17 +94,41 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    public List<OrderResponseDTO> getOrderHistory(Long userId) {
+        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+                .stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+    }
+
+    // ======================== CHỨC NĂNG CHO ADMIN ========================
+
+    public List<OrderResponseDTO> getAllOrdersForAdmin() {
+        return orderRepository.findAll().stream()
+                .map(this::mapToResponseDTO).collect(Collectors.toList());
+    }
+
+    public List<OrderResponseDTO> getOrdersByStatus(OrderStatus status) {
+        return orderRepository.findAllByStatusOrderByCreatedAtDesc(status)
+                .stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+
+        // Duy có thể thêm logic nếu status là CANCELLED thì hoàn lại kho tại đây
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+    }
+
+    @Override
     public OrderResponseDTO getOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
         return mapToResponseDTO(order);
     }
 
-    @Override
-    public List<OrderResponseDTO> getOrderHistory(Long userId) {
-        return orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
-                .stream().map(this::mapToResponseDTO).collect(Collectors.toList());
-    }
+    // ======================== MAPPING DTO ========================
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
         List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
