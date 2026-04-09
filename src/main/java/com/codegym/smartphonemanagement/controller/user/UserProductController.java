@@ -1,14 +1,19 @@
 package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ReviewResponseDTO;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -54,8 +59,31 @@ public class UserProductController {
     }
 
     @GetMapping("/{id}")
+    public String productDetail(@PathVariable Long id, Model model) {
+        ProductResponseDTO product = userProductService.getProductById(id);
+        List<ReviewResponseDTO> reviews = userProductService.getReviewsByProductId(id);
+
+        model.addAttribute("product", product);
+        model.addAttribute("reviews", reviews);
+
+        return "user/product/detail";
+    }
+
+    @PostMapping("/review")
     @ResponseBody
-    public ProductResponseDTO getProductDetail(@PathVariable Long id) {
-        return userProductService.getProductById(id);
+    public ResponseEntity<ReviewResponseDTO> createReview(
+            @RequestBody @Valid ReviewRequestDTO request) {
+        Long userId = 1L;
+
+        ReviewResponseDTO response =
+                userProductService.reviewProduct(userId,request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/reviews")
+    @ResponseBody
+    public List<ReviewResponseDTO> getReviews(@PathVariable Long id) {
+        return userProductService.getReviewsByProductId(id);
     }
 }
