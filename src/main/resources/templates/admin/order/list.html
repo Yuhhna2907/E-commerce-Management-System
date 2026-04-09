@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý đơn hàng - Smartphone Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .header-red {
+            background-color: #d70018;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+        .footer { background: #212529; color: white; }
+        .badge-pending { background-color: #ffc107; color: #000; }
+        .badge-shipped { background-color: #198754; color: #fff; }
+        .badge-paid { background-color: #0d6efd; color: #fff; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/admin/products}">
+            <i class="bi bi-phone"></i> SMARTPHONE STORE
+        </a>
+        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold small mb-3">Danh mục quản lý</h6>
+
+            <a th:href="@{/admin/dashboard}" class="sidebar-link"
+               th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+
+            <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product'} ? 'active'">
+                <i class="bi bi-box-seam me-2"></i> Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category'} ? 'active'">
+                <i class="bi bi-tags me-2"></i> Danh mục
+            </a>
+
+            <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
+                <i class="bi bi-cart-check me-2"></i> Đơn hàng
+            </a>
+            <hr>
+            <a th:href="@{/admin/products}" class="text-danger">
+                <i class="bi bi-box-arrow-left me-2"></i> Thoát
+            </a>
+        </div>
+
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark">Danh sách đơn hàng</h3>
+                <div class="btn-group shadow-sm">
+                    <a th:href="@{/admin/orders}" class="btn btn-sm"
+                       th:classappend="${currentStatus == null ? 'btn-dark' : 'btn-outline-dark'}">Tất cả</a>
+                    <a th:href="@{/admin/orders(status='PENDING')}" class="btn btn-sm"
+                       th:classappend="${currentStatus?.name() == 'PENDING' ? 'btn-warning' : 'btn-outline-warning'}">Chờ xử lý</a>
+                    <a th:href="@{/admin/orders(status='SHIPPED')}" class="btn btn-sm"
+                       th:classappend="${currentStatus?.name() == 'SHIPPED' ? 'btn-success' : 'btn-outline-success'}">Đang giao</a>
+                </div>
+            </div>
+
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="table-responsive bg-white shadow-sm rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-center">
+                    <tr>
+                        <th>Mã ĐH</th>
+                        <th>Khách hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày đặt</th>
+                        <th width="200">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${orders}" class="text-center">
+                        <td th:text="${order.id}" class="fw-bold"></td>
+                        <td class="text-start">
+                            <div class="fw-bold" th:text="${order.customerName}"></div>
+                            <small class="text-muted"><i class="bi bi-telephone"></i> [[${order.receiverPhone}]]</small>
+                        </td>
+                        <td class="text-danger fw-bold">
+                            [[${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}]] ₫
+                        </td>
+                        <td>
+                                <span class="badge"
+                                      th:classappend="${order.status == 'PENDING' ? 'badge-pending' : (order.status == 'SHIPPED' ? 'badge-shipped' : 'badge-paid')}"
+                                      th:text="${order.status == 'PENDING' ? 'Chờ xử lý' : (order.status == 'SHIPPED' ? 'Đang giao' : 'Đã giao')}">
+                                </span>
+                        </td>
+                        <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-info" th:onclick="'showDetail(' + ${order.id} + ')'" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                                <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/update-status/{id}(id=${order.id})}" method="post" class="d-inline">
+                                    <input type="hidden" name="status" value="SHIPPED">
+                                    <button type="submit" class="btn btn-sm btn-success ms-1" onclick="return confirm('Duy muốn duyệt đơn hàng này?')">
+                                        <i class="bi bi-check-lg"></i> Duyệt
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="6" class="text-center p-4 text-muted">Không có đơn hàng nào.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-receipt me-2"></i>Chi tiết đơn hàng #<span id="displayOrderId"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="customerInfo" class="row mb-4 p-3 bg-light rounded g-3">
+                </div>
+
+                <h6 class="fw-bold mb-3"><i class="bi bi-box me-2"></i>Danh sách sản phẩm</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-center">Đơn giá</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody id="orderDetailBody">
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">TỔNG CỘNG:</td>
+                            <td id="totalOrderPrice" class="text-end text-danger fw-bold fs-5"></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer text-center p-3 mt-4 shadow-sm">
+    <div class="container">
+        <small>© 2026 Smartphone Store | Admin Dashboard System</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showDetail(id) {
+        fetch('/admin/orders/api/detail/' + id)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('displayOrderId').textContent = data.id;
+
+                // Hiển thị thông tin khách
+                document.getElementById('customerInfo').innerHTML = `
+            <div class="col-md-6">
+                <strong>Người nhận:</strong> ${data.customerName}<br>
+                <strong>Số điện thoại:</strong> ${data.receiverPhone}
+            </div>
+            <div class="col-md-6">
+                <strong>Địa chỉ:</strong> ${data.shippingAddress}<br>
+                <strong>Ghi chú:</strong> ${data.note || 'Không có'}
+            </div>
+        `;
+
+                // Đổ danh sách sản phẩm
+                let html = '';
+                data.items.forEach(item => {
+                    html += `
+                <tr>
+                    <td>
+                        <img src="${item.imageUrl}" width="40" class="me-2 rounded">
+                        ${item.productName}
+                    </td>
+                    <td class="text-center">${new Intl.NumberFormat('vi-VN').format(item.price)} ₫</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-end fw-bold">${new Intl.NumberFormat('vi-VN').format(item.subTotal)} ₫</td>
+                </tr>
+            `;
+                });
+                document.getElementById('orderDetailBody').innerHTML = html;
+                document.getElementById('totalOrderPrice').textContent = new Intl.NumberFormat('vi-VN').format(data.totalPrice) + ' ₫';
+
+                new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+            })
+            .catch(err => alert("Lỗi tải chi tiết: " + err));
+    }
+</script>
+</body>
+</html>

@@ -1,9 +1,9 @@
 package com.codegym.smartphonemanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-
 import java.util.List;
 
 @Entity
@@ -23,8 +23,10 @@ public class Category {
     private String name;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
-    @OneToMany(mappedBy = "category")
+    @JsonIgnore // Chống vòng lặp vô tận khi render JSON
+    @OneToMany(mappedBy = "category", fetch = FetchType.EAGER) // EAGER để lấy được size() ở HTML
     private List<Product> products;
 }

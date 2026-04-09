@@ -18,6 +18,8 @@ public interface IProductService {
     Page<ProductResponseDTO> search(
             String keyword,
             Long categoryId,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
             int page,
             int size,
             String sortBy,

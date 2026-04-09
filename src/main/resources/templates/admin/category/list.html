@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý danh mục - Smartphone Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .header-red { background-color: #d70018; }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover { background-color: #f8f9fa; color: #d70018; }
+        .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/admin/products}">
+            <i class="bi bi-phone"></i> SMARTPHONE STORE
+        </a>
+        <div class="text-white">Xin chào, <span class="fw-bold">Admin Duy</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold">Danh mục quản lý</h6>
+            <a th:href="@{/admin/dashboard}" class="sidebar-link"
+               th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+
+            <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product'} ? 'active'">
+                <i class="bi bi-box-seam me-2"></i> Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category'} ? 'active'">
+                <i class="bi bi-tags me-2"></i> Danh mục
+            </a>
+
+            <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
+                <i class="bi bi-cart-check me-2"></i> Đơn hàng
+            </a>
+            <hr>
+            <a th:href="@{/admin/products}" class="text-danger">
+                <i class="bi bi-box-arrow-left me-2"></i> Thoát
+            </a>
+        </div>
+
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark">Quản lý danh mục</h3>
+                <button type="button" class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="prepareAdd()">
+                    <i class="bi bi-plus-lg"></i> Thêm danh mục
+                </button>
+            </div>
+
+            <div class="table-responsive bg-white shadow-sm rounded">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead class="table-light">
+                    <tr>
+                        <th width="80">ID</th>
+                        <th class="text-start">Tên danh mục</th>
+                        <th>Số lượng sản phẩm</th>
+                        <th>Trạng thái</th>
+                        <th width="150">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cat : ${categories}">
+                        <td th:text="${cat.id}" class="fw-bold"></td>
+                        <td th:text="${cat.name}" class="text-start fw-bold"></td>
+                        <td>
+                            <span class="badge rounded-pill bg-info text-dark"
+                                  th:text="${(cat.products != null ? cat.products.size() : 0) + ' sản phẩm'}"></span>
+                        </td>
+                        <td>
+                            <span th:data-id="${cat.id}"
+                                  th:classappend="${cat.active ? 'bg-success' : 'bg-secondary'}"
+                                  class="badge toggle-active" style="cursor: pointer;"
+                                  th:text="${cat.active ? 'Hoạt động' : 'Đã ẩn'}">
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-warning btn-sm btn-edit"
+                                        th:data-id="${cat.id}"
+                                        th:data-name="${cat.name}"
+                                        th:data-active="${cat.active}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-delete"
+                                        th:data-id="${cat.id}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header header-red text-white">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm danh mục</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="categoryForm">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="categoryId">
+                    <input type="hidden" name="active" id="categoryActive">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên danh mục</label>
+                        <input type="text" class="form-control" name="name" id="categoryName" required placeholder="VD: iPhone, Samsung...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger shadow-sm">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="categoryToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 1. Hàm hiển thị thông báo (Toast)
+    function showToast(status, message) {
+        const toastEl = document.getElementById('categoryToast');
+        if (!toastEl) return;
+        document.getElementById('toastMessage').textContent = message;
+        toastEl.classList.remove('text-bg-success', 'text-bg-danger');
+        toastEl.classList.add(status === 'success' ? 'text-bg-success' : 'text-bg-danger');
+        new bootstrap.Toast(toastEl).show();
+    }
+
+    // 2. Reset form khi nhấn "Thêm danh mục"
+    function prepareAdd() {
+        document.getElementById('modalTitle').textContent = 'Thêm danh mục mới';
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryActive').value = 'true';
+        document.getElementById('categoryForm').reset();
+    }
+
+    // 3. Xử lý sự kiện khi nhấn nút Sửa (Dùng Event Delegation hoặc Selector)
+    document.addEventListener('click', function(e) {
+        // Tìm nút sửa gần nhất với phần tử được click
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn) {
+            const id = editBtn.getAttribute('data-id');
+            const name = editBtn.getAttribute('data-name');
+            const active = editBtn.getAttribute('data-active');
+
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa danh mục';
+            document.getElementById('categoryId').value = id;
+            document.getElementById('categoryName').value = name;
+            document.getElementById('categoryActive').value = active;
+
+            const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            modal.show();
+        }
+
+        // Tìm nút xóa gần nhất
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (deleteBtn) {
+            const id = deleteBtn.getAttribute('data-id');
+            if(confirm('Duy có chắc chắn muốn xóa danh mục này?')) {
+                fetch(`/admin/categories/delete/${id}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(res => {
+                        showToast(res.status, res.message);
+                        if(res.status === 'success') setTimeout(() => location.reload(), 800);
+                    });
+            }
+        }
+    });
+
+    // 4. Submit Form (Lưu/Cập nhật)
+    document.getElementById('categoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/admin/categories/save', {
+            method: 'POST',
+            body: formData
+        })
+            .then(r => r.json())
+            .then(res => {
+                showToast(res.status, res.message);
+                if(res.status === 'success') setTimeout(() => location.reload(), 800);
+            })
+            .catch(() => showToast('error', 'Lỗi kết nối server!'));
+    });
+
+    // 5. Toggle Trạng thái (Hoạt động/Đã ẩn)
+    document.querySelectorAll('.toggle-active').forEach(badge => {
+        badge.addEventListener('click', function() {
+            const id = this.dataset.id;
+            fetch(`/admin/categories/toggle-status/${id}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.status === 'success') location.reload();
+                });
+        });
+    });
+</script>/
+</body>
+</html>
