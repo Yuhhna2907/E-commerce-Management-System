@@ -11,7 +11,7 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    // 1. Tìm lịch sử đơn hàng của 1 user (Dành cho trang cá nhân của khách)
+    // 1. Tìm lịch sử đơn hàng của 1 user
     List<Order> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
     // 2. Tìm đơn hàng theo trạng thái (Ví dụ: Admin muốn lọc các đơn PENDING)

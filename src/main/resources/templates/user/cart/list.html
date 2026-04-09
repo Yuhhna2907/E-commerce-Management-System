@@ -248,31 +248,30 @@
             </div>
 
             <!-- SUMMARY -->
-            <div class="cart-summary">
+            <div class="fixed-bottom bg-white border-top shadow-sm">
+                <div class="container py-2">
+                    <div class="d-flex justify-content-center align-items-center gap-3">
+                        <div class="text-end">
+                            <span class="text-muted small d-block">
+                                Tạm tính (<span th:text="${#lists.size(cart.items)}">0</span> sản phẩm):
+                            </span>
+                            <span class="text-danger fw-bold fs-4"
+                                  th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                                0 ₫
+                            </span>
+                        </div>
 
-                <div class="summary-row">
-                    <span>Tạm tính (<span th:text="${#lists.size(cart.items)}">0</span> sản phẩm)</span>
-                    <span class="summary-total"
-                          th:text="${#numbers.formatDecimal(cart.totalPrice,0,'COMMA',0,'POINT')} + '₫'">
-                    </span>
+                        <a th:href="@{/user/order/checkout}" class="text-decoration-none">
+                            <button class="btn btn-danger fw-bold shadow-sm px-5"
+                                    style="background-color: #ee4d2d; border: none; min-width: 180px; height: 48px;">
+                                MUA HÀNG
+                            </button>
+                        </a>
+                    </div>
                 </div>
-
-                <a th:href="@{/user/order/checkout}" class="text-decoration-none">
-                    <button class="btn-checkout">
-                        ĐẶT HÀNG NGAY
-                    </button>
-                </a>
-
-                <div class="text-center mt-2">
-                    <small class="text-muted">
-                        Giao hàng tận nơi nhanh chóng
-                    </small>
-                </div>
-
             </div>
 
         </div>
-
     </div>
 
 </div>

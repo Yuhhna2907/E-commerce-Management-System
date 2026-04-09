@@ -39,4 +39,8 @@ public class ProductResponseDTO {
     private String categoryName;
 
     private Boolean active;
+
+    private Double averageRating;
+
+    private Integer totalReviews;
 }
