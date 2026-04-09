@@ -4,6 +4,7 @@ import com.codegym.smartphonemanagement.model.*;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderItemResponseDTO;
+import com.codegym.smartphonemanagement.service.order.DTO.OrderRequestDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class OrderService implements IOrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -28,63 +29,66 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public OrderResponseDTO createOrder(Long userId, String receiverName, String receiverPhone,
-                                        String shippingAddress, String note) {
-
-        // 1. Lấy giỏ hàng
+    public OrderResponseDTO createOrder(Long userId, OrderRequestDTO orderDTO) {
+        // 1. Lấy và kiểm tra giỏ hàng
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại!"));
-
-        if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng đang trống!");
-        }
+        if (cart.getItems().isEmpty()) throw new RuntimeException("Giỏ hàng trống!");
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
+                .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
 
-        // 2. Tính tổng tiền
+        String fullAddress = String.format("%s, %s, %s, %s",
+                orderDTO.getAddressDetail(),
+                orderDTO.getWard(),
+                orderDTO.getDistrict(),
+                orderDTO.getProvince());
+
+        // 2. Tính tổng tiền từ giỏ hàng
         BigDecimal total = cart.getItems().stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> item.getPriceAtTime().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 3. Khởi tạo đơn hàng
+        // 3. Khởi tạo Order từ DTO
         Order order = Order.builder()
                 .user(user)
-                .receiverName(receiverName)
-                .receiverPhone(receiverPhone)
-                .shippingAddress(shippingAddress)
-                .note(note)
+                .receiverName(orderDTO.getCustomerName())
+                .receiverPhone(orderDTO.getReceiverPhone())
+                .shippingAddress(fullAddress)
+                .note(orderDTO.getNote())
                 .totalPrice(total)
                 .status(OrderStatus.PENDING)
                 .build();
 
         Order savedOrder = orderRepository.save(order);
 
-        // 4. Chuyển sang OrderItem & Trừ kho
+        // 4. Chuyển CartItem sang OrderItem & TRỪ KHO
         List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
-            Product product = cartItem.getProduct();
+            ProductVariant variant = cartItem.getProductVariant();
 
-            // Kiểm tra tồn kho (Duy check lại field là 'stock' hay 'quantity' nhé)
-            if (product.getStock() < cartItem.getQuantity()) {
-                throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng!");
+            if (variant.getStockQuantity() < cartItem.getQuantity()) {
+                throw new RuntimeException("Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
             }
 
-            product.setStock(product.getStock() - cartItem.getQuantity());
-            productRepository.save(product);
+            // Trừ kho
+            variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
+            productVariantRepository.save(variant);
 
             return OrderItem.builder()
                     .order(savedOrder)
-                    .product(product)
+                    .product(cartItem.getProduct())
+                    .productVariant(variant)
                     .quantity(cartItem.getQuantity())
-                    .price(product.getPrice())
+                    .price(cartItem.getPriceAtTime())
                     .build();
         }).collect(Collectors.toList());
 
         orderItemRepository.saveAll(orderItems);
-        savedOrder.setItems(orderItems);
 
-        // 5. Xóa giỏ hàng
+        // 5. Xóa giỏ hàng sau khi đặt thành công
         cartItemRepository.deleteAllByCartId(cart.getId());
+
+        savedOrder.setItems(orderItems);
 
         return mapToResponseDTO(savedOrder);
     }
@@ -127,24 +131,29 @@ public class OrderService implements IOrderService {
     // ======================== MAPPING DTO ========================
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
-        if (order == null) return null;
+        List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
+                .map(item -> OrderItemResponseDTO.builder()
+                        .productName(item.getProduct().getName())
+                        .variantName(item.getProductVariant() != null ? item.getProductVariant().getVariantName() : "")
+                        .imageUrl(item.getProduct().getImageUrl())
+                        .quantity(item.getQuantity())
+                        .price(item.getPrice())
+                        // Tính thành tiền từng món
+                        .subTotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                        .build())
+                .collect(Collectors.toList());
 
+        // 2. Build OrderResponseDTO tổng thể
         return OrderResponseDTO.builder()
                 .id(order.getId())
                 .totalPrice(order.getTotalPrice())
-                .status(order.getStatus() != null ? order.getStatus().name() : null)
+                .status(order.getStatus() != null ? order.getStatus().name() : "PENDING")
                 .createdAt(order.getCreatedAt())
                 .customerName(order.getReceiverName())
                 .receiverPhone(order.getReceiverPhone())
                 .shippingAddress(order.getShippingAddress())
                 .note(order.getNote())
-                .items(order.getItems() != null ? order.getItems().stream().map(item -> OrderItemResponseDTO.builder()
-                        .productName(item.getProduct().getName())
-                        .imageUrl(item.getProduct().getImageUrl())
-                        .quantity(item.getQuantity())
-                        .price(item.getPrice())
-                        .subTotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                        .build()).collect(Collectors.toList()) : List.of())
+                .items(itemDTOs)
                 .build();
     }
 }

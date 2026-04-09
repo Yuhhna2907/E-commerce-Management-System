@@ -6,6 +6,7 @@ import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantResponseDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -124,60 +125,62 @@ public class UserProductService implements IUserProductService {
 
         BigDecimal discountPrice = discountService.applyDiscount(product);
         String discountLabel = discountService.getDiscountLabel(product);
-        Integer stock = product.getStock() != null ? product.getStock() : 0;
+
         Integer sold = product.getSold() != null ? product.getSold() : 0;
-        Integer totalQuantity = stock + sold;
+        Integer stock = product.getStock() != null ? product.getStock() : 0;
+        Double averageRating = product.getAverageRating() != null ? product.getAverageRating() : 0.0;
+        Integer totalReviews = product.getTotalReviews() != null ? product.getTotalReviews() : 0;
+
+        List<ProductVariantResponseDTO> variantDTOs = product.getVariants() == null
+                ? List.of()
+                : product.getVariants().stream()
+                .map(variant -> {
+                    BigDecimal variantDiscountPrice = discountService.applyDiscountToVariant(product, variant.getSalePrice());
+
+                    return ProductVariantResponseDTO.builder()
+                            .variantId(variant.getVariantId())
+                            .productId(product.getId())
+                            .sku(variant.getSku())
+                            .variantName(variant.getVariantName())
+                            .color(variant.getColor())
+                            .storage(variant.getStorage())
+                            .ram(variant.getRam())
+                            .costPrice(variant.getCostPrice())
+                            .salePrice(variant.getSalePrice()) // Giá gốc của variant
+                            .discountPrice(variantDiscountPrice) // <--- THÊM TRƯỜNG NÀY (Cần check DTO có chưa)
+                            .stockQuantity(variant.getStockQuantity())
+                            .active(variant.getIsActive())
+                            .build();
+                })
+                .toList();
 
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
                 .brand(product.getBrand())
-                .color(product.getColor())
                 .description(product.getDescription())
                 .price(product.getPrice())
                 .discountPrice(discountPrice)
                 .discountLabel(discountLabel)
-                .stock(stock)
                 .sold(sold)
-                .totalQuantity(totalQuantity)
-                .averageRating(product.getAverageRating())
-                .totalReviews(product.getTotalReviews())
+                .stock(stock)
+                .totalQuantity(stock + sold)
+                .averageRating(averageRating)
+                .totalReviews(totalReviews)
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .active(product.getActive())
+                .variants(variantDTOs)
                 .build();
     }
+
 
     public ProductResponseDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        BigDecimal discountPrice = discountService.applyDiscount(product);
-        String discountLabel = discountService.getDiscountLabel(product);
-        Integer stock = product.getStock() != null ? product.getStock() : 0;
-        Integer sold = product.getSold() != null ? product.getSold() : 0;
-        Integer totalQuantity = stock + sold;
-
-        return ProductResponseDTO.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .brand(product.getBrand())
-                .color(product.getColor())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .discountPrice(discountPrice)
-                .discountLabel(discountLabel)
-                .stock(stock)
-                .sold(sold)
-                .totalQuantity(totalQuantity)
-                .averageRating(product.getAverageRating())
-                .totalReviews(product.getTotalReviews())
-                .imageUrl(product.getImageUrl())
-                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
-                .active(product.getActive())
-                .build();
+        return convertToDTO(product);
     }
 
     public List<ReviewResponseDTO> getReviewsByProductId(Long productId) {
