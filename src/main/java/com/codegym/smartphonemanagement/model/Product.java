@@ -47,6 +47,12 @@ public class Product {
 
     private String imageUrl;
 
+    @Column
+    private Double averageRating = 0.0;
+
+    @Column
+    private Integer totalReviews = 0;
+
     @Size(max = 1000)
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -63,6 +69,9 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews;
 
     @PrePersist
     public void prePersist() {
