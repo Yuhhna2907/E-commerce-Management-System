@@ -9,6 +9,7 @@ import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -50,8 +53,6 @@ public class ProductService implements IProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .brand(request.getBrand())
-                .color(request.getColor())
-                .stock(request.getStock())
                 .imageUrl(request.getImageUrl())
                 .category(category)
                 .active(true)
@@ -66,18 +67,36 @@ public class ProductService implements IProductService {
     }
 
     private ProductResponseDTO mapToResponse(Product product) {
+        // Map danh sách biến thể sang DTO
+        List<ProductVariantResponseDTO> variantDTOs = product.getVariants()
+                .stream()
+                .map(variant -> ProductVariantResponseDTO.builder()
+                        .variantId(variant.getVariantId())
+                        .productId(product.getId())
+                        .sku(variant.getSku())
+                        .variantName(variant.getVariantName())
+                        .color(variant.getColor())
+                        .storage(variant.getStorage())
+                        .ram(variant.getRam())
+                        .costPrice(variant.getCostPrice())
+                        .salePrice(variant.getSalePrice())
+                        .stockQuantity(variant.getStockQuantity())
+                        .active(variant.getIsActive())
+                        .build()
+                )
+                .toList();
+
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
-                .color(product.getColor())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .price(product.getPrice())
-                .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .active(product.getActive())
+                .variants(variantDTOs) // thêm danh sách biến thể
                 .build();
     }
 
@@ -112,10 +131,8 @@ public class ProductService implements IProductService {
         // 4️⃣ Update field
         product.setName(request.getName());
         product.setDescription(request.getDescription());
-        product.setColor(request.getColor());
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
-        product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());
@@ -147,28 +164,38 @@ public class ProductService implements IProductService {
     public Page<ProductResponseDTO> search(
             String keyword,
             Long categoryId,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
             int page,
             int size,
             String sortBy,
             String direction
     ) {
+        // 1. Kiểm tra tính hợp lệ của phân trang
         if (page < 0) page = 0;
         if (size <= 0 || size > 50) size = 10;
 
-        Sort sort = direction.equalsIgnoreCase("desc") ?
-                Sort.by(sortBy).descending() :
-                Sort.by(sortBy).ascending();
+        // 2. Xử lý sắp xếp (Bảo vệ chống lỗi nếu sortBy null)
+        String sortProperty = (sortBy == null || sortBy.isEmpty()) ? "id" : sortBy;
+        Sort sort = direction.equalsIgnoreCase("asc") ?
+                Sort.by(sortProperty).ascending() :
+                Sort.by(sortProperty).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Nếu keyword rỗng thì set null để query dễ xử lý
-        if (keyword != null && keyword.trim().isEmpty()) {
-            keyword = null;
-        }
+        // 3. Chuẩn hóa dữ liệu đầu vào (Keyword)
+        String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
 
-        Page<Product> productPage =
-                productRepository.searchAndFilter(keyword, categoryId, pageable);
+        // 4. Gọi Repository với đầy đủ các tham số lọc mới
+        Page<Product> productPage = productRepository.searchAndFilter(
+                searchKeyword,
+                categoryId,
+                minPrice,
+                maxPrice,
+                pageable
+        );
 
+        // 5. Map sang DTO để trả về cho giao diện
         return productPage.map(this::mapToResponse);
     }
 
@@ -180,5 +207,29 @@ public class ProductService implements IProductService {
                         new ResourceNotFoundException("Product không tồn tại"));
 
         return mapToResponse(product);
+    }
+
+    public Map<String, Object> getDashboardStats() {
+        Map<String, Object> stats = new HashMap<>();
+
+        long totalProducts = productRepository.countByActiveTrue();
+        long lowStockCount = productRepository.countByActiveTrueAndStockLessThan(5);
+        java.math.BigDecimal totalValue = productRepository.calculateTotalInventoryValue();
+
+        stats.put("totalProducts", totalProducts);
+        stats.put("lowStockCount", lowStockCount);
+        stats.put("inventoryValue", totalValue != null ? totalValue : java.math.BigDecimal.ZERO);
+
+        return stats;
+    }
+
+    @Transactional
+    public boolean toggleStatus(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+
+        boolean newStatus = !product.getActive();
+        productRepository.updateActiveStatus(id, newStatus);
+        return newStatus;
     }
 }

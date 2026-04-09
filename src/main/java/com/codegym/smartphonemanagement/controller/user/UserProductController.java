@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewResponseDTO;
@@ -21,6 +22,7 @@ import java.util.List;
 public class UserProductController {
 
     private final IUserProductService userProductService;
+    private final DiscountService discountService;
 
     @GetMapping
     public String listProducts(

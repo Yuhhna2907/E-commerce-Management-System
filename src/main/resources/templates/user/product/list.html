@@ -327,17 +327,18 @@
                             </span>
                         </div>
 
-                        <div class="flash-sale-container mb-3" th:if="${product.stock > 0}">
+                        <div class="flash-sale-container mb-3" th:if="${product.stock != null and product.stock > 0}">
                             <div class="flash-sale-progress">
                                 <div class="flash-sale-text">
                                     <i class="bi bi-fire"></i>
-                                    Còn <span th:text="${product.stock}">0</span>/<span th:text="${product.totalQuantity}">20</span> suất
+                                    Còn <span th:text="${product.stock}">0</span> /
+                                    <span th:text="${(product.stock != null ? product.stock : 0) + (product.sold != null ? product.sold : 0)}">20</span> suất
                                 </div>
 
                                 <div class="progress-bar"
                                      role="progressbar"
-                                     th:style="'width: ' + (${product.sold != null and (product.sold + product.stock) > 0 ? (product.sold * 100.0 / (product.sold + product.stock)) : 0}) + '%'"
-                                     th:attr="aria-valuenow=${product.sold != null and (product.sold + product.stock) > 0 ? (product.sold * 100.0 / (product.sold + product.stock)) : 0}"
+                                     th:style="'width: ' + (${(product.stock != null and product.sold != null and (product.stock + product.sold) > 0) ? (product.sold * 100.0 / (product.stock + product.sold)) : 0}) + '%'"
+                                     th:attr="aria-valuenow=${(product.stock != null and product.sold != null and (product.stock + product.sold) > 0) ? (product.sold * 100.0 / (product.stock + product.sold)) : 0}"
                                      aria-valuemin="0"
                                      aria-valuemax="100">
                                 </div>
@@ -348,9 +349,9 @@
                             <button type="button"
                                     class="btn btn-buy w-100 py-2 rounded-pill shadow-sm position-relative overflow-hidden ripple-btn"
                                     th:disabled="${product.stock <= 0}"
-                                    th:onclick="|addToCart(${product.id})|">
+                                    th:onclick="|window.location.href='/user/products/' + ${product.id}|">
                                 <span th:if="${product.stock > 0}">
-                                    <i class="bi bi-cart-plus-fill me-1"></i> THÊM GIỎ HÀNG
+                                    <i class="bi bi-cart-plus-fill me-1"></i> XEM CHI TIẾT
                                 </span>
 
                                 <span th:unless="${product.stock > 0}">

@@ -1,12 +1,16 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.model.Order;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
+import com.codegym.smartphonemanagement.service.order.DTO.OrderRequestDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderResponseDTO;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -36,6 +40,7 @@ public class UserOrderController {
         }
 
         model.addAttribute("cart", cart);
+        model.addAttribute("orderRequest", new OrderRequestDTO());
         return "user/order/checkout"; // Trả về file checkout.html
     }
 
@@ -43,25 +48,27 @@ public class UserOrderController {
      * Bước 2: Xử lý nút "Xác nhận đặt hàng" từ Form
      */
     @PostMapping("/place")
-    public String placeOrder(@RequestParam String receiverName,
-                             @RequestParam String receiverPhone,
-                             @RequestParam String shippingAddress,
-                             @RequestParam(required = false) String note,
-                             RedirectAttributes redirectAttributes) {
-        try {
-            // Gọi Service xử lý logic nghiệp vụ (Trừ kho, lưu đơn, xóa giỏ)
-            OrderResponseDTO order = orderService.createOrder(
-                    USER_ID,
-                    receiverName,
-                    receiverPhone,
-                    shippingAddress,
-                    note
-            );
+    public String placeOrder(@Valid @ModelAttribute("orderRequest") OrderRequestDTO orderDTO,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes,
+                             Model model) {
 
-            // Chuyển hướng sang trang thành công
-            return "redirect:/user/order/success/" + order.getId();
+        // 1. Kiểm tra nếu dính lỗi Validation (Trống tên, SĐT sai định dạng...)
+        if (bindingResult.hasErrors()) {
+            // Lấy lại giỏ hàng để hiển thị lại trang checkout nếu có lỗi
+            CartResponseDTO cart = cartService.getCartByUserId(USER_ID);
+            model.addAttribute("cart", cart);
+            // Trả về thẳng view checkout (không redirect để giữ message lỗi)
+            return "user/order/checkout";
+        }
+
+        try {
+
+            OrderResponseDTO savedOrder = orderService.createOrder(USER_ID, orderDTO);
+
+            return "redirect:/user/order/success/" + savedOrder.getId();
         } catch (Exception e) {
-            // Nếu lỗi (hết hàng...), báo lỗi về trang giỏ hàng
+            // Lỗi nghiệp vụ (ví dụ: đang thanh toán thì món đó bị người khác mua mất)
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/user/cart";
         }

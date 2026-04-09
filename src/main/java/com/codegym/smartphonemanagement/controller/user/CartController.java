@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.model.ProductVariant;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
@@ -44,7 +45,7 @@ public class CartController {
     public Map<String, Object> addToCart(@RequestBody CartItemRequestDTO request) {
         Map<String, Object> response = new HashMap<>();
         try {
-            if (request == null || request.getProductId() == null) {
+            if (request == null || request.getProductId() == null || request.getVariantId() == null) {
                 response.put("success", false);
                 response.put("message", "Dữ liệu gửi lên không hợp lệ!");
                 return response;
@@ -55,7 +56,21 @@ public class CartController {
             if (productOpt.isPresent()) {
                 Product product = productOpt.get();
 
-                // Thực hiện thêm vào giỏ hàng (giữ từ nhánh develop)
+                // Lấy biến thể theo variantId
+                Optional<ProductVariant> variantOpt = product.getVariants()
+                        .stream()
+                        .filter(v -> v.getVariantId().equals(request.getVariantId()))
+                        .findFirst();
+
+                if (variantOpt.isEmpty()) {
+                    response.put("success", false);
+                    response.put("message", "Không tìm thấy biến thể sản phẩm!");
+                    return response;
+                }
+
+                ProductVariant variant = variantOpt.get();
+
+                // Thực hiện thêm vào giỏ hàng
                 cartService.addToCart(USER_ID, request);
 
                 response.put("success", true);
@@ -63,15 +78,17 @@ public class CartController {
 
                 // Thông tin cơ bản
                 response.put("productName", product.getName());
-                response.put("productPrice", product.getPrice());
                 response.put("productImage", product.getImageUrl());
 
-                // Thông tin chi tiết (giữ từ nhánh develop)
+                // Thông tin chi tiết từ biến thể
                 response.put("brand", product.getBrand());
-                response.put("color", product.getColor());
-                response.put("storage", product.getStorage());
+                response.put("color", variant.getColor());
+                response.put("storage", variant.getStorage());
+                response.put("ram", variant.getRam());
+                response.put("productPrice", variant.getSalePrice());
+                response.put("stockQuantity", variant.getStockQuantity());
 
-                // Logic giảm giá của bạn (thêm vào)
+                // Logic giảm giá
                 response.put("discountPrice", discountService.applyDiscount(product));
                 response.put("discountLabel", discountService.getDiscountLabel(product));
 
@@ -95,9 +112,9 @@ public class CartController {
     }
 
     // Xoá item
-    @PostMapping("/remove/{productId}")
-    public String removeItem(@PathVariable Long productId) {
-        cartService.removeItem(USER_ID, productId);
+    @PostMapping("/remove/{cartItemId}")
+    public String removeItem(@PathVariable Long cartItemId) {
+        cartService.removeItem(USER_ID, cartItemId);
         return "redirect:/user/cart";
     }
 

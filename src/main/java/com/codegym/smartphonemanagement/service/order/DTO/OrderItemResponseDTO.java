@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 @Getter @Setter @Builder @AllArgsConstructor @NoArgsConstructor
 public class OrderItemResponseDTO {
     private String productName;
+    private String variantName;
     private String imageUrl;
     private Integer quantity;
     private BigDecimal price; // Giá tại thời điểm chốt đơn

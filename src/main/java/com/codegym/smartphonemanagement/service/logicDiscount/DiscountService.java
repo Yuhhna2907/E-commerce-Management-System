@@ -40,4 +40,27 @@ public class DiscountService {
         if ("Samsung".equalsIgnoreCase(product.getBrand())) return "12%";
         return "10%";
     }
+
+    public BigDecimal applyDiscountToVariant(Product product, BigDecimal variantPrice) {
+        if (variantPrice == null) return BigDecimal.ZERO;
+
+        BigDecimal discountPrice = variantPrice;
+
+        if (product.getPrice().compareTo(BigDecimal.valueOf(30_000_000)) >= 0) {
+            discountPrice = variantPrice.multiply(BigDecimal.valueOf(0.85));
+        } else if ("Apple".equalsIgnoreCase(product.getBrand())) {
+            discountPrice = variantPrice.multiply(BigDecimal.valueOf(0.85));
+        } else if ("Samsung".equalsIgnoreCase(product.getBrand())) {
+            discountPrice = variantPrice.multiply(BigDecimal.valueOf(0.88));
+        } else {
+            discountPrice = variantPrice.multiply(BigDecimal.valueOf(0.90));
+        }
+
+        if (product.getPrice().compareTo(BigDecimal.valueOf(10_000_000)) < 0) {
+            discountPrice = variantPrice.subtract(BigDecimal.valueOf(500_000));
+        }
+
+        return discountPrice.max(BigDecimal.ZERO);
+    }
 }
+

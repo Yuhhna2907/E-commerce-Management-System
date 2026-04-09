@@ -10,6 +10,9 @@ public class CartItemRequestDTO {
     @NotNull
     private Long productId;
 
+    @NotNull
+    private Long variantId;
+
     @Min(1)
     private Integer quantity;
 }
