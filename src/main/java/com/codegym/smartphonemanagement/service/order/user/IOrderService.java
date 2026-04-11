@@ -11,4 +11,8 @@ public interface IOrderService {
     OrderResponseDTO getOrderById(Long id);
 
     List<OrderResponseDTO> getOrderHistory(Long userId);
+
+    void reorderOrderToCart(Long userId, Long orderId);
+
+    long countInProgressOrdersByUser(Long userId);
 }

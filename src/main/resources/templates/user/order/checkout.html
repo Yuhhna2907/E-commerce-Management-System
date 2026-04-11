@@ -2,311 +2,1077 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Thanh toán - Smartphone Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thanh toán bảo mật - Smartphone Store 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    
     <style>
+        :root {
+            --primary-glow: rgba(13, 110, 253, 0.4);
+            --secondary-glow: rgba(251, 146, 60, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-strong: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --shadow-soft: 0 20px 40px -15px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.5);
+            --shadow-float: 0 30px 60px -15px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.8);
+            --price-red: #ef4444;
+            --accent-gradient: linear-gradient(135deg, #f59e0b, #eab308);
+            --accent-gradient-hover: linear-gradient(135deg, #f97316, #f59e0b);
+            --bg-color: #F1F3F5;
+        }
+
         body {
-            background: #f5f5f5;
-            font-family: Arial, sans-serif;
-            color: #333;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(245, 158, 11, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(13, 110, 253, 0.03) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.6;
         }
 
         .checkout-wrapper {
-            max-width: 900px;
-            margin: 30px auto;
+            max-width: 1100px;
+            margin: 40px auto;
+            position: relative;
         }
 
-        .card-custom {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            padding: 25px;
+        .checkout-flow-row {
+            position: relative;
+        }
+
+        @media (min-width: 992px) {
+            .checkout-flow-row::before {
+                content: '';
+                position: absolute;
+                top: 3rem;
+                bottom: 8rem;
+                left: calc(58.333333% - 1px);
+                width: 1px;
+                background: linear-gradient(
+                    180deg,
+                    transparent 0%,
+                    rgba(245, 158, 11, 0.22) 25%,
+                    rgba(59, 130, 246, 0.12) 55%,
+                    rgba(245, 158, 11, 0.18) 80%,
+                    transparent 100%
+                );
+                box-shadow: 6px 0 32px rgba(245, 158, 11, 0.07), -4px 0 24px rgba(13, 110, 253, 0.05);
+                pointer-events: none;
+                z-index: 0;
+            }
+        }
+
+        .checkout-flow-row .col-lg-7,
+        .checkout-flow-row .col-lg-5 {
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-header h2 {
+            font-weight: 800;
+            font-size: 2.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        /* --- Bento Box Card --- */
+        .card-bento {
+            background: var(--glass-strong);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 28px 28px 26px;
             margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-bento::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-gradient);
+            opacity: 0.5;
         }
 
         .section-title {
-            font-size: 18px;
+            font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 20px;
-            color: #288ad6;
+            margin-bottom: 1.1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #f59e0b;
+            font-size: 1.5rem;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        /* --- Form: compact + icon + focus inset --- */
+        .form-floating > .form-control,
+        .form-floating > .form-select {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            border-radius: var(--radius-md);
+            height: calc(3.55rem + 2px);
+            padding: 0.95rem 1.15rem;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: border-color 0.25s ease, box-shadow 0.35s ease, background 0.25s ease;
+            box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+
+        .form-floating.input-icon-wrap > .form-control,
+        .form-floating.input-icon-wrap > .form-select {
+            padding-left: 2.85rem;
+        }
+
+        .form-floating.input-icon-wrap > label {
+            padding-left: 2.85rem;
+        }
+
+        .input-icon-wrap {
+            position: relative;
+        }
+
+        .input-icon-line {
+            position: absolute;
+            left: 1.05rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            font-size: 1.12rem;
+            color: rgba(15, 23, 42, 0.22);
+            pointer-events: none;
+            transition: color 0.25s ease, opacity 0.25s ease;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0.25px currentColor;
+        }
+
+        .form-floating.input-icon-wrap:focus-within .input-icon-line {
+            color: rgba(245, 158, 11, 0.55);
+        }
+
+        .form-floating > label {
+            padding: 0.95rem 1.15rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-floating > .form-control:focus,
+        .form-floating > .form-select:focus {
+            border-color: rgba(245, 158, 11, 0.75);
+            background: #fff;
+            box-shadow:
+                inset 0 3px 10px rgba(15, 23, 42, 0.07),
+                inset 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 0 0 3px rgba(245, 158, 11, 0.18);
+            outline: none;
+        }
+
+        .form-floating > .form-control:not(:focus),
+        .form-floating > .form-select:not(:focus) {
+            transform: none;
+        }
+
+        .form-field-tight {
+            margin-bottom: 0.65rem !important;
+        }
+
+        /* Địa chỉ 3 cột: không dùng icon trong ô (tránh chật + chồng label) */
+        .address-selects {
+            --bs-gutter-x: 1rem;
+            --bs-gutter-y: 0.75rem;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .address-selects .form-floating > .form-select {
+            min-height: 3.7rem;
+            height: auto;
+            padding-top: 1.35rem;
+            padding-bottom: 0.45rem;
+            padding-left: 0.95rem;
+            padding-right: 2.35rem;
+            font-size: 0.9375rem;
+            line-height: 1.35;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .address-selects .form-floating > label {
+            padding: 0.85rem 0.95rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.01em;
+        }
+
+        .address-selects .form-select {
+            background-position: right 0.65rem center;
+            background-size: 14px 11px;
+        }
+
+        .address-section-label {
+            font-size: 0.875rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: var(--text-main);
+            margin-top: 0.35rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes input-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .input-shake {
+            animation: input-shake 0.45s ease;
+        }
+
+        #receiverPhone.is-invalid.input-shake,
+        #receiverPhone.is-invalid:focus {
+            border-color: rgba(239, 68, 68, 0.65) !important;
+            box-shadow:
+                inset 0 3px 10px rgba(239, 68, 68, 0.08),
+                0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-size: 16px 12px;
+        }
+        
+        .invalid-feedback {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 6px;
+            margin-left: 8px;
+        }
+
+        /* --- Payment Tiles --- */
+        .payment-tile {
+            cursor: pointer;
+            display: block;
+            margin-bottom: 12px;
+            user-select: none;
+        }
+
+        .payment-tile .tile-content {
+            background: rgba(255, 255, 255, 0.62);
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.3s ease, background 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-tile:hover .tile-content {
+            background: rgba(255, 255, 255, 0.92);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        .payment-radio:checked + .tile-content {
+            background: #fff;
+            border-color: transparent;
+            box-shadow:
+                0 0 0 2px rgba(245, 158, 11, 0.55),
+                0 14px 36px rgba(245, 158, 11, 0.18);
+            transform: scale(1.01);
+        }
+
+        .payment-radio:checked + .tile-content::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(120deg, #f59e0b, #eab308, #f97316, #fbbf24, #f59e0b);
+            background-size: 300% 300%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            animation: pm-border-flow 4s linear infinite;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        @keyframes pm-border-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .pm-selected-pill {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
+            color: #b45309;
+            background: linear-gradient(135deg, rgba(253, 230, 138, 0.95), rgba(251, 191, 36, 0.5));
+            padding: 4px 10px;
+            border-radius: 999px;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 4;
+            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.25);
+        }
+
+        .payment-radio:checked + .tile-content .pm-selected-pill {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .tile-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.45rem;
+            margin-right: 14px;
+            transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
+        }
+
+        .icon-cash { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .icon-bank { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+        .icon-card { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+
+        .payment-radio:checked + .tile-content .icon-cash {
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.35), rgba(52, 211, 153, 0.2));
+            color: #047857;
+            transform: scale(1.08);
+            box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+            filter: saturate(1.15);
+        }
+
+        .payment-radio:checked + .tile-content .icon-bank {
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.4), rgba(96, 165, 250, 0.22));
+            color: #1d4ed8;
+            transform: scale(1.08);
+            box-shadow: 0 8px 22px rgba(59, 130, 246, 0.35);
+            filter: saturate(1.12);
+        }
+
+        .payment-radio:checked + .tile-content .icon-card {
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.45), rgba(251, 191, 36, 0.25));
+            color: #b45309;
+            transform: scale(1.08);
+            box-shadow: 0 8px 22px rgba(245, 158, 11, 0.4);
+            filter: saturate(1.15);
+        }
+
+        .payment-radio:checked + .tile-content .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .check-icon {
+            color: #f59e0b;
+            font-size: 1.45rem;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- Order Summary (Sidebar) --- */
+        .sidebar-sticky {
+            position: sticky;
+            top: 100px;
+            z-index: 10;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: var(--shadow-float);
+        }
+
+        .order-items-scroll {
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 6px;
+            margin-right: -4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+        }
+
+        .order-items-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .order-items-scroll::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 4px 0;
+        }
+
+        .order-items-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.12);
+            border-radius: 100px;
+        }
+
+        .order-items-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .product-mini {
             display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+        }
+
+        .product-mini:last-child {
+            border-bottom: none;
+        }
+
+        .product-mini-img {
+            width: 72px;
+            height: 72px;
+            background: #fff;
+            border-radius: 12px;
+            object-fit: contain;
+            margin-right: 14px;
+            padding: 6px;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+            flex-shrink: 0;
+        }
+
+        .product-mini-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+
+        .price-mono {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: -0.015em;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+        }
+
+        .summary-row {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 12px;
-            font-size: 14px;
+            font-size: 1.05rem;
+            color: var(--text-muted);
         }
 
-        .total-highlight {
-            font-size: 20px;
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .total-row .total-label-col {
+            font-size: 0.8125rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        /* Số + ₫ cùng baseline, cùng họ Outfit — không monospace to đùng */
+        .total-highlight-wrap {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: baseline;
+            justify-content: flex-end;
+            gap: 0.28em;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+            line-height: 1;
+        }
+
+        .total-amount {
+            font-size: clamp(1.65rem, 4vw, 1.95rem);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: #9a3412;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .total-currency {
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #d0021c;
+            color: rgba(154, 52, 18, 0.82);
+            line-height: 1;
+            position: relative;
+            top: 0.02em;
         }
 
-        .btn-confirm {
-            background: #fb6e2e;
+        .total-vat-note {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 0.35rem;
+            letter-spacing: 0.01em;
+        }
+
+        /* --- Primary Button + shimmer --- */
+        .btn-checkout-pulse {
+            background: var(--accent-gradient);
+            color: #fff;
             border: none;
             width: 100%;
-            padding: 15px;
-            border-radius: 6px;
-            font-weight: 700;
-            color: #fff;
+            padding: 18px 22px;
+            border-radius: var(--radius-lg);
+            font-weight: 800;
+            font-size: 1.1rem;
             text-transform: uppercase;
-            transition: 0.3s;
+            letter-spacing: 0.05em;
+            box-shadow: 0 15px 30px -10px var(--secondary-glow);
+            transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 26px;
+            z-index: 1;
+            isolation: isolate;
         }
 
-        .btn-confirm:hover {
-            background: #e65c1e;
-            transform: translateY(-2px);
+        .btn-checkout-pulse::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--accent-gradient-hover);
+            transition: opacity 0.4s ease;
+            opacity: 0;
+            z-index: 0;
         }
 
-        .form-label {
+        .btn-checkout-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 55%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.5) 45%, transparent 75%);
+            transform: skewX(-18deg);
+            animation: checkout-shimmer 3s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .btn-checkout-pulse > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes checkout-shimmer {
+            0%, 35% { left: -100%; opacity: 0; }
+            40% { opacity: 1; }
+            55%, 100% { left: 130%; opacity: 0; }
+        }
+
+        .btn-checkout-pulse.is-loading::after {
+            animation: none;
+            opacity: 0;
+        }
+
+        .btn-checkout-pulse:hover:not(.is-loading) {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.55);
+            color: #fff;
+        }
+
+        .btn-checkout-pulse:hover:not(.is-loading)::before {
+            opacity: 1;
+        }
+
+        .btn-checkout-pulse:active:not(.is-loading) {
+            transform: translateY(0);
+        }
+
+        .btn-checkout-pulse .spinner-border {
+            width: 1.35rem;
+            height: 1.35rem;
+            border-width: 0.2em;
+        }
+
+        /* --- Trust Badges --- */
+        .trust-signals {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 24px;
+            opacity: 0.8;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
             font-weight: 600;
-            font-size: 14px;
-        }
-        .select-address {
-            font-size: 13px !important;
-            padding-left: 8px !important;
-            padding-right: 25px !important; /* Tránh đè lên cái mũi tên của Bootstrap */
-            height: 40px; /* Cố định chiều cao cho đều */
+            background: rgba(255,255,255,0.6);
+            padding: 6px 12px;
+            border-radius: 50px;
+            border: 1px solid rgba(0,0,0,0.04);
         }
 
-        .select-address option {
-            font-size: 14px;
+        /* Responsive Thumb-friendly adjustments */
+        @media (max-width: 768px) {
+            .card-bento {
+                padding: 24px;
+                border-radius: 20px;
+            }
+            .payment-tile .tile-content {
+                padding: 16px;
+            }
+            .summary-card {
+                padding: 24px;
+            }
+            .checkout-flow-row::before {
+                display: none;
+            }
         }
-    </style>
+
+        .payment-tile .tile-content > .tile-icon,
+        .payment-tile .tile-content > .flex-grow-1,
+        .payment-tile .tile-content > .check-icon {
+            position: relative;
+            z-index: 2;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn-checkout-pulse::after {
+                animation: none !important;
+            }
+            .payment-radio:checked + .tile-content::before {
+                animation: none !important;
+            }
+            .input-shake {
+                animation: none !important;
+            }
+</style>
 </head>
 <body>
 
 <div th:replace="~{fragments/header :: header}"></div>
 
-<div class="container checkout-wrapper">
-    <form th:action="@{/user/order/place}" th:object="${orderRequest}" method="post">
-        <div class="row">
-            <div class="col-md-7">
-                <div class="card-custom">
-                    <h5 class="section-title"><i class="bi bi-geo-alt"></i> Thông tin nhận hàng</h5>
+<div class="container py-5">
+    
+    <!-- Progress Stepper -->
+    <div th:replace="~{fragments/header :: stepper('checkout')}"></div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
+    <div class="container checkout-wrapper">
+    <div class="page-header">
+        <h2>Hoàn tất đơn hàng</h2>
+        <p class="text-muted fw-medium">Chỉ một bước nữa để sở hữu siêu phẩm công nghệ của bạn</p>
+    </div>
+
+    <form th:action="@{/user/order/place}" th:object="${orderRequest}" method="post" id="checkoutForm">
+        <div class="row gx-5 checkout-flow-row">
+            
+            <!-- MAIN FLOW (Left Column) -->
+            <div class="col-lg-7">
+                
+                <!-- STEP 1: Delivery Info -->
+                <div class="card-bento">
+                    <h5 class="section-title"><i class="bi bi-geo-alt"></i> Thông tin nhận hàng (1/2)</h5>
+
+                    <div class="form-floating input-icon-wrap form-field-tight">
+                        <i class="bi bi-person input-icon-line" aria-hidden="true"></i>
                         <input type="text" th:field="*{customerName}"
-                               class="form-control"
+                               class="form-control" id="customerName"
                                th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid'"
-                               placeholder="Nhập tên người nhận">
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('customerName')}"
+                               placeholder="VD: Nguyễn Văn A" autocomplete="name" required>
+                        <label for="customerName">Họ tên người nhận <span class="text-danger">*</span></label>
+                        <div class="invalid-feedback fw-bold" th:if="${#fields.hasErrors('customerName')}"
                              th:errors="*{customerName}"></div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                    <div class="form-floating input-icon-wrap form-field-tight">
+                        <i class="bi bi-telephone input-icon-line" aria-hidden="true"></i>
                         <input type="tel" th:field="*{receiverPhone}"
-                               class="form-control"
+                               class="form-control" id="receiverPhone"
                                th:classappend="${#fields.hasErrors('receiverPhone')} ? 'is-invalid'"
-                               placeholder="Số điện thoại liên hệ">
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('receiverPhone')}"
+                               placeholder="VD: 0912345678" autocomplete="tel" inputmode="tel" required>
+                        <label for="receiverPhone">Số điện thoại liên hệ <span class="text-danger">*</span></label>
+                        <div class="invalid-feedback fw-bold" th:if="${#fields.hasErrors('receiverPhone')}"
                              th:errors="*{receiverPhone}"></div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-4">
-                                <select class="form-select select-address" id="province" th:field="*{province}" required>
-                                    <option value="" selected>Tỉnh / Thành phố</option>
+                    <p class="address-section-label ms-1">Địa chỉ giao hàng <span class="text-danger">*</span></p>
+                    <div class="row address-selects">
+                        <div class="col-12 col-md-4">
+                            <div class="form-floating form-field-tight">
+                                <select class="form-select" id="province" th:field="*{province}" th:classappend="${#fields.hasErrors('province')} ? 'is-invalid'" required>
+                                    <option value="" selected disabled hidden>Chọn tỉnh / thành</option>
                                 </select>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-select select-address" id="district" th:field="*{district}" disabled required>
-                                    <option value="" selected>Quận / Huyện</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-select select-address" id="ward" th:field="*{ward}" disabled required>
-                                    <option value="" selected>Phường / Xã</option>
-                                </select>
+                                <label for="province">Tỉnh / Thành phố</label>
                             </div>
                         </div>
-                        <input type="text" th:field="*{addressDetail}" class="form-control"
-                               placeholder="Số nhà, tên đường cụ thể..." required>
+                        <div class="col-12 col-md-4">
+                            <div class="form-floating form-field-tight">
+                                <select class="form-select" id="district" th:field="*{district}" th:classappend="${#fields.hasErrors('district')} ? 'is-invalid'" disabled required>
+                                    <option value="" selected disabled hidden>Chọn quận / huyện</option>
+                                </select>
+                                <label for="district">Quận / Huyện</label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="form-floating form-field-tight">
+                                <select class="form-select" id="ward" th:field="*{ward}" th:classappend="${#fields.hasErrors('ward')} ? 'is-invalid'" disabled required>
+                                    <option value="" selected disabled hidden>Chọn phường / xã</option>
+                                </select>
+                                <label for="ward">Phường / Xã</label>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Ghi chú (nếu có)</label>
-                        <input type="text" th:field="*{note}" class="form-control"
-                               placeholder="Ví dụ: Giao giờ hành chính">
+                    <div class="form-floating input-icon-wrap form-field-tight">
+                        <i class="bi bi-house-door input-icon-line" aria-hidden="true"></i>
+                        <input type="text" th:field="*{addressDetail}" class="form-control" id="addressDetail" th:classappend="${#fields.hasErrors('addressDetail')} ? 'is-invalid'"
+                               placeholder="Số nhà, đường..." autocomplete="street-address" required>
+                        <label for="addressDetail">Chi tiết Số nhà, Tên đường... <span class="text-danger">*</span></label>
+                        <div class="invalid-feedback fw-bold" th:if="${#fields.hasErrors('addressDetail')}" th:errors="*{addressDetail}"></div>
+                    </div>
+
+                    <div class="form-floating input-icon-wrap form-field-tight mb-0">
+                        <i class="bi bi-chat-left-text input-icon-line" aria-hidden="true"></i>
+                        <input type="text" th:field="*{note}" class="form-control" id="note"
+                               placeholder="Ghi chú thêm..." autocomplete="off">
+                        <label for="note">Ghi chú thêm (VD: Giao giờ hành chính)</label>
                     </div>
                 </div>
 
-
-                <div class="card-custom">
-                    <h5 class="section-title"><i class="bi bi-credit-card"></i> Hình thức thanh toán</h5>
-
-                    <div class="list-group">
-                        <label class="list-group-item d-flex gap-3 py-3" style="cursor: pointer;">
-                            <input class="form-check-input flex-shrink-0" type="radio" name="paymentMethod" value="CASH"
-                                   checked>
-                            <span class="d-flex gap-2 w-100 justify-content-between">
-                <div>
-                    <h6 class="mb-0 fw-bold"><i class="bi bi-cash-coin text-primary"></i> Thanh toán tiền mặt khi nhận hàng</h6>
-                    <p class="mb-0 opacity-75 small">Trả tiền cho shipper khi bạn nhận được hàng.</p>
-                </div>
-            </span>
+                <!-- STEP 2: Payment Method -->
+                <div class="card-bento">
+                    <h5 class="section-title"><i class="bi bi-wallet2"></i> Phương thức thanh toán (2/2)</h5>
+                    <div th:if="${#fields.hasErrors('paymentMethod')}" class="text-danger fw-bold small mb-2 ms-2" th:errors="*{paymentMethod}"></div>
+                    
+                    <div class="payment-methods mt-3">
+                        
+                        <!-- COD -->
+                        <label class="payment-tile">
+                            <input class="payment-radio d-none" type="radio" th:field="*{paymentMethod}" value="CASH" checked>
+                            <div class="tile-content d-flex align-items-center">
+                                <span class="pm-selected-pill">Đã chọn</span>
+                                <div class="tile-icon icon-cash"><i class="bi bi-cash-stack"></i></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold fs-6">Thanh toán bằng tiền mặt (COD)</h6>
+                                    <p class="mb-0 text-muted small">Trả tiền cho Shiper khi bạn nhận được hàng.</p>
+                                </div>
+                                <div class="check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            </div>
                         </label>
 
-                        <label class="list-group-item d-flex gap-3 py-3" style="cursor: pointer;">
-                            <input class="form-check-input flex-shrink-0" type="radio" name="paymentMethod"
-                                   value="TRANSFER">
-                            <span class="d-flex gap-2 w-100 justify-content-between">
-                <div>
-                    <h6 class="mb-0 fw-bold"><i class="bi bi-bank text-info"></i> Chuyển khoản ngân hàng</h6>
-                    <p class="mb-0 opacity-75 small">Chuyển khoản qua QR Code hoặc số tài khoản.</p>
-                </div>
-            </span>
+                        <!-- TRANSFER -->
+                        <label class="payment-tile">
+                            <input class="payment-radio d-none" type="radio" th:field="*{paymentMethod}" value="TRANSFER">
+                            <div class="tile-content d-flex align-items-center">
+                                <span class="pm-selected-pill">Đã chọn</span>
+                                <div class="tile-icon icon-bank"><i class="bi bi-qr-code"></i></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold fs-6">Chuyển khoản / Quét mã QR</h6>
+                                    <p class="mb-0 text-muted small">Chuyển khoản 24/7 trực tiếp qua Mobile Banking.</p>
+                                </div>
+                                <div class="check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            </div>
                         </label>
 
-                        <label class="list-group-item d-flex gap-3 py-3" style="cursor: pointer;">
-                            <input class="form-check-input flex-shrink-0" type="radio" name="paymentMethod"
-                                   value="CARD_AT_HOME">
-                            <span class="d-flex gap-2 w-100 justify-content-between">
-                <div>
-                    <h6 class="mb-0 fw-bold"><i class="bi bi-credit-card-2-front text-warning"></i> Nhân viên mang máy cà thẻ khi nhận hàng</h6>
-                    <p class="mb-0 opacity-75 small">Hỗ trợ các loại thẻ nội địa và quốc tế.</p>
-                </div>
-            </span>
+                        <!-- CARD AT HOME -->
+                        <label class="payment-tile">
+                            <input class="payment-radio d-none" type="radio" th:field="*{paymentMethod}" value="CARD_AT_HOME">
+                            <div class="tile-content d-flex align-items-center">
+                                <span class="pm-selected-pill">Đã chọn</span>
+                                <div class="tile-icon icon-card"><i class="bi bi-credit-card-2-front"></i></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold fs-6">Quẹt thẻ tận nhà (máy POS)</h6>
+                                    <p class="mb-0 text-muted small">Hỗ trợ các loại thẻ nội địa (ATM) và thẻ quốc tế.</p>
+                                </div>
+                                <div class="check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            </div>
                         </label>
+
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-5">
-                <div class="card-custom sticky-top" style="top: 20px; z-index: 1;">
-                    <h5 class="section-title">Đơn hàng của bạn</h5>
+            <!-- SIDEBAR ORDER SUMMARY (Right Column) -->
+            <div class="col-lg-5">
+                <div class="sidebar-sticky">
+                    <div class="summary-card">
+                        <h4 class="fw-bold mb-4" style="letter-spacing: -0.01em;">Giỏ hàng của bạn</h4>
 
-                    <div class="order-items mb-4">
-                        <div th:each="item : ${cart.items}" class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-2">
-                            <div style="flex: 1; padding-right: 10px;">
-                                <div class="fw-bold" th:text="${item.productName}">iPhone 14</div>
-                                <small class="text-muted d-block" th:text="${item.variantName}"></small>
-                                <small class="text-secondary" th:text="'Số lượng: ' + ${item.quantity}"></small>
+                        <div class="order-items-scroll mb-3">
+                            <div th:each="item : ${cart.items}" class="product-mini">
+                                <img th:src="${item.imageUrl != null} ? ${item.imageUrl} : 'https://cdn-icons-png.flaticon.com/512/186/186239.png'" class="product-mini-img" th:alt="${item.productName}">
+                                <div class="flex-grow-1 pe-2 min-w-0">
+                                    <div class="product-mini-name mb-1" th:text="${item.productName}">iPhone 14</div>
+                                    <div class="small text-muted mb-1 text-truncate" th:text="${item.variantName}">Bản tiêu chuẩn</div>
+                                    <div class="small fw-semibold" style="color: #0d6efd;">SL: <span th:text="${item.quantity}">1</span></div>
+                                </div>
+                                <div class="text-end price-mono flex-shrink-0 d-flex flex-column align-items-end">
+                                    <span class="d-inline-flex align-items-baseline gap-1">
+                                        <span th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')}"></span>
+                                        <span class="opacity-75" style="font-size: 0.82em;">₫</span>
+                                    </span>
+                                </div>
                             </div>
-                            <div class="text-end" style="min-width: 120px;">
-                                <strong class="text-danger d-block"
-                                        th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')} + '₫'">
-                                </strong>
+                        </div>
+                        <!-- Form Ẩn dùng để Submit Coupon Độc Lập Màn Hình Order -->
+                        <form id="couponApplyForm" th:action="@{/user/coupons/apply}" method="POST" style="display: none;">
+                             <input type="hidden" name="couponCode" id="submitCouponCode">
+                        </form>
+
+                        <!-- Mã Giảm Giá Khuyến Mãi -->
+                        <div class="coupon-section pb-3 border-bottom border-light">
+                            <label class="form-label fw-bold small text-muted">MÃ GIẢM GIÁ / VOUCHER</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="couponCode" id="couponCodeInput" th:value="${appliedCouponCode}" placeholder="Nhập mã ưu đãi..." style="border-radius: 8px 0 0 8px;">
+                                <button class="btn btn-warning fw-bold text-dark px-3" type="button" id="btnApplyCoupon" onclick="document.getElementById('submitCouponCode').value = document.getElementById('couponCodeInput').value; document.getElementById('couponApplyForm').submit();" style="border-radius: 0 8px 8px 0;">Áp dụng</button>
+                            </div>
+                            
+                            <!-- Thông báo kết quả từ SSR -->
+                            <div th:if="${successCoupon != null}" class="small mt-2 text-success" style="font-weight: 500;">
+                                <i class="bi bi-check-circle-fill"></i> <span th:text="${successCoupon}"></span>
+                            </div>
+                            <div th:if="${errorCoupon != null}" class="small mt-2 text-danger" style="font-weight: 500;">
+                                <i class="bi bi-x-circle-fill"></i> <span th:text="${errorCoupon}"></span>
+                            </div>
+                            
+                            <!-- Hidden Field để gửi kèm form checkout tổng (đặt hàng) -->
+                            <input type="hidden" th:field="*{couponCode}">
+                        </div>
+
+                        <div class="summary-row mt-3">
+                            <span>Tạm tính (<span th:text="${#lists.size(cart.items)}"></span> sản phẩm)</span>
+                            <span class="price-mono d-inline-flex align-items-baseline gap-1" style="color: var(--text-main);">
+                                <span th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')}"></span>
+                                <span class="opacity-75" style="font-size: 0.82em; font-weight: 700;">₫</span>
+                            </span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Phí giao hàng</span>
+                            <span class="fw-bold text-success">Miễn phí toàn quốc</span>
+                        </div>
+
+                        <div class="summary-row" id="discountRow" th:if="${discountAmt != null}">
+                            <span class="text-warning fw-bold"><i class="bi bi-tag-fill"></i> Giảm giá</span>
+                            <span class="fw-bold text-warning d-inline-flex align-items-baseline gap-1" id="discountValue">
+                                -<span th:text="${#numbers.formatDecimal(discountAmt, 0, 'COMMA', 0, 'POINT')}">0</span> <span class="opacity-75" style="font-size: 0.82em; font-weight: 700;">₫</span>
+                            </span>
+                        </div>
+
+                        <div class="total-row">
+                            <div class="total-label-col">TỔNG CỘNG</div>
+                            <div class="text-end">
+                                <div class="total-highlight-wrap">
+                                    <span class="total-amount" th:text="${#numbers.formatDecimal(totalAfterDiscount, 0, 'COMMA', 0, 'POINT')}">0</span>
+                                    <span class="total-currency">₫</span>
+                                </div>
+                                <div class="total-vat-note">Đã bao gồm VAT</div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Tạm tính:</span>
-                        <span th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
-                    </div>
+                        <button type="submit" id="btn-order" class="btn-checkout-pulse shadow" aria-busy="false">
+                            <span id="btn-text">ĐẶT HÀNG NGAY</span>
+                            <span id="btn-spinner" class="spinner-border text-light ms-1 d-none" role="status" aria-hidden="true"></span>
+                        </button>
 
-
-                    <div class="d-flex justify-content-between mb-4 pt-3 border-top">
-                        <span class="fw-bold">TỔNG CỘNG:</span>
-                        <span class="total-highlight"
-                              th:text="${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
-                    </div>
-
-                    <button type="submit" id="btn-order" class="btn-confirm shadow d-flex align-items-center justify-content-center">
-                        <span id="btn-text">XÁC NHẬN ĐẶT HÀNG</span>
-                        <div id="btn-spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
-                    </button>
-
-                    <div class="mt-3 p-2 bg-light rounded text-center" style="border: 1px dashed #ccc;">
-                        <div class="small text-muted mb-1">
-                            <i class="bi bi-shield-check text-success"></i> Thanh toán an toàn & bảo mật
+                        <div class="trust-signals">
+                            <div class="trust-badge">
+                                <i class="bi bi-shield-fill-check text-success fs-6"></i> Bảo mật Stripe 256-bit
+                            </div>
+                            <div class="trust-badge">
+                                <i class="bi bi-patch-check-fill text-primary fs-6"></i> 100% Chính hãng
+                            </div>
+                            <div class="trust-badge">
+                                <i class="bi bi-arrow-return-left text-warning fs-6"></i> Đổi trả linh hoạt
+                            </div>
                         </div>
-                        <div class="small text-muted" style="font-size: 11px;">
-                            <i class="bi bi-truck"></i> Giao hàng toàn quốc • <i class="bi bi-arrow-counterclockwise"></i> Đổi trả 7 ngày
+                        
+                        <div class="text-center mt-4">
+                            <a th:href="@{/user/cart}" class="text-decoration-none fw-semibold" style="color: #0d6efd;">
+                                <i class="bi bi-arrow-left"></i> Chỉnh sửa giỏ hàng
+                            </a>
                         </div>
-                    </div>
-
-                    <div class="text-center mt-3">
-                        <a th:href="@{/user/cart}" class="text-decoration-none text-muted small">
-                            <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
-                        </a>
                     </div>
                 </div>
             </div>
+            
         </div>
     </form>
 </div>
+
+<!-- Lottie Animations (Ready for Success Modal via JS if needed later) -->
+<script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const host = "https://provinces.open-api.vn/api/";
 
+    // 0. Render Helpers
     var renderData = (array, select) => {
         let title = "";
-        if(select === "province") title = "Tỉnh/Thành phố";
-        if(select === "district") title = "Quận/Huyện";
-        if(select === "ward") title = "Phường/Xã";
+        if (select === "province") title = "Chọn tỉnh / thành";
+        if (select === "district") title = "Chọn quận / huyện";
+        if (select === "ward") title = "Chọn phường / xã";
 
-        let row = ` <option value="">${title}</option>`;
-        array.forEach(element => {
-            row += `<option data-id="${element.code}" value="${element.name}">${element.name}</option>`
-        });
+        let row = `<option value="" selected disabled hidden>${title}</option>`;
+        if(array) {
+            array.forEach(element => {
+                row += `<option data-id="${element.code}" value="${element.name}">${element.name}</option>`
+            });
+        }
         document.querySelector("#" + select).innerHTML = row;
     }
 
-    // 1. Gọi danh sách Tỉnh
+    // 1. Fetch Provinces
     fetch(host + "?depth=1")
         .then(response => response.json())
-        .then(data => renderData(data, "province"));
+        .then(data => renderData(data, "province"))
+        .catch(err => console.error(err));
 
-    // 2. Khi chọn Tỉnh -> Gọi Huyện
-    document.querySelector("#province").addEventListener("change", function () {
-        let provinceId = this.options[this.selectedIndex].getAttribute("data-id");
-        if (provinceId) {
-            fetch(host + "p/" + provinceId + "?depth=2")
-                .then(response => response.json())
-                .then(data => {
-                    renderData(data.districts, "district");
-                    document.querySelector("#district").disabled = false;
-                    document.querySelector("#ward").innerHTML = '<option value="">Chọn Phường/Xã</option>';
-                    document.querySelector("#ward").disabled = true;
-                });
-        }
-    });
+    // 2. Tỉnh -> Huyện
+    const provinceSelect = document.querySelector("#province");
+    if(provinceSelect) {
+        provinceSelect.addEventListener("change", function () {
+            let provinceId = this.options[this.selectedIndex].getAttribute("data-id");
+            if (provinceId) {
+                fetch(host + "p/" + provinceId + "?depth=2")
+                    .then(response => response.json())
+                    .then(data => {
+                        renderData(data.districts, "district");
+                        document.querySelector("#district").disabled = false;
+                        document.querySelector("#ward").innerHTML = '<option value="" selected disabled hidden>Chọn phường / xã</option>';
+                        document.querySelector("#ward").disabled = true;
+                    });
+            } else {
+                document.querySelector("#district").innerHTML = '<option value="" selected disabled hidden>Chọn quận / huyện</option>';
+                document.querySelector("#district").disabled = true;
+                document.querySelector("#ward").innerHTML = '<option value="" selected disabled hidden>Chọn phường / xã</option>';
+                document.querySelector("#ward").disabled = true;
+            }
+        });
+    }
 
-    // 3. Khi chọn Huyện -> Gọi Xã
-    document.querySelector("#district").addEventListener("change", function () {
-        let districtId = this.options[this.selectedIndex].getAttribute("data-id");
-        if (districtId) {
-            fetch(host + "d/" + districtId + "?depth=2")
-                .then(response => response.json())
-                .then(data => {
-                    renderData(data.wards, "ward");
-                    document.querySelector("#ward").disabled = false;
-                });
-        }
-    });
+    // 3. Huyện -> Xã
+    const districtSelect = document.querySelector("#district");
+    if(districtSelect) {
+        districtSelect.addEventListener("change", function () {
+            let districtId = this.options[this.selectedIndex].getAttribute("data-id");
+            if (districtId) {
+                fetch(host + "d/" + districtId + "?depth=2")
+                    .then(response => response.json())
+                    .then(data => {
+                        renderData(data.wards, "ward");
+                        document.querySelector("#ward").disabled = false;
+                    });
+            } else {
+                document.querySelector("#ward").innerHTML = '<option value="" selected disabled hidden>Chọn phường / xã</option>';
+                document.querySelector("#ward").disabled = true;
+            }
+        });
+    }
 
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const btn = document.getElementById('btn-order');
-        const btnText = document.getElementById('btn-text');
-        const btnSpinner = document.getElementById('btn-spinner');
+    // 4. Submit: kiểm tra SĐT (rung + viền đỏ), sau đó spinner
+    const checkoutForm = document.getElementById('checkoutForm');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function (e) {
+            const phone = document.getElementById('receiverPhone');
+            const phoneVal = phone ? phone.value.trim() : '';
 
-        // Nếu form hợp lệ (đã qua được validation mặc định của trình duyệt)
-        if (this.checkValidity()) {
-            // Disable nút để tránh bấm nhiều lần
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-            btn.style.cursor = 'not-allowed';
+            if (!phoneVal) {
+                e.preventDefault();
+                e.stopPropagation();
+                phone.classList.add('is-invalid', 'input-shake');
+                phone.focus();
+                window.setTimeout(function () {
+                    phone.classList.remove('input-shake');
+                }, 480);
+                return;
+            }
 
-            // Đổi chữ và hiện spinner
-            btnText.innerText = 'ĐANG XỬ LÝ...';
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                this.reportValidity();
+                return;
+            }
+
+            const btn = document.getElementById('btn-order');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+            if (!btn || !btnText || !btnSpinner) return;
+
+            btn.classList.add('is-loading');
+            btn.setAttribute('aria-busy', 'true');
+            btn.style.pointerEvents = 'none';
+            btnText.textContent = 'ĐANG XỬ LÝ...';
             btnSpinner.classList.remove('d-none');
+            btn.style.opacity = '0.92';
+        });
+
+        const phoneInput = document.getElementById('receiverPhone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function () {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
         }
-    });
+    }
 </script>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

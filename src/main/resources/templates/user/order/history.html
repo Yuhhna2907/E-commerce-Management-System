@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử đơn hàng | SmartZone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --radius-bento: 24px;
+            --radius-sm: 16px;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-glow: rgba(245, 158, 11, 0.4);
+            --shadow-float: 0 20px 40px -10px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,1);
+            --shadow-real: 0 15px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --bg-color: #F1F3F5;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 0% 100%, rgba(13, 110, 253, 0.03) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            overflow-x: hidden;
+        }
+
+        .history-wrapper {
+            max-width: 1100px;
+            margin: 40px auto;
+        }
+
+        .page-title {
+            font-weight: 800;
+            font-size: 2.5rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #0f172a, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Toolbar Lọc --- */
+        .filter-toolbar {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--radius-bento);
+            padding: 16px 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px -15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: #f59e0b;
+            color: #fff;
+            border-color: #f59e0b;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        /* --- Bento Order Card & Timeline --- */
+        .timeline-container {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 20px; bottom: 0; left: 15px;
+            width: 2px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.05), transparent);
+            border-radius: 2px;
+        }
+
+        .bento-order {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-bento);
+            padding: 32px;
+            margin-bottom: 30px;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 20px -10px rgba(0,0,0,0.05);
+        }
+
+        .bento-order::before {
+            content: '';
+            position: absolute;
+            top: 35px; left: -34px;
+            width: 18px; height: 18px;
+            background: #fff;
+            border: 4px solid #f59e0b;
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .bento-order:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: var(--shadow-float);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .bento-order:hover::before {
+            background: #f59e0b;
+            box-shadow: 0 0 0 6px var(--accent-glow);
+        }
+
+        .order-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #0d6efd;
+            background: rgba(13, 110, 253, 0.08);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .date-box {
+            text-align: center;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            width: 90px;
+            min-width: 90px;
+        }
+
+        .date-month { font-weight: 700; color: #ef4444; font-size: 0.85rem; text-transform: uppercase; }
+        .date-day { font-weight: 800; font-size: 1.8rem; line-height: 1; margin: 4px 0; color: var(--text-main); }
+        .date-year { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
+
+        /* --- Product Gallery Row --- */
+        .product-mini-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(0,0,0,0.03);
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .product-mini-item:hover {
+            transform: translateX(4px);
+        }
+
+        .product-img {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 4px;
+            object-fit: contain;
+            box-shadow: var(--shadow-real); /* Real shadow effect */
+            margin-right: 16px;
+        }
+
+        .product-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .product-config {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- Price & Badge --- */
+        .order-total-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ef4444;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .status-badge.success { background: rgba(16, 185, 129, 0.15); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* --- Hover Expand & Actions --- */
+        .hidden-details {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .bento-order:hover .hidden-details {
+            max-height: 100px;
+            opacity: 1;
+            margin-top: 15px;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-action.primary {
+            background: var(--text-main);
+            color: #fff;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        button.btn-action {
+            cursor: pointer;
+        }
+
+        .link-micro-hit {
+            transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease, color 0.28s ease;
+        }
+
+        a.link-micro-hit:hover,
+        button.link-micro-hit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.45);
+        }
+
+        .breadcrumb-glass {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            padding: 10px 20px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .breadcrumb-glass .breadcrumb-item + .breadcrumb-item::before {
+            color: var(--text-muted);
+        }
+
+        .history-search-input {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-weight: 600;
+            min-width: 200px;
+            background: #fff;
+        }
+
+        .history-search-input:focus {
+            outline: none;
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        .product-mini-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-mini-link:hover {
+            color: inherit;
+        }
+
+        .review-pill {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+            white-space: nowrap;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .review-pill:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.4);
+            color: #b45309;
+        }
+
+        /* --- Empty State --- */
+        .empty-dashboard {
+            background: var(--glass-strong);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-bento);
+            padding: 60px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-float);
+        }
+
+        .empty-illustration {
+            width: 250px;
+            opacity: 0.8;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.1));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0); }
+        }
+
+        .btn-start-journey {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #fff;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 800;
+            text-transform: uppercase;
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-start-journey:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(245, 158, 11, 0.5);
+            color: #fff;
+        }
+        
+        .memory-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            padding: 4px 12px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container { padding-left: 20px; }
+            .timeline-container::before { left: 0px; }
+            .bento-order::before { left: -24px; width: 14px; height: 14px; }
+            .bento-order { padding: 24px; }
+            .date-box { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: 8px 16px; margin-bottom: 12px; }
+            .date-box > div { display: inline-block; margin: 0; font-size: 0.9rem; }
+            .date-day { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container history-wrapper">
+    <nav class="mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-glass mb-0">
+            <li class="breadcrumb-item"><a th:href="@{/user/products}" class="text-decoration-none" style="color: #f59e0b;">Trang chủ</a></li>
+            <li class="breadcrumb-item"><span class="text-muted">Tài khoản</span></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page">Lịch sử đơn hàng</li>
+        </ol>
+    </nav>
+
+    <div th:if="${successMessage}" class="alert alert-success rounded-4 border-0 shadow-sm mb-3" role="alert" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger rounded-4 border-0 shadow-sm mb-3" role="alert" th:text="${errorMessage}"></div>
+
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="page-title">Đơn hàng của tôi</h2>
+            <p class="text-muted fw-medium mb-0">Theo dõi và quản lý những siêu phẩm bạn đã sở hữu tại SmartZone</p>
+        </div>
+    </div>
+
+    <!-- Trang thái Trống -->
+    <div th:if="${#lists.isEmpty(orders)}" class="empty-dashboard">
+        <img src="https://cdn-icons-png.flaticon.com/512/3585/3585091.png" alt="Empty Box" class="empty-illustration">
+        <h3 class="fw-bold mb-3">Bộ sưu tập của bạn còn trống</h3>
+        <p class="text-muted mb-4">Hãy bắt đầu xây dựng kỷ nguyên công nghệ riêng của bạn ngay hôm nay.</p>
+        <a th:href="@{/user/products}" class="btn-start-journey link-micro-hit">
+            BẮT ĐẦU HÀNH TRÌNH
+        </a>
+    </div>
+
+    <!-- Có đơn hàng -->
+    <div th:if="${not #lists.isEmpty(orders)}">
+        
+        <!-- Bộ lọc UI -->
+        <div class="filter-toolbar">
+            <div class="d-flex gap-2 flex-wrap align-items-center flex-grow-1">
+                <label class="d-flex align-items-center gap-2 mb-0 text-muted small fw-bold text-uppercase" style="letter-spacing: 0.06em;">
+                    <i class="bi bi-search text-warning"></i> Tìm máy đã mua
+                </label>
+                <input type="search" id="historySearchInput" class="history-search-input flex-grow-1" placeholder="Nhập tên sản phẩm, biến thể..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="timeline-container">
+            <!-- Render danh sách Orders -->
+            <div th:each="order : ${orders}" class="bento-order js-order-card" th:data-date="${order.createdAt}">
+                <div class="row align-items-md-center gy-4">
+                    
+                    <!-- Lịch -->
+                    <div class="col-md-2">
+                        <div class="date-box">
+                            <div class="date-month" th:text="${#temporals.format(order.createdAt, 'MMM')}">THG 4</div>
+                            <div class="date-day" th:text="${#temporals.format(order.createdAt, 'dd')}">11</div>
+                            <div class="date-year" th:text="${#temporals.format(order.createdAt, 'yyyy')}">2026</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dữ liệu Sản phẩm -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="order-id">Mã: #<span th:text="${order.id}">123</span></span>
+                            <!-- Tính năng gợi nhắc kỷ niệm bằng JS -->
+                            <span class="memory-text d-none js-memory-text">
+                                <i class="bi bi-stars"></i> <span class="memory-content"></span>
+                            </span>
+                        </div>
+                        
+                        <div class="product-mini-item" th:each="item : ${order.items}">
+                            <a th:href="@{/user/products/{id}(id=${item.productId})}" class="product-mini-link link-micro-hit rounded-3">
+                                <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                                     th:src="${item.imageUrl}" alt="" class="product-img">
+                                <div th:unless="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                                     class="product-img d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-phone text-secondary fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <h6 class="product-name text-truncate" th:text="${item.productName}">Tên sản phẩm</h6>
+                                    <div class="product-config text-truncate" th:text="${item.variantName}">Biến thể</div>
+                                    <div class="product-config">Số lượng: <strong class="text-dark" th:text="${item.quantity}">1</strong></div>
+                                </div>
+                            </a>
+                            <a th:with="detailUrl=@{/user/products/{id}(id=${item.productId})}"
+                               th:href="${detailUrl} + '#reviews'"
+                               class="review-pill link-micro-hit text-decoration-none ms-2 flex-shrink-0 align-self-center"
+                               title="Đánh giá sản phẩm">Đánh giá</a>
+                        </div>
+
+                        <!-- Chi tiết ẩn hiện khi Hover -->
+                        <div class="hidden-details">
+                            <div class="p-3 bg-white rounded-3 border">
+                                <div class="row text-sm">
+                                    <div class="col-6">
+                                        <div class="text-muted small">Thông tin nhận hàng:</div>
+                                        <div class="fw-semibold text-dark text-truncate" th:text="${order.customerName} + ' - ' + ${order.receiverPhone}">...</div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <div class="text-muted small">Tọa độ:</div>
+                                        <div class="fw-semibold text-dark text-truncate" th:text="${order.shippingAddress}">...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Cột Phải: Tổng Giá & Status -->
+                    <div class="col-md-4 text-md-end">
+                        <div class="mb-2">
+                            <!-- Điều kiện hiển thị Trạng thái (Phụ thuộc vào dữ liệu DB, ví dụ tạm) -->
+                            <span th:if="${order.status == 'SHIPPED' or order.status == 'SUCCESS' or order.status == 'COMPLETED' or order.status == 'DELIVERED' or order.status == 'Đã giao'}" class="status-badge success">
+                                <i class="bi bi-check-circle-fill"></i> Hoàn Tất
+                            </span>
+                            <span th:if="${order.status == 'PENDING' or order.status == 'PAID' or order.status == 'PROCESSING' or order.status == 'Đang xử lý'}" class="status-badge pending">
+                                <i class="bi bi-truck"></i> Đang Xử Lý
+                            </span>
+                            <span th:if="${order.status == 'CANCELLED' or order.status == 'Đã hủy'}" class="status-badge cancelled">
+                                <i class="bi bi-x-circle-fill"></i> Đã Hủy
+                            </span>
+                            <span th:unless="${order.status == 'SHIPPED' or order.status == 'SUCCESS' or order.status == 'COMPLETED' or order.status == 'DELIVERED' or order.status == 'Đã giao' or order.status == 'PENDING' or order.status == 'PAID' or order.status == 'PROCESSING' or order.status == 'Đang xử lý' or order.status == 'CANCELLED' or order.status == 'Đã hủy'}" class="status-badge pending">
+                                <i class="bi bi-info-circle-fill"></i> <span th:text="${order.status}">Status</span>
+                            </span>
+                        </div>
+                        
+                        <div class="text-muted small mb-1">Tổng quy đổi</div>
+                        <div class="order-total-price">
+                            <span th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                        </div>
+                        
+                        <div class="action-bar justify-content-md-end mt-4">
+                            <form th:action="@{/user/order/reorder/{id}(id=${order.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn-action primary link-micro-hit"><i class="bi bi-bag-plus"></i> Đặt lại</button>
+                            </form>
+                            <a th:href="@{/user/order/success/{id}(id=${order.id})}" class="btn-action link-micro-hit text-decoration-none d-inline-flex align-items-center"><i class="bi bi-receipt"></i> Hóa đơn</a>
+                            <a th:if="${not #lists.isEmpty(order.items)}"
+                               th:with="firstDetail=@{/user/products/{id}(id=${order.items[0].productId})}"
+                               th:href="${firstDetail} + '#reviews'"
+                               class="btn-action link-micro-hit text-decoration-none d-inline-flex align-items-center" title="Đánh giá"><i class="bi bi-star"></i> Đánh giá</a>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}" class="mt-5"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Logic tính toán "Bạn đã sở hữu siêu phẩm này được X tháng/ngày"
+        const cards = document.querySelectorAll('.js-order-card');
+        const now = new Date();
+
+        const searchInput = document.getElementById('historySearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('.js-order-card').forEach(card => {
+                    const hay = card.innerText.toLowerCase();
+                    card.style.display = !q || hay.includes(q) ? '' : 'none';
+                });
+            });
+        }
+
+        cards.forEach(card => {
+            const dateStr = card.getAttribute('data-date');
+            if(dateStr) {
+                const orderDate = new Date(dateStr);
+                const diffTime = Math.abs(now - orderDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                const memoryText = card.querySelector('.js-memory-text');
+                const memoryContent = card.querySelector('.memory-content');
+                
+                if(memoryText && memoryContent) {
+                    if (diffDays > 30) {
+                        const months = Math.floor(diffDays / 30);
+                        memoryContent.textContent = `Sở hữu được ${months} tháng`;
+                        memoryText.classList.remove('d-none');
+                    } else if (diffDays > 0) {
+                        memoryContent.textContent = `Gắn bó được ${diffDays} ngày`;
+                        memoryText.classList.remove('d-none');
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

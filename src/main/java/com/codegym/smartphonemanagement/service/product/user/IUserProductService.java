@@ -24,4 +24,6 @@ public interface IUserProductService {
 
     List<ReviewResponseDTO> getReviewsByProductId(Long id);
 
+    List<com.codegym.smartphonemanagement.service.product.DTO.ComparisonItemDTO> compareProducts(List<Long> productIds);
+
 }

@@ -3,6 +3,8 @@ package com.codegym.smartphonemanagement.service.order.user;
 import com.codegym.smartphonemanagement.model.*;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.repository.user.*;
+import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
+import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderItemResponseDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderRequestDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderResponseDTO;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,7 @@ public class OrderService implements IOrderService {
     private final ProductVariantRepository productVariantRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ICartService cartService;
 
     // ======================== CHỨC NĂNG CHO USER ========================
 
@@ -58,6 +62,7 @@ public class OrderService implements IOrderService {
                 .note(orderDTO.getNote())
                 .totalPrice(total)
                 .status(OrderStatus.PENDING)
+                .paymentMethod(orderDTO.getPaymentMethod())
                 .build();
 
         Order savedOrder = orderRepository.save(order);
@@ -128,11 +133,42 @@ public class OrderService implements IOrderService {
         return mapToResponseDTO(order);
     }
 
+    @Override
+    @Transactional
+    public void reorderOrderToCart(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+        if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
+        }
+        List<OrderItem> items = order.getItems();
+        if (items == null || items.isEmpty()) {
+            throw new RuntimeException("Đơn hàng không có sản phẩm.");
+        }
+        for (OrderItem oi : items) {
+            CartItemRequestDTO req = new CartItemRequestDTO();
+            req.setProductId(oi.getProduct().getId());
+            req.setVariantId(oi.getProductVariant().getVariantId());
+            req.setQuantity(oi.getQuantity());
+            cartService.addToCart(userId, req);
+        }
+    }
+
+    @Override
+    public long countInProgressOrdersByUser(Long userId) {
+        return orderRepository.countByUser_IdAndStatusIn(
+                userId,
+                EnumSet.of(OrderStatus.PENDING, OrderStatus.PAID)
+        );
+    }
+
     // ======================== MAPPING DTO ========================
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
         List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
                 .map(item -> OrderItemResponseDTO.builder()
+                        .productId(item.getProduct().getId())
+                        .variantId(item.getProductVariant() != null ? item.getProductVariant().getVariantId() : null)
                         .productName(item.getProduct().getName())
                         .variantName(item.getProductVariant() != null ? item.getProductVariant().getVariantName() : "")
                         .imageUrl(item.getProduct().getImageUrl())
@@ -153,6 +189,8 @@ public class OrderService implements IOrderService {
                 .receiverPhone(order.getReceiverPhone())
                 .shippingAddress(order.getShippingAddress())
                 .note(order.getNote())
+                .paymentMethodDisplay(order.getPaymentMethod() != null ?
+                        order.getPaymentMethod().getDisplayValue() : "Chưa xác định")
                 .items(itemDTOs)
                 .build();
     }

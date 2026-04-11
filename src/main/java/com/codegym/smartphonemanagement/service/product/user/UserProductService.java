@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.Review;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
+import com.codegym.smartphonemanagement.service.product.DTO.ComparisonItemDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantResponseDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
@@ -198,5 +199,72 @@ public class UserProductService implements IUserProductService {
                         .build()
                 )
                 .toList();
+    }
+
+    @Override
+    public List<ComparisonItemDTO> compareProducts(List<Long> productIds) {
+        List<Product> products = productRepository.findAllById(productIds);
+
+        // Tìm kỷ lục (Max / Min)
+        Integer maxAntutu = products.stream()
+                .filter(p -> p.getSpecification() != null && p.getSpecification().getAntutuScore() != null)
+                .map(p -> p.getSpecification().getAntutuScore())
+                .max(Integer::compareTo).orElse(0);
+
+        Double maxScreenSize = products.stream()
+                .filter(p -> p.getSpecification() != null && p.getSpecification().getScreenSize() != null)
+                .map(p -> p.getSpecification().getScreenSize())
+                .max(Double::compareTo).orElse(0.0);
+
+        Integer maxBattery = products.stream()
+                .filter(p -> p.getSpecification() != null && p.getSpecification().getBatteryCapacity() != null)
+                .map(p -> p.getSpecification().getBatteryCapacity())
+                .max(Integer::compareTo).orElse(0);
+
+        Integer maxCharging = products.stream()
+                .filter(p -> p.getSpecification() != null && p.getSpecification().getChargingSpeed() != null)
+                .map(p -> p.getSpecification().getChargingSpeed())
+                .max(Integer::compareTo).orElse(0);
+
+        Double minWeight = products.stream()
+                .filter(p -> p.getSpecification() != null && p.getSpecification().getWeight() != null)
+                .map(p -> p.getSpecification().getWeight())
+                .min(Double::compareTo).orElse(Double.MAX_VALUE);
+
+        return products.stream().map(p -> {
+            ComparisonItemDTO dto = ComparisonItemDTO.builder()
+                    .productId(p.getId())
+                    .name(p.getName())
+                    .imageUrl(p.getImageUrl())
+                    .price(discountService.applyDiscount(p))
+                    .build();
+
+            if (p.getSpecification() != null) {
+                com.codegym.smartphonemanagement.model.ProductSpecification spec = p.getSpecification();
+                
+                dto.setProcessor(spec.getProcessor());
+                dto.setAntutuScore(spec.getAntutuScore());
+                dto.setBestAntutu(spec.getAntutuScore() != null && spec.getAntutuScore().equals(maxAntutu) && maxAntutu > 0);
+
+                dto.setScreenSize(spec.getScreenSize());
+                dto.setScreenTech(spec.getScreenTech());
+                dto.setBestScreenSize(spec.getScreenSize() != null && spec.getScreenSize().equals(maxScreenSize) && maxScreenSize > 0);
+
+                dto.setCameraInfo(spec.getCameraInfo());
+
+                dto.setBatteryCapacity(spec.getBatteryCapacity());
+                dto.setBestBattery(spec.getBatteryCapacity() != null && spec.getBatteryCapacity().equals(maxBattery) && maxBattery > 0);
+
+                dto.setChargingSpeed(spec.getChargingSpeed());
+                dto.setBestCharging(spec.getChargingSpeed() != null && spec.getChargingSpeed().equals(maxCharging) && maxCharging > 0);
+
+                dto.setOs(spec.getOs());
+                
+                dto.setWeight(spec.getWeight());
+                dto.setLightestWeight(spec.getWeight() != null && spec.getWeight().equals(minWeight) && minWeight < Double.MAX_VALUE);
+            }
+
+            return dto;
+        }).toList();
     }
 }

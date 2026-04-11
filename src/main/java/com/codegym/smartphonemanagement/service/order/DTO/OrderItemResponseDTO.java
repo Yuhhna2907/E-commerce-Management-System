@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 
 @Getter @Setter @Builder @AllArgsConstructor @NoArgsConstructor
 public class OrderItemResponseDTO {
+    private Long productId;
+    private Long variantId;
     private String productName;
     private String variantName;
     private String imageUrl;

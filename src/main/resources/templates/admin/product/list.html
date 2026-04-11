@@ -54,6 +54,10 @@
             <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
                 <i class="bi bi-cart-check me-2"></i> Đơn hàng
             </a>
+
+            <a th:href="@{/admin/coupons}" class="sidebar-link" th:classappend="${pageTitle == 'coupon'} ? 'active'">
+                <i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi / Voucher
+            </a>
             <hr>
         </div>
 

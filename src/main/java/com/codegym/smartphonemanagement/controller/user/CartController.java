@@ -1,5 +1,7 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.ProductVariant;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
@@ -12,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +37,25 @@ public class CartController {
     public String viewCart(HttpSession session, Model model) {
 
         CartResponseDTO cartResponse = cartService.getCart(USER_ID);
+
+        String appliedCoupon = (String) session.getAttribute("APPLIED_COUPON");
+        java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
+        
+        if (appliedCoupon != null) {
+            model.addAttribute("appliedCouponCode", appliedCoupon);
+            model.addAttribute("discountAmt", discountAmt);
+            
+            java.math.BigDecimal currentTotal = cartResponse.getTotalPrice().subtract(discountAmt);
+            if (currentTotal.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                 currentTotal = java.math.BigDecimal.ZERO;
+            }
+            model.addAttribute("totalAfterDiscount", currentTotal);
+            model.addAttribute("cartRawTotal", cartResponse.getTotalPrice());
+        } else {
+            model.addAttribute("totalAfterDiscount", cartResponse.getTotalPrice());
+            model.addAttribute("cartRawTotal", cartResponse.getTotalPrice());
+            model.addAttribute("discountAmt", java.math.BigDecimal.ZERO);
+        }
 
         model.addAttribute("cart", cartResponse);
 
@@ -106,8 +128,12 @@ public class CartController {
 
     // Update số lượng
     @PostMapping("/update")
-    public String updateCart(@ModelAttribute CartItemRequestDTO request) {
-        cartService.updateQuantity(USER_ID, request);
+    public String updateCart(@ModelAttribute CartItemRequestDTO request, RedirectAttributes redirectAttributes) {
+        try {
+            cartService.updateQuantity(USER_ID, request);
+        } catch (BadRequestException | ResourceNotFoundException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/user/cart";
     }
 

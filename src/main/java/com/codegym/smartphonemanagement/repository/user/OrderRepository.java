@@ -7,12 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     // 1. Tìm lịch sử đơn hàng của 1 user
     List<Order> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    long countByUser_IdAndStatusIn(Long userId, Collection<OrderStatus> statuses);
 
     // 2. Tìm đơn hàng theo trạng thái (Ví dụ: Admin muốn lọc các đơn PENDING)
     List<Order> findAllByStatusOrderByCreatedAtDesc(OrderStatus status);

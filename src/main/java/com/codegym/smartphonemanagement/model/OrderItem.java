@@ -40,4 +40,8 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id", nullable = false)
     private ProductVariant productVariant;
+
+    @Column(name = "allocated_discount")
+    @Builder.Default
+    private BigDecimal allocatedDiscount = BigDecimal.ZERO;
 }

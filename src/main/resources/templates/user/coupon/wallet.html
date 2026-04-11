@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Ví Khuyến Mãi - SmartZone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-main: #0f172a;
+            --accent: #0d6efd;
+            --radius-xl: 24px;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(circle at top right, rgba(13, 110, 253, 0.05), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.05), transparent 40%);
+            color: var(--text-main);
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #0b021a 0%, #1e0030 100%);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+        .wallet-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .wallet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        
+        .code-pill {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px dashed #f59e0b;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+        
+        .voucher-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ef4444;
+            line-height: 1.2;
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 50px;
+            padding: 10px 24px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: white;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #0d6efd, #3b82f6);
+            color: white;
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+            border-color: transparent;
+        }
+        
+        /* Cyber decorative */
+        .cyber-line {
+            width: 60px;
+            height: 4px;
+            background: #f59e0b;
+            border-radius: 2px;
+            margin-top: 15px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="fragments/header :: header"></div>
+
+<div class="container py-5">
+    
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="fw-bolder mb-1">Ví Khuyến Mãi Của Tôi <i class="bi bi-wallet2 text-warning ms-2"></i></h1>
+            <p class="mb-0 text-white-50 fs-5">Quản lý và theo dõi các siêu ưu đãi độc quyền.</p>
+            <div class="cyber-line"></div>
+        </div>
+        <div class="d-none d-lg-block opacity-50">
+            <i class="bi bi-ticket-perforated" style="font-size: 6rem;"></i>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 mb-4">
+            <div class="sidebar position-sticky" style="top: 100px;">
+                <div class="text-center mb-4 pb-3 border-bottom">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-person-circle fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">Tài khoản Khách</h5>
+                    <span class="text-muted small">ID: #USER_001</span>
+                </div>
+                
+                <ul class="nav flex-column nav-pills gap-2" id="walletTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link w-100 text-start active d-flex justify-content-between" id="myvouchers-tab" data-bs-toggle="pill" data-bs-target="#myvouchers" type="button" role="tab">
+                            <span><i class="bi bi-pass w-20px me-2 text-center"></i> Kho Voucher</span>
+                            <span class="badge bg-danger rounded-pill" th:text="${myWalletCoupons != null ? #lists.size(myWalletCoupons) : 0}">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link w-100 text-start d-flex justify-content-between" id="hunt-tab" data-bs-toggle="pill" data-bs-target="#hunt" type="button" role="tab">
+                            <span><i class="bi bi-search w-20px me-2 text-center"></i> Săn thêm Voucher</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="col-lg-9">
+            <div class="tab-content" id="walletTabContent">
+                
+                <!-- Tab: My Vouchers -->
+                <div class="tab-pane fade show active" id="myvouchers" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0"><i class="bi bi-pass-fill text-primary"></i> Voucher Đã Lưu</h4>
+                    </div>
+                    
+                    <div th:if="${myWalletCoupons == null or #lists.isEmpty(myWalletCoupons)}" class="text-center p-5 bg-white rounded-4 shadow-sm border text-muted">
+                        <i class="bi bi-emoji-frown fs-1 text-black-50 mb-3 d-block"></i>
+                        <h5 class="fw-bold text-dark">Ví của bạn đang rỗng</h5>
+                        <p class="mb-4">Bạn chưa săn được mã ưu đãi nào. Hãy chuyển sang mục Săn thêm Voucher nhé!</p>
+                        <button class="btn btn-outline-primary rounded-pill px-4" onclick="document.getElementById('hunt-tab').click()">Bắt đầu săn mã</button>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <!-- Iteration -->
+                        <div class="col-xl-6" th:each="coupon : ${myWalletCoupons}">
+                            <div class="wallet-card">
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="code-pill">
+                                            <i class="bi bi-tags-fill me-1"></i> <span th:text="${coupon.code}">SALE2026</span>
+                                        </div>
+                                        <span th:if="${coupon.status.name() == 'ACTIVE'}" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Có hiệu lực</span>
+                                        <span th:if="${coupon.status.name() != 'ACTIVE'}" class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Hết hạn</span>
+                                    </div>
+                                    
+                                    <div class="voucher-value mb-1">
+                                        Giảm <span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? #numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT') + '%' : #numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT') + 'đ'}">0%</span>
+                                    </div>
+                                    <div class="text-muted small fw-medium mb-3">
+                                        Đơn tối thiểu: <span th:text="${coupon.minOrderValue != null ? #numbers.formatDecimal(coupon.minOrderValue, 0, 'POINT', 0, 'COMMA') + 'đ' : '0đ'}">0đ</span>
+                                        <span th:if="${coupon.maxDiscountAmount != null}"> | Giảm đa: <span th:text="${#numbers.formatDecimal(coupon.maxDiscountAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'">0đ</span></span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-4">
+                                        <div class="small fw-bold" style="color: #64748b;">
+                                            <i class="bi bi-clock-history me-1"></i> HSD: <span th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}">31/12/2026</span>
+                                        </div>
+                                        <a th:href="@{/user/cart}" class="btn btn-primary fw-bold text-uppercase px-4 rounded-pill shadow-sm" style="font-size: 0.9rem;">
+                                            Dùng ngay
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab: Hunt Vouchers -->
+                <div class="tab-pane fade" id="hunt" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0"><i class="bi bi-search text-warning"></i> Săn Siêu Ưu Đãi</h4>
+                    </div>
+                    
+                    <div th:if="${GlobalVouchers == null or #lists.isEmpty(GlobalVouchers)}" class="text-center p-5 bg-white rounded-4 shadow-sm border text-muted">
+                        Trang web hiện tại chưa tung ra mã giảm giá nào. Bạn vui lòng quay lại sau nhé!
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Iteration GlobalVouchers -->
+                        <div class="col-xl-6" th:each="coupon : ${GlobalVouchers}">
+                            <div class="wallet-card border-warning">
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                                            <i class="bi bi-stars text-warning me-2"></i> <span th:text="${coupon.code}">CODE</span>
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="voucher-value mb-1 text-warning">
+                                        Giảm <span th:text="${coupon.discountType.name() == 'PERCENTAGE' ? #numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT') + '%' : #numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT') + 'đ'}">0%</span>
+                                    </div>
+                                    <div class="text-muted small fw-medium mb-3">
+                                        Đơn tối thiểu: <span th:text="${coupon.minOrderValue != null ? #numbers.formatDecimal(coupon.minOrderValue, 0, 'POINT', 0, 'COMMA') + 'đ' : '0đ'}">0đ</span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <span class="small fw-semibold text-danger"><i class="bi bi-fire"></i> Sắp hết</span>
+                                        
+                                        <!-- Actions -->
+                                        <div th:if="${#lists.contains(SavedVoucherCodes, coupon.code)}">
+                                            <button class="btn btn-secondary px-4 rounded-pill shadow-sm py-2 fw-bold" disabled><i class="bi bi-check2-circle"></i> Đã Lưu</button>
+                                        </div>
+                                        <form th:unless="${#lists.contains(SavedVoucherCodes, coupon.code)}" th:action="@{/user/coupons/save}" method="POST" class="m-0 p-0">
+                                            <input type="hidden" name="code" th:value="${coupon.code}">
+                                            <button type="submit" class="btn btn-warning px-4 py-2 rounded-pill shadow-sm fw-bold">Lưu Mã Của Bạn</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

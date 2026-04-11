@@ -135,10 +135,15 @@ public class CartService implements ICartService {
                 .findByCartAndProductAndProductVariant(cart, product, variant)
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
 
-        checkStock(variant, request.getQuantity());
+        int newQty = request.getQuantity();
+        int previousQty = item.getQuantity();
+        /* Chỉ chặn khi tăng số lượng; cho phép giảm khi kho = 0 (giỏ đang “vượt” tồn sau khi hết hàng) */
+        if (newQty > previousQty) {
+            checkStock(variant, newQty);
+        }
 
-        item.setQuantity(request.getQuantity());
-        item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(request.getQuantity())));
+        item.setQuantity(newQty);
+        item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(newQty)));
         cartItemRepository.save(item);
 
         return mapToResponseDTO(cart);

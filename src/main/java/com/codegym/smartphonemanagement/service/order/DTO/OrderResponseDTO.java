@@ -15,4 +15,5 @@ public class OrderResponseDTO {
     private String shippingAddress;
     private String note;
     private List<OrderItemResponseDTO> items;
+    private String paymentMethodDisplay;
 }

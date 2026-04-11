@@ -1,6 +1,5 @@
 package com.codegym.smartphonemanagement.controller.user;
 
-import com.codegym.smartphonemanagement.model.Order;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.order.DTO.OrderRequestDTO;
@@ -31,7 +30,7 @@ public class UserOrderController {
      * Bước 1: Hiển thị trang điền thông tin thanh toán (Checkout)
      */
     @GetMapping("/checkout")
-    public String showCheckoutPage(Model model) {
+    public String showCheckoutPage(Model model, jakarta.servlet.http.HttpSession session) {
         CartResponseDTO cart = cartService.getCart(USER_ID);
 
         // Nếu giỏ hàng trống, không cho vào trang thanh toán
@@ -39,8 +38,28 @@ public class UserOrderController {
             return "redirect:/user/cart";
         }
 
+        OrderRequestDTO requestDto = new OrderRequestDTO();
+        
+        String appliedCoupon = (String) session.getAttribute("APPLIED_COUPON");
+        java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
+        
+        if (appliedCoupon != null) {
+            requestDto.setCouponCode(appliedCoupon);
+            model.addAttribute("appliedCouponCode", appliedCoupon);
+            model.addAttribute("discountAmt", discountAmt);
+            
+            // Recalculate total for display
+            java.math.BigDecimal currentTotal = cart.getTotalPrice().subtract(discountAmt);
+            if (currentTotal.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                 currentTotal = java.math.BigDecimal.ZERO;
+            }
+            model.addAttribute("totalAfterDiscount", currentTotal);
+        } else {
+            model.addAttribute("totalAfterDiscount", cart.getTotalPrice());
+        }
+
         model.addAttribute("cart", cart);
-        model.addAttribute("orderRequest", new OrderRequestDTO());
+        model.addAttribute("orderRequest", requestDto);
         return "user/order/checkout"; // Trả về file checkout.html
     }
 
@@ -92,5 +111,17 @@ public class UserOrderController {
         List<OrderResponseDTO> history = orderService.getOrderHistory(USER_ID);
         model.addAttribute("orders", history);
         return "user/order/history";
+    }
+
+    @PostMapping("/reorder/{orderId}")
+    public String reorder(@PathVariable Long orderId, RedirectAttributes redirectAttributes) {
+        try {
+            orderService.reorderOrderToCart(USER_ID, orderId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thêm sản phẩm từ đơn hàng vào giỏ.");
+            return "redirect:/user/cart";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/user/order/history";
+        }
     }
 }

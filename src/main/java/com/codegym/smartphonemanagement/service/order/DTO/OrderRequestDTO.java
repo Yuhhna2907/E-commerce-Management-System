@@ -1,6 +1,8 @@
 package com.codegym.smartphonemanagement.service.order.DTO;
 
+import com.codegym.smartphonemanagement.model.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
@@ -13,9 +15,6 @@ public class OrderRequestDTO {
     @Pattern(regexp = "^(0|\\+84)(\\s|\\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\\d)(\\s|\\.)?(\\d{3})(\\s|\\.)?(\\d{3})$",
             message = "Vui lòng nhập số điện thoại hợp lệ") // Giữ cái Regex của m
     private String receiverPhone;
-
-    @NotBlank(message = "Địa chỉ giao hàng không được để trống")
-    private String shippingAddress;
 
     @NotBlank(message = "Vui lòng chọn Tỉnh/Thành phố")
     private String province;
@@ -30,4 +29,9 @@ public class OrderRequestDTO {
     private String addressDetail;
 
     private String note;
+
+    @NotNull(message = "Vui lòng chọn phương thức thanh toán")
+    private PaymentMethod paymentMethod;
+
+    private String couponCode;
 }
