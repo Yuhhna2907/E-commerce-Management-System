@@ -61,4 +61,14 @@ public class Order {
 
     @Column(name = "note")
     private String note;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "coupon_code", length = 50)
+    private String couponCode;
+
+    @Column(name = "total_discount")
+    @Builder.Default
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
 }

@@ -1,47 +1,943 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Đặt hàng thành công</title>
+    <title>Đặt hàng thành công | Smartphone Store 2026</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    
     <style>
-        body { background: #f8f9fa; }
-        .success-box { max-width: 600px; margin: 80px auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-        .check-icon { font-size: 80px; color: #28a745; margin-bottom: 20px; animation: scaleUp 0.5s ease-out; }
-        .order-details { background: #fdfdfd; border: 1px dashed #ddd; border-radius: 8px; padding: 20px; text-align: left; margin: 30px 0; }
-        .btn-home { background: #288ad6; color: white; border-radius: 25px; padding: 10px 30px; font-weight: 600; text-decoration: none; transition: 0.3s; }
-        .btn-home:hover { background: #1b6ca8; color: white; }
-        @keyframes scaleUp { from { transform: scale(0); } to { transform: scale(1); } }
+        :root {
+            --primary-glow: rgba(13, 110, 253, 0.4);
+            --secondary-glow: rgba(251, 146, 60, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-strong: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --shadow-soft: 0 20px 40px -15px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.5);
+            --shadow-float: 0 30px 60px -15px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,1);
+            --price-red: #ef4444;
+            --accent-gradient: linear-gradient(135deg, #f59e0b, #f97316);
+            --accent-gradient-hover: linear-gradient(135deg, #f97316, #ea580c);
+            --bg-color: #F1F3F5;
+            /* Mặc định cho IDE / trước khi JS gán từng hạt burst */
+            --burst-dx: 0px;
+            --burst-dy: 0px;
+            --burst-delay: 0s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.04) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .dashboard-wrapper {
+            max-width: 1000px;
+            margin: 50px auto;
+            position: relative;
+        }
+
+        /* --- Animations Stagger --- */
+        .fly-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: flyIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        @keyframes flyIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Bento Cards --- */
+        .bento-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            height: 100%;
+        }
+
+        .bento-card-main {
+            background: var(--glass-strong);
+            text-align: center;
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-float);
+            position: relative;
+            z-index: 2;
+            overflow: visible;
+        }
+
+        .bento-card-sub {
+            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s ease, border-color 0.35s ease, background 0.35s ease;
+        }
+
+        .bento-card-sub:hover {
+            transform: translateY(-6px);
+            box-shadow:
+                0 20px 50px -18px rgba(15, 23, 42, 0.12),
+                0 0 0 1px rgba(245, 158, 11, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border-color: rgba(245, 158, 11, 0.25) !important;
+            background: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        .bento-card:hover:not(.bento-card-main):not(.bento-timeline):not(.bento-card-sub) {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-float);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* --- Celebrate Block (Main) --- */
+        .check-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 24px;
+        }
+
+        .burst-particles-host {
+            position: absolute;
+            inset: -120px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .burst-particle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 7px;
+            height: 7px;
+            margin-left: -3.5px;
+            margin-top: -3.5px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: burst-out 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: var(--burst-delay, 0s);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        @keyframes burst-out {
+            0% {
+                transform: translate(0, 0) scale(0.2);
+                opacity: 0;
+            }
+            12% {
+                opacity: 0.95;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(var(--burst-dx), var(--burst-dy)) scale(0.15);
+                opacity: 0;
+            }
+        }
+
+        .bento-card-main .main-burst-halo {
+            position: absolute;
+            inset: -20%;
+            border-radius: inherit;
+            background: radial-gradient(circle at 50% 18%, rgba(16, 185, 129, 0.12) 0%, transparent 42%),
+                radial-gradient(circle at 50% 18%, rgba(245, 158, 11, 0.08) 0%, transparent 35%);
+            pointer-events: none;
+            z-index: 0;
+            animation: halo-breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes halo-breathe {
+            0%, 100% { opacity: 0.75; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        .check-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #34d399, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+            z-index: 5;
+            box-shadow:
+                0 18px 36px -12px rgba(16, 185, 129, 0.55),
+                0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+            animation: popIn 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .check-circle .check-icon-anim {
+            display: flex;
+            animation: check-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+
+        @keyframes check-pop {
+            from {
+                transform: scale(0) rotate(-25deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotate(0);
+                opacity: 1;
+            }
+        }
+
+        .particles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .particles::before, .particles::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 2px solid #10b981;
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+            animation: burst 1.5s ease-out infinite;
+        }
+        
+        .particles::after {
+            animation-delay: 0.75s;
+            border-color: #f59e0b;
+        }
+
+        @keyframes burst {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; border-width: 4px; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; border-width: 0; }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .celebrate-title {
+            font-weight: 800;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #0f172a, #334155);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        /* --- Left Block (Info) --- */
+        .info-row {
+            margin-bottom: 20px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-label i {
+            color: #f59e0b;
+            font-size: 1.1rem;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .info-value.mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #0d6efd;
+            background: rgba(13, 110, 253, 0.05);
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* --- Right Block (Products) --- */
+        .product-mini-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            background: rgba(255,255,255,0.7);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+        }
+
+        .product-mini-item:hover {
+            background: #fff;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        a.product-row-link {
+            cursor: pointer;
+            text-decoration: none !important;
+            color: inherit !important;
+        }
+
+        a.product-row-link:hover {
+            transform: translateX(5px) scale(1.03);
+            box-shadow: 0 0 26px rgba(245, 158, 11, 0.38);
+            border-color: rgba(245, 158, 11, 0.35) !important;
+        }
+
+        .review-cta-pill {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 6px 12px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.15));
+            color: #b45309;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .product-img {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 4px;
+            object-fit: contain;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            margin-right: 14px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--text-main);
+            margin-bottom: 2px;
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+
+        .product-qty {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .product-price {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--price-red);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+        }
+
+        .product-price .currency-suffix {
+            font-size: 0.78em;
+            font-weight: 600;
+            opacity: 0.88;
+            margin-left: 0.12em;
+        }
+
+        .order-total-pill {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .order-total-pill .ot-amount {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .order-total-pill .ot-currency {
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0.85;
+            margin-left: 0.15em;
+        }
+
+        /* --- Bottom Block (Timeline) --- */
+        .bento-timeline {
+            padding: 40px;
+        }
+
+        .timeline-track {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .timeline-track::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 40px;
+            right: 40px;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+            z-index: 0;
+        }
+
+        .timeline-station {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            width: 80px;
+        }
+
+        .station-icon {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            margin: 0 auto 12px;
+            transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, color 0.35s ease, filter 0.35s ease;
+        }
+
+        .timeline-station:not(.active):not(.done) .station-icon:hover {
+            transform: scale(1.08);
+            border-color: rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+            box-shadow: 0 0 22px rgba(59, 130, 246, 0.2);
+            filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.35));
+        }
+
+        .timeline-station.done .station-icon:hover {
+            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45));
+            transform: scale(1.06);
+        }
+
+        .station-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: all 0.4s ease;
+        }
+
+        .timeline-station.done .station-icon {
+            border-color: #10b981;
+            background: #10b981;
+            color: #fff;
+        }
+
+        .timeline-station.done .station-label {
+            color: #10b981;
+        }
+
+        .timeline-station.active .station-icon {
+            border-color: #10b981;
+            color: #fff;
+            background: linear-gradient(145deg, #34d399, #059669);
+            box-shadow:
+                0 0 0 4px rgba(16, 185, 129, 0.25),
+                0 0 28px rgba(16, 185, 129, 0.45);
+            animation: pulse-station-glow 2.2s ease-in-out infinite;
+        }
+
+        .timeline-station.active .station-label {
+            color: #047857;
+            font-weight: 800;
+        }
+
+        @keyframes pulse-station-glow {
+            0%, 100% {
+                box-shadow:
+                    0 0 0 4px rgba(16, 185, 129, 0.2),
+                    0 0 22px rgba(16, 185, 129, 0.35);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 10px rgba(16, 185, 129, 0),
+                    0 0 36px rgba(245, 190, 11, 0.35);
+            }
+        }
+
+        /* Timeline skeleton */
+        .timeline-wrap {
+            position: relative;
+            min-height: 140px;
+        }
+
+        .timeline-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            pointer-events: none;
+            transition: opacity 0.45s ease, visibility 0.45s ease;
+        }
+
+        .timeline-wrap.is-ready .timeline-skeleton {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .timeline-inner {
+            opacity: 0;
+            transition: opacity 0.5s ease 0.05s;
+        }
+
+        .timeline-wrap.is-ready .timeline-inner {
+            opacity: 1;
+        }
+
+        .sk-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 45%, #e2e8f0 90%);
+            background-size: 200% 100%;
+            animation: sk-shimmer 1.1s ease-in-out infinite;
+        }
+
+        .sk-bar {
+            flex: 1;
+            height: 4px;
+            margin: 0 0.5rem;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+            background-size: 200% 100%;
+            animation: sk-shimmer 1.2s ease-in-out infinite;
+        }
+
+        @keyframes sk-shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* --- Buttons --- */
+        .btn-gradient-glow {
+            background: linear-gradient(135deg, #f59e0b, #ea580c, #fbbf24);
+            background-size: 200% 200%;
+            color: #fff;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 1.02rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow:
+                0 12px 28px -8px rgba(245, 158, 11, 0.55),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            transition: transform 0.35s ease, box-shadow 0.35s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            isolation: isolate;
+        }
+
+        .btn-gradient-glow::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 0;
+        }
+
+        .btn-gradient-glow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 55%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+            transform: skewX(-18deg);
+            animation: btn-liquid 3.5s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .btn-gradient-glow > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes btn-liquid {
+            0%, 30% { left: -100%; opacity: 0; }
+            38% { opacity: 1; }
+            55%, 100% { left: 130%; opacity: 0; }
+        }
+
+        .btn-gradient-glow:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 18px 40px -10px rgba(245, 158, 11, 0.6),
+                0 0 32px rgba(251, 191, 36, 0.35);
+            color: #fff;
+            background-position: 100% 50%;
+        }
+
+        .btn-gradient-glow:hover::before {
+            opacity: 1;
+        }
+
+        .btn-outline-glass {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(10px);
+            color: var(--text-main);
+            border: 1.5px solid rgba(15, 23, 42, 0.14);
+            padding: 15px 32px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, transform 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-outline-glass:hover {
+            background: rgba(13, 110, 253, 0.08);
+            border-color: rgba(13, 110, 253, 0.35);
+            color: #0d6efd;
+            box-shadow: 0 10px 28px rgba(13, 110, 253, 0.12);
+            transform: translateY(-3px);
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            .timeline-track::before {
+                left: 20px; right: 20px;
+            }
+            .bento-card-main {
+                padding: 30px 20px;
+            }
+            .timeline-skeleton {
+                padding: 0 0.5rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fly-in,
+            .check-circle,
+            .check-icon-anim,
+            .burst-particle,
+            .btn-gradient-glow::after,
+            .timeline-station.active .station-icon,
+            .main-burst-halo {
+                animation: none !important;
+            }
+            .fly-in {
+                opacity: 1;
+                transform: none;
+            }
+            .btn-gradient-glow::after {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div th:replace="~{fragments/header :: header}"></div>
 
-<div class="container">
-    <div class="success-box">
-        <i class="bi bi-check-circle-fill check-icon"></i>
-        <h2 class="fw-bold">ĐẶT HÀNG THÀNH CÔNG!</h2>
-        <p class="text-muted">Cảm ơn <strong th:text="${order.customerName}"></strong> đã mua sắm. Đơn hàng của Duy đang được chuẩn bị.</p>
+<div class="container dashboard-wrapper">
+    
+    <!-- Progress Stepper -->
+    <div th:replace="~{fragments/header :: stepper('success')}"></div>
 
-        <div class="order-details">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Chi tiết đơn hàng</h6>
-            <p class="mb-2"><strong>Mã đơn hàng:</strong> #<span th:text="${order.id}"></span></p>
-            <p class="mb-2"><strong>Người nhận:</strong> <span th:text="${order.customerName}"></span></p>
-            <p class="mb-2"><strong>Địa chỉ:</strong> <span th:text="${order.shippingAddress}"></span></p>
-            <p class="mb-2"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span></p>
-            <p class="mb-0"><strong>Trạng thái:</strong> <span class="badge bg-warning text-dark">Chờ xác nhận</span></p>
+    <!-- KHỐI ĂN MỪNG (Bento Chính) -->
+    <div class="bento-card bento-card-main fly-in mb-4 position-relative">
+        <div class="main-burst-halo" aria-hidden="true"></div>
+        <div class="check-container">
+            <div class="particles" aria-hidden="true"></div>
+            <div class="check-circle">
+                <span class="check-icon-anim"><i class="bi bi-check-lg"></i></span>
+            </div>
+        </div>
+        
+        <h2 class="celebrate-title">ĐẶT HÀNG THÀNH CÔNG!</h2>
+        <p class="text-muted fs-5 mb-0" style="max-width: 600px; margin: 0 auto;">
+            Tuyệt vời, <strong class="text-dark" th:text="${order.customerName}">Nguyễn Văn A</strong>! <br>
+            Bạn vừa hoàn tất sở hữu siêu phẩm công nghệ năm 2026.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <!-- KHỐI THÔNG TIN (Trái) -->
+        <div class="col-lg-5">
+            <div class="bento-card bento-card-sub fly-in delay-1 d-flex flex-column justify-content-between">
+                <div>
+                    <h5 class="fw-bold mb-4" style="letter-spacing: -0.02em;">
+                        <span style="background: rgba(13,110,253,0.1); color: #0d6efd; padding: 6px 12px; border-radius: 8px; margin-right: 8px;">
+                            <i class="bi bi-receipt"></i>
+                        </span>
+                        Hồ sơ đơn hàng
+                    </h5>
+
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-tag-fill"></i> Mã Đơn Hàng</div>
+                        <div class="info-value mono">#<span th:text="${order.id}"></span></div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-clock-history"></i> Dấu thời gian</div>
+                        <div class="info-value text-dark" th:text="${#temporals.format(order.createdAt, 'HH:mm - dd/MM/yyyy')}">14:00 - 11/04/2026</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-wallet2"></i> Phương thức thanh toán</div>
+                        <div class="info-value text-success" th:text="${order.paymentMethodDisplay}">Thanh toán khi nhận hàng (COD)</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-person-badge"></i> Liên hệ</div>
+                        <div class="info-value" th:text="${order.receiverPhone}">0912345678</div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-geo-alt-fill"></i> Tọa độ nhận hàng</div>
+                        <div class="info-value lh-sm fw-semibold text-muted" th:text="${order.shippingAddress}">
+                            Số 1, Đường 2, Phường 3, Quận 4, TP.HCM
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="d-flex justify-content-center gap-3">
-            <a th:href="@{/user/products}" class="btn-home">Tiếp tục mua sắm</a>
-            <a th:href="@{/user/order/history}" class="btn btn-outline-secondary rounded-pill px-4">Lịch sử đơn hàng</a>
+        <!-- KHỐI SẢN PHẨM ĐÃ MUA (Phải) -->
+        <div class="col-lg-7">
+            <div class="bento-card bento-card-sub fly-in delay-2">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0" style="letter-spacing: -0.02em;">
+                        <span style="background: rgba(245,158,11,0.1); color: #f59e0b; padding: 6px 12px; border-radius: 8px; margin-right: 8px;">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </span>
+                        Sản phẩm đã mua
+                    </h5>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-sm order-total-pill">
+                        <span class="me-1">Tổng cộng:</span>
+                        <strong class="text-danger ot-amount" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                        <strong class="text-danger ot-currency">₫</strong>
+                    </span>
+                </div>
+
+                <div class="product-list" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Lặp danh sách sản phẩm -->
+                    <a th:each="item : ${order.items}"
+                       th:with="detailUrl=@{/user/products/{id}(id=${item.productId})}"
+                       th:href="${detailUrl} + '#reviews'"
+                       class="product-mini-item product-row-link">
+                        <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                             th:src="${item.imageUrl}" alt="" class="product-img">
+                        <div th:unless="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                             class="product-img d-flex align-items-center justify-content-center bg-white border border-light">
+                             <i class="bi bi-phone text-secondary fs-3"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="product-name text-truncate" th:text="${item.productName}">Tên sản phẩm</h6>
+                            <div class="product-qty text-truncate" th:text="${item.variantName}">Biến thể</div>
+                            <div class="product-qty">Số lượng: <strong th:text="${item.quantity}">1</strong></div>
+                        </div>
+                        <span class="review-cta-pill d-none d-sm-inline">Đánh giá ngay</span>
+                        <div class="product-price d-inline-flex align-items-baseline flex-shrink-0">
+                            <span th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')}"></span>
+                            <span class="currency-suffix">₫</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- KHỐI QUY TRÌNH BAO GÓI (Bottom) -->
+    <div class="bento-card bento-timeline fly-in delay-3 mt-4">
+        <h5 class="fw-bold mb-4 mb-md-5 text-center" style="letter-spacing: -0.02em;">
+            <i class="bi bi-activity text-success me-2"></i> Trình theo dõi bưu kiện
+        </h5>
+
+        <div class="timeline-wrap" id="timelineWrap">
+            <div class="timeline-skeleton" aria-hidden="true">
+                <div class="d-flex align-items-center w-100 justify-content-between gap-1 px-md-3">
+                    <div class="sk-dot"></div>
+                    <div class="sk-bar flex-grow-1 d-none d-sm-block"></div>
+                    <div class="sk-dot"></div>
+                    <div class="sk-bar flex-grow-1 d-none d-sm-block"></div>
+                    <div class="sk-dot"></div>
+                    <div class="sk-bar flex-grow-1 d-none d-sm-block"></div>
+                    <div class="sk-dot"></div>
+                    <div class="sk-bar flex-grow-1 d-none d-sm-block"></div>
+                    <div class="sk-dot"></div>
+                </div>
+            </div>
+            <div class="timeline-inner">
+                <div class="timeline-track" id="orderTimeline" th:data-status="${order.status}">
+                    <div class="timeline-station" data-step="PENDING">
+                        <div class="station-icon"><i class="bi bi-bag-check-fill"></i></div>
+                        <div class="station-label">Đã đặt</div>
+                    </div>
+                    <div class="timeline-station" data-step="CONFIRMED">
+                        <div class="station-icon"><i class="bi bi-shield-check"></i></div>
+                        <div class="station-label">Xác nhận</div>
+                    </div>
+                    <div class="timeline-station" data-step="SHIPPING">
+                        <div class="station-icon"><i class="bi bi-truck-front-fill"></i></div>
+                        <div class="station-label">Vận chuyển</div>
+                    </div>
+                    <div class="timeline-station" data-step="DELIVERED">
+                        <div class="station-icon"><i class="bi bi-house-heart-fill"></i></div>
+                        <div class="station-label">Đã giao</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI NÚT ACTION TƯƠNG TÁC -->
+    <div class="d-flex flex-column flex-sm-row justify-content-center gap-4 mt-5 fly-in delay-4">
+        <a th:href="@{/user/products}" class="btn-gradient-glow">
+            <i class="bi bi-cart-plus fs-5"></i> Tiếp tục săn Sale
+        </a>
+        <a th:href="@{/user/order/history}" class="btn-outline-glass">
+            <i class="bi bi-clock-history fs-5"></i> Lịch sử Mua hàng
+        </a>
+    </div>
+
 </div>
 
-<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: footer}" class="mt-5"></div>
+
+<!-- Tham chiếu class cho phân tích tĩnh (IDE); không hiển thị -->
+<div class="d-none" aria-hidden="true">
+    <div class="burst-particles-host">
+        <span class="burst-particle" style="--burst-dx:0px;--burst-dy:0px;--burst-delay:0s"></span>
+    </div>
+    <div class="timeline-station active done"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Burst particles animation
+        const host = document.querySelector('.check-container');
+        if (host) {
+            const layer = document.createElement('div');
+            layer.className = 'burst-particles-host';
+            layer.setAttribute('aria-hidden', 'true');
+            host.insertBefore(layer, host.firstChild);
+            const palette = [
+                'rgba(16, 185, 129, 0.9)',
+                'rgba(52, 211, 153, 0.85)',
+                'rgba(245, 158, 11, 0.88)',
+                'rgba(251, 191, 36, 0.82)',
+                'rgba(5, 150, 105, 0.75)'
+            ];
+            for (let i = 0; i < 42; i++) {
+                const p = document.createElement('span');
+                p.className = 'burst-particle';
+                const angle = (Math.PI * 2 * i) / 42 + (Math.random() - 0.5) * 0.35;
+                const dist = 68 + Math.random() * 100;
+                const dx = Math.round(Math.cos(angle) * dist);
+                const dy = Math.round(Math.sin(angle) * dist);
+                p.style.setProperty('--burst-dx', dx + 'px');
+                p.style.setProperty('--burst-dy', dy + 'px');
+                p.style.setProperty('--burst-delay', (Math.random() * 0.28).toFixed(2) + 's');
+                const c = palette[i % palette.length];
+                p.style.background = c;
+                p.style.color = c;
+                layer.appendChild(p);
+            }
+        }
+
+        // Timeline logic based on OrderStatus enum
+        const timeline = document.getElementById('orderTimeline');
+        if (timeline) {
+            const currentStatus = timeline.getAttribute('data-status');
+            
+            // Define the order flow matching OrderStatus enum
+            const statusFlow = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED'];
+            
+            // Find current status index
+            const currentIndex = statusFlow.indexOf(currentStatus);
+            
+            // Update timeline stations
+            const stations = timeline.querySelectorAll('.timeline-station');
+            stations.forEach((station, index) => {
+                const stepStatus = station.getAttribute('data-step');
+                const stepIndex = statusFlow.indexOf(stepStatus);
+                
+                if (stepIndex < currentIndex) {
+                    // Past steps - mark as done
+                    station.classList.add('done');
+                } else if (stepIndex === currentIndex) {
+                    // Current step - mark as active
+                    station.classList.add('active');
+                }
+                // Future steps remain default (no class)
+            });
+        }
+
+        // Show timeline after processing
+        window.setTimeout(function () {
+            const w = document.getElementById('timelineWrap');
+            if (w) {
+                w.classList.add('is-ready');
+            }
+        }, 400);
+    });
+</script>
 </body>
 </html>

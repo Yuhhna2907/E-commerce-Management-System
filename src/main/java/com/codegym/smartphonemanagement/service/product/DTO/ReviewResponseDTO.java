@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.service.product.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,5 +19,6 @@ public class ReviewResponseDTO {
     private Integer rating;
     private String comment;
 
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime createdAt;
 }

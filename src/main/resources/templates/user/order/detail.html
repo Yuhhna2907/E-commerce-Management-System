@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết đơn hàng #<span th:text="${order.id}">1</span> | SmartZone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --radius-bento: 24px;
+            --radius-sm: 16px;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --shadow-float: 0 20px 40px -10px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,1);
+        }
+
+        body {
+            background: #F1F3F5;
+            background-image: 
+                radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 0% 100%, rgba(13, 110, 253, 0.03) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+        }
+
+        .detail-wrapper { max-width: 1100px; margin: 40px auto; }
+
+        .page-title {
+            font-weight: 800; font-size: 2rem; letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #0f172a, #475569);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Timeline Bento --- */
+        .timeline-bento {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-bento);
+            padding: 36px 32px;
+            box-shadow: var(--shadow-float);
+            margin-bottom: 32px;
+        }
+
+        .step-track {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; position: relative;
+            padding: 0 10px;
+        }
+
+        .step-track::before {
+            content: ''; position: absolute;
+            top: 22px; left: 40px; right: 40px;
+            height: 3px; background: #e2e8f0;
+            border-radius: 3px; z-index: 0;
+        }
+
+        .step-track .progress-fill {
+            position: absolute; top: 22px; left: 40px;
+            height: 3px; border-radius: 3px; z-index: 1;
+            background: linear-gradient(90deg, #10b981, #f59e0b);
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .step-node {
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; z-index: 2; flex: 1; max-width: 120px;
+        }
+
+        .step-icon {
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; font-weight: 700;
+            background: #fff; border: 3px solid #e2e8f0;
+            color: #94a3b8;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .step-node.done .step-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981; color: #fff;
+            box-shadow: 0 0 0 6px rgba(16,185,129,0.15);
+        }
+
+        .step-node.active .step-icon {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            border-color: #f59e0b; color: #fff;
+            box-shadow: 0 0 0 6px rgba(245,158,11,0.2);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .step-node.error .step-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #ef4444; color: #fff;
+            box-shadow: 0 0 0 6px rgba(239,68,68,0.15);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 6px rgba(245,158,11,0.2); }
+            50% { box-shadow: 0 0 0 10px rgba(245,158,11,0.1); }
+        }
+
+        .step-label {
+            margin-top: 10px; font-weight: 700; font-size: 0.75rem;
+            color: var(--text-muted); text-align: center;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+
+        .step-node.done .step-label { color: #059669; }
+        .step-node.active .step-label { color: #d97706; }
+        .step-node.error .step-label { color: #dc2626; }
+
+        .step-time {
+            font-size: 0.7rem; color: #94a3b8; margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- Info Cards --- */
+        .info-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-bento);
+            padding: 28px;
+            box-shadow: var(--shadow-float);
+            margin-bottom: 24px;
+        }
+
+        .info-card h5 {
+            font-weight: 800; font-size: 1.1rem;
+            margin-bottom: 20px; letter-spacing: -0.01em;
+        }
+
+        .info-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+        .info-value { font-weight: 700; font-size: 0.95rem; }
+
+        /* --- Product Items --- */
+        .product-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px; background: #fff;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(0,0,0,0.03);
+            margin-bottom: 12px;
+            transition: transform 0.3s;
+        }
+        .product-item:hover { transform: translateX(4px); }
+
+        .product-item img {
+            width: 64px; height: 64px; border-radius: 12px;
+            object-fit: contain; padding: 4px; background: #fff;
+            box-shadow: 0 8px 16px -4px rgba(0,0,0,0.1);
+        }
+
+        .price-mono {
+            font-family: 'JetBrains Mono', monospace; font-weight: 700;
+        }
+
+        .discount-tag {
+            font-size: 0.78rem; font-weight: 700;
+            color: #d97706; background: rgba(245,158,11,0.1);
+            padding: 2px 8px; border-radius: 6px;
+        }
+
+        /* --- Status Badges --- */
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 18px; border-radius: 50px; font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .status-pill.pending { background: rgba(245,158,11,0.12); color: #d97706; }
+        .status-pill.confirmed { background: rgba(13,110,253,0.1); color: #0d6efd; }
+        .status-pill.shipping { background: rgba(139,92,246,0.1); color: #7c3aed; }
+        .status-pill.delivered { background: rgba(16,185,129,0.12); color: #059669; }
+        .status-pill.cancelled { background: rgba(239,68,68,0.1); color: #dc2626; }
+        .status-pill.refund_requested { background: rgba(245,158,11,0.15); color: #b45309; }
+        .status-pill.refunded { background: rgba(239,68,68,0.12); color: #dc2626; }
+        .status-pill.partial_refunded { background: rgba(249,115,22,0.12); color: #c2410c; }
+
+        /* --- Summary --- */
+        .summary-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 0.95rem;
+        }
+        .summary-row:last-child { border-bottom: none; }
+
+        .total-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 0; margin-top: 8px;
+            border-top: 2px solid #0f172a;
+        }
+
+        .total-amount {
+            font-size: 1.8rem; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #ef4444;
+        }
+
+        /* --- Action Buttons --- */
+        .btn-action-lg {
+            padding: 14px 28px; border-radius: 50px;
+            font-weight: 800; font-size: 0.95rem;
+            border: none; cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .btn-action-lg:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+
+        .btn-cancel { background: #fee2e2; color: #dc2626; }
+        .btn-cancel:hover { background: #fecaca; color: #b91c1c; }
+
+        .btn-refund { background: linear-gradient(135deg, #f59e0b, #eab308); color: #fff; }
+        .btn-refund:hover { box-shadow: 0 10px 25px rgba(245,158,11,0.4); color: #fff; }
+
+        /* --- Refund Info Banner --- */
+        .refund-banner {
+            background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.08));
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: var(--radius-bento);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+
+        /* --- Activity Log --- */
+        .activity-item {
+            display: flex; gap: 12px; padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .activity-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #10b981; margin-top: 6px; flex-shrink: 0;
+        }
+        .activity-time {
+            font-size: 0.78rem; color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .breadcrumb-glass {
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            padding: 10px 20px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.9rem; font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .step-track { flex-wrap: wrap; gap: 16px; justify-content: center; }
+            .step-track::before, .step-track .progress-fill { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container detail-wrapper">
+    <nav class="mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-glass mb-0">
+            <li class="breadcrumb-item"><a th:href="@{/user/products}" class="text-decoration-none" style="color: #f59e0b;">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/user/order/history}" class="text-decoration-none text-muted">Đơn hàng</a></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page">Chi tiết #<span th:text="${order.id}">1</span></li>
+        </ol>
+    </nav>
+
+    <div th:if="${successMessage}" class="alert alert-success rounded-4 border-0 shadow-sm mb-3" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger rounded-4 border-0 shadow-sm mb-3" th:text="${errorMessage}"></div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="page-title mb-1">Đơn hàng #<span th:text="${order.id}">1</span></h2>
+            <p class="text-muted fw-medium mb-0">
+                Đặt lúc <span th:text="${#temporals.format(order.createdAt, 'HH:mm - dd/MM/yyyy')}"></span>
+            </p>
+        </div>
+        <span class="status-pill"
+              th:classappend="${order.status.toLowerCase()}"
+              th:text="${order.statusDisplay}">Trạng thái</span>
+    </div>
+
+    <!-- ========== TIMELINE BENTO ========== -->
+    <div class="timeline-bento">
+        <h5 class="fw-bold mb-4"><i class="bi bi-signpost-2 me-2"></i>Tiến trình đơn hàng</h5>
+        <div class="step-track" id="stepTrack">
+            <!-- Rendered by JS below based on status -->
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- LEFT COLUMN -->
+        <div class="col-lg-7">
+            <!-- Sản phẩm -->
+            <div class="info-card">
+                <h5><i class="bi bi-bag-check me-2"></i>Sản phẩm đã mua</h5>
+                <div th:each="item : ${order.items}" class="product-item">
+                    <img th:src="${item.imageUrl != null ? item.imageUrl : 'https://cdn-icons-png.flaticon.com/512/186/186239.png'}"
+                         th:alt="${item.productName}">
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fw-bold text-truncate" th:text="${item.productName}">iPhone 15</div>
+                        <div class="small text-muted text-truncate" th:text="${item.variantName}">Xanh - 256GB</div>
+                        <div class="small mt-1">
+                            SL: <strong th:text="${item.quantity}">1</strong>
+                            <span class="ms-2 price-mono" style="color: #0d6efd;">
+                                <span th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')}"></span>₫
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-end flex-shrink-0">
+                        <div class="price-mono fw-bold" th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</div>
+                        <div th:if="${item.allocatedDiscount != null && item.allocatedDiscount > 0}" class="discount-tag mt-1">
+                            -<span th:text="${#numbers.formatDecimal(item.allocatedDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫ voucher
+                        </div>
+                        <div th:if="${item.allocatedDiscount != null && item.allocatedDiscount > 0}" class="small text-success fw-bold mt-1">
+                            Thực: <span th:text="${#numbers.formatDecimal(item.netPrice, 0, 'COMMA', 0, 'POINT')}"></span>₫
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lịch sử hoạt động -->
+            <div class="info-card" th:if="${order.timeline != null && !order.timeline.isEmpty()}">
+                <h5><i class="bi bi-clock-history me-2"></i>Nhật ký đơn hàng</h5>
+                <div th:each="entry : ${order.timeline}" class="activity-item">
+                    <div class="activity-dot"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold small" th:text="${entry.reason}">Đơn hàng được tạo</div>
+                        <div class="activity-time" th:text="${#temporals.format(entry.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
+                    </div>
+                    <span class="badge bg-light text-dark fw-bold small" th:text="${entry.updatedBy}">SYSTEM</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="col-lg-5">
+            <!-- Thông tin nhận hàng -->
+            <div class="info-card">
+                <h5><i class="bi bi-geo-alt me-2"></i>Thông tin giao hàng</h5>
+                <div class="mb-3">
+                    <div class="info-label">Người nhận</div>
+                    <div class="info-value" th:text="${order.customerName}">Nguyễn Văn A</div>
+                </div>
+                <div class="mb-3">
+                    <div class="info-label">Số điện thoại</div>
+                    <div class="info-value" th:text="${order.receiverPhone}">0901234567</div>
+                </div>
+                <div class="mb-3">
+                    <div class="info-label">Địa chỉ</div>
+                    <div class="info-value" th:text="${order.shippingAddress}">...</div>
+                </div>
+                <div th:if="${order.note != null && !order.note.isEmpty()}">
+                    <div class="info-label">Ghi chú</div>
+                    <div class="info-value" th:text="${order.note}">...</div>
+                </div>
+            </div>
+
+            <!-- Tóm tắt thanh toán -->
+            <div class="info-card">
+                <h5><i class="bi bi-receipt me-2"></i>Tóm tắt thanh toán</h5>
+                <div class="summary-row">
+                    <span>Phương thức</span>
+                    <span class="fw-bold" th:text="${order.paymentMethodDisplay}">COD</span>
+                </div>
+                <div th:if="${order.couponCode != null}" class="summary-row">
+                    <span>Mã giảm giá</span>
+                    <span class="fw-bold" style="color: #d97706;">
+                        <i class="bi bi-tag-fill"></i> <span th:text="${order.couponCode}">CODE</span>
+                    </span>
+                </div>
+                <div th:if="${order.totalDiscount != null && order.totalDiscount > 0}" class="summary-row">
+                    <span>Giảm giá Voucher</span>
+                    <span class="fw-bold text-warning">-<span th:text="${#numbers.formatDecimal(order.totalDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫</span>
+                </div>
+                <div class="summary-row">
+                    <span>Phí vận chuyển</span>
+                    <span class="fw-bold text-success">Miễn phí</span>
+                </div>
+                <div class="total-row">
+                    <span class="fw-bold text-uppercase" style="letter-spacing: 0.05em;">Tổng cộng</span>
+                    <span class="total-amount" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
+                </div>
+            </div>
+
+            <!-- Refund Banner -->
+            <div th:if="${order.activeRefund != null}" class="refund-banner">
+                <h6 class="fw-bold mb-2"><i class="bi bi-arrow-return-left me-2 text-warning"></i>Yêu cầu hoàn trả</h6>
+                <div class="small mb-2">
+                    <span class="fw-bold">Trạng thái: </span>
+                    <span th:if="${order.activeRefund.status == 'PENDING'}" class="status-pill pending" style="font-size: 0.8rem; padding: 4px 12px;">Đang chờ duyệt</span>
+                    <span th:if="${order.activeRefund.status == 'APPROVED'}" class="status-pill delivered" style="font-size: 0.8rem; padding: 4px 12px;">Đã duyệt</span>
+                    <span th:if="${order.activeRefund.status == 'REJECTED'}" class="status-pill cancelled" style="font-size: 0.8rem; padding: 4px 12px;">Bị từ chối</span>
+                </div>
+                <div class="small mb-1"><strong>Lý do:</strong> <span th:text="${order.activeRefund.reason}"></span></div>
+                <div class="small"><strong>Số tiền hoàn:</strong>
+                    <span class="price-mono text-danger fw-bold" th:text="${#numbers.formatDecimal(order.activeRefund.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                </div>
+                <div th:if="${order.activeRefund.adminNote != null}" class="small mt-2 p-2 bg-white rounded-3">
+                    <strong>Admin note:</strong> <span th:text="${order.activeRefund.adminNote}"></span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 flex-wrap">
+                <form th:if="${order.canCancel}" th:action="@{/user/order/{id}/cancel(id=${order.id})}" method="post">
+                    <button type="submit" class="btn-action-lg btn-cancel"
+                            onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+                        <i class="bi bi-x-circle me-1"></i> Hủy đơn hàng
+                    </button>
+                </form>
+                <a th:if="${order.canRefund}" th:href="@{/user/order/{id}/refund(id=${order.id})}"
+                   class="btn-action-lg btn-refund text-decoration-none">
+                    <i class="bi bi-arrow-return-left me-1"></i> Yêu cầu hoàn trả
+                </a>
+                <a th:href="@{/user/order/history}" class="btn-action-lg text-decoration-none"
+                   style="background: #f1f5f9; color: var(--text-main);">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}" class="mt-5"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const status = /*[[${order.status}]]*/ 'PENDING';
+        const timeline = /*[[${order.timeline}]]*/ [];
+
+        const STEPS = [
+            { key: 'PENDING', icon: 'bi-hourglass-split', label: 'Đặt hàng' },
+            { key: 'CONFIRMED', icon: 'bi-check2-circle', label: 'Xác nhận' },
+            { key: 'SHIPPING', icon: 'bi-truck', label: 'Vận chuyển' },
+            { key: 'DELIVERED', icon: 'bi-house-check', label: 'Đã giao' }
+        ];
+
+        const STATUS_ORDER = { PENDING: 0, CONFIRMED: 1, SHIPPING: 2, DELIVERED: 3 };
+        const CANCEL_STATES = ['CANCELLED', 'REFUNDED', 'REFUND_REQUESTED', 'PARTIAL_REFUNDED'];
+
+        const track = document.getElementById('stepTrack');
+        const currentIdx = STATUS_ORDER[status] ?? -1;
+        const isCancelState = CANCEL_STATES.includes(status);
+
+        // Find timestamps from timeline
+        function findTime(stepKey) {
+            if (!timeline) return null;
+            const entry = timeline.find(t => t.statusTo === stepKey);
+            return entry ? new Date(entry.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : null;
+        }
+
+        STEPS.forEach((step, idx) => {
+            const node = document.createElement('div');
+            node.className = 'step-node';
+
+            let state = '';
+            if (isCancelState) {
+                // Show done up to DELIVERED if was delivered, etc. based on timeline
+                const reachedThis = timeline && timeline.some(t => t.statusTo === step.key);
+                if (reachedThis) state = 'done';
+            } else if (idx < currentIdx) {
+                state = 'done';
+            } else if (idx === currentIdx) {
+                state = 'active';
+            }
+
+            node.classList.add(state || 'future');
+
+            const time = findTime(step.key);
+            node.innerHTML = `
+                <div class="step-icon"><i class="bi ${step.icon}"></i></div>
+                <div class="step-label">${step.label}</div>
+                ${time ? '<div class="step-time">' + time + '</div>' : ''}
+            `;
+            track.appendChild(node);
+        });
+
+        // Add cancel/refund node if applicable
+        if (isCancelState) {
+            const EXTRA_MAP = {
+                CANCELLED: { icon: 'bi-x-circle', label: 'Đã hủy', cls: 'error' },
+                REFUND_REQUESTED: { icon: 'bi-arrow-return-left', label: 'Yêu cầu hoàn', cls: 'active' },
+                REFUNDED: { icon: 'bi-arrow-return-left', label: 'Đã hoàn trả', cls: 'error' },
+                PARTIAL_REFUNDED: { icon: 'bi-arrow-return-left', label: 'Hoàn một phần', cls: 'active' }
+            };
+            const extra = EXTRA_MAP[status];
+            if (extra) {
+                const node = document.createElement('div');
+                node.className = `step-node ${extra.cls}`;
+                const time = findTime(status);
+                node.innerHTML = `
+                    <div class="step-icon"><i class="bi ${extra.icon}"></i></div>
+                    <div class="step-label">${extra.label}</div>
+                    ${time ? '<div class="step-time">' + time + '</div>' : ''}
+                `;
+                track.appendChild(node);
+            }
+        }
+
+        // Progress bar fill
+        const totalSteps = track.children.length;
+        let doneCount = track.querySelectorAll('.done').length;
+        let activeCount = track.querySelectorAll('.active').length;
+        const fillPct = totalSteps > 1 ? ((doneCount + activeCount * 0.5) / (totalSteps - 1)) * 100 : 0;
+
+        const fill = document.createElement('div');
+        fill.className = 'progress-fill';
+        fill.style.width = Math.min(fillPct, 100) + '%';
+        track.appendChild(fill);
+    });
+</script>
+</body>
+</html>

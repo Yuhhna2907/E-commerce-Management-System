@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tech Head-to-Head 2026 | SmartZone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-page: #F1F3F5;
+            --bento-bg: rgba(255, 255, 255, 0.7);
+            --bento-border: rgba(255, 255, 255, 0.9);
+            --radius-large: 24px;
+            --radius-medium: 16px;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-gold: #fbbf24;
+            --accent-orange: #f59e0b;
+            --glow-gold: rgba(251, 191, 36, 0.4);
+            --shadow-subtle: 0 4px 15px -5px rgba(0,0,0,0.05);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.02) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .page-header {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .page-title {
+            font-weight: 900;
+            font-size: 2.5rem;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #0f172a, #334155);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Toolbar với Toggle - COMPACT */
+        .comparison-toolbar {
+            background: var(--bento-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--bento-border);
+            border-radius: var(--radius-medium);
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-subtle);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toggle-differences {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active .toggle-knob {
+            left: 27px;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        /* Sticky Product Header - OPTIMIZED FOR COMPACT VIEW */
+        .sticky-product-header {
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--bento-border);
+            border-radius: var(--radius-large);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sticky-product-header.scrolled {
+            padding: 10px 20px;
+            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.15);
+            top: 70px;
+        }
+        
+        .sticky-product-header.scrolled .compare-img {
+            height: 80px;
+        }
+        
+        .sticky-product-header.scrolled .product-name {
+            font-size: 0.95rem;
+        }
+        
+        .sticky-product-header.scrolled .product-price {
+            font-size: 1.1rem;
+        }
+        
+        .sticky-product-header.scrolled .btn-buy-now {
+            padding: 8px 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Bảng So Sánh (Bento Architecture) - OPTIMIZED SPACING */
+        .comparison-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 80px;
+        }
+
+        .bento-row {
+            background: var(--bento-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--bento-border);
+            border-radius: var(--radius-medium);
+            padding: 16px 20px;
+            display: flex;
+            align-items: stretch;
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.3s;
+        }
+
+        .bento-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        }
+
+        .bento-row.hidden-row {
+            display: none;
+        }
+
+        .row-header {
+            flex: 0 0 180px;
+            padding-right: 16px;
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-muted);
+            border-right: 1.5px dashed rgba(15, 23, 42, 0.1);
+        }
+
+        .row-header i {
+            font-size: 1.3rem;
+            margin-right: 10px;
+            color: #3b82f6;
+        }
+
+        .cells-container {
+            display: flex;
+            flex-grow: 1;
+            gap: 12px;
+            padding-left: 16px;
+        }
+
+        .spec-cell {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-medium);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 1.5px solid transparent;
+            position: relative;
+            transition: all 0.4s ease;
+            min-height: 80px;
+        }
+
+        /* Add Product Cell - COMPACT VERSION */
+        .add-product-cell {
+            flex: 1;
+            background: rgba(245, 158, 11, 0.05);
+            border: 2px dashed rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-medium);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 280px;
+        }
+
+        .add-product-cell:hover {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .add-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .add-icon i {
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        /* BEST IN CLASS EFFECT */
+        .best-in-class {
+            background: linear-gradient(to bottom, #fffbeb, #fff);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 25px var(--glow-gold), inset 0 0 10px rgba(251, 191, 36, 0.1);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .trophy-badge {
+            position: absolute;
+            top: -10px;
+            right: -8px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #fff;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+            border: 2px solid #fff;
+            animation: bounce-trophy 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce-trophy {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .spec-value {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+        
+        .spec-value.numeric {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+        }
+
+        .spec-unit {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        /* Progress Bar cho Antutu - COMPACT */
+        .antutu-progress-container {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .antutu-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(15, 23, 42, 0.08);
+            border-radius: 50px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .antutu-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            border-radius: 50px;
+            transition: width 1s ease;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Product Header Row - COMPACT & EFFICIENT */
+        .product-head-cell {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 8px;
+            position: relative;
+        }
+
+        .compare-img {
+            height: 140px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.08));
+            margin-bottom: 12px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-head-cell:hover .compare-img {
+            transform: scale(1.05) translateY(-3px);
+        }
+
+        .product-name {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--text-main);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        .product-name:hover { color: #3b82f6; }
+
+        .product-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            color: #ef4444;
+            font-size: 1.25rem;
+            margin-top: 6px;
+        }
+
+        /* Nút Xóa sản phẩm */
+        .btn-remove-product {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .product-head-cell:hover .btn-remove-product {
+            opacity: 1;
+        }
+
+        .btn-remove-product:hover {
+            background: #ef4444;
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        /* Nút Mua Ngay - COMPACT */
+        .btn-buy-now {
+            background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 24px;
+            font-weight: 700;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .btn-buy-now:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.5);
+            background: linear-gradient(135deg, #ea580c 0%, #d97706 100%);
+            color: #fff;
+        }
+
+        /* Popup Selector */
+        .product-selector-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .product-selector-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .product-selector-popup {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: var(--radius-large);
+            padding: 32px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .popup-title {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: var(--text-main);
+        }
+
+        .btn-close-popup {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.05);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-close-popup:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border: 2px solid rgba(15, 23, 42, 0.1);
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .product-item {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid transparent;
+            border-radius: var(--radius-medium);
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-item:hover {
+            border-color: var(--accent-orange);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .product-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+
+        .product-item-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-item-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #ef4444;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .comparison-dashboard {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .bento-row {
+                min-width: 800px;
+            }
+
+            .sticky-product-header {
+                min-width: 800px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .row-header {
+                flex: 0 0 150px;
+                font-size: 0.9rem;
+            }
+            
+            .row-header i {
+                font-size: 1.1rem;
+            }
+
+            .product-list {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+        
+        /* Smooth Scroll Behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom Scrollbar for Dashboard */
+        .comparison-dashboard::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .comparison-dashboard::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.05);
+            border-radius: 10px;
+        }
+        
+        .comparison-dashboard::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            border-radius: 10px;
+        }
+        
+        .comparison-dashboard::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #d97706, #f59e0b);
+        }
+
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container py-4">
+    <div class="page-header">
+        <h2 class="page-title">Tech Head-to-Head 2026</h2>
+        <p class="text-muted fw-medium fs-6">Đối đầu công nghệ. Quyết định thông minh.</p>
+    </div>
+
+    <!-- Toolbar với Toggle -->
+    <div class="comparison-toolbar">
+        <div class="toggle-differences" onclick="toggleDifferences()">
+            <div class="toggle-switch" id="toggleSwitch">
+                <div class="toggle-knob"></div>
+            </div>
+            <span class="toggle-label"><i class="bi bi-funnel"></i> Chỉ xem khác biệt</span>
+        </div>
+        <div class="text-muted fw-medium" style="font-size: 0.9rem;">
+            <i class="bi bi-info-circle"></i> So sánh <span id="productCount" th:text="${comparisonList != null ? #lists.size(comparisonList) : 0}">0</span> sản phẩm
+        </div>
+    </div>
+
+    <!-- Sticky Product Header -->
+    <div class="sticky-product-header" id="stickyHeader">
+        <div class="d-flex align-items-center">
+            <div style="flex: 0 0 200px;"></div>
+            <div class="cells-container" id="productHeaderContainer">
+                
+                <!-- Existing Products -->
+                <div th:each="item : ${comparisonList}" class="product-head-cell" th:data-product-id="${item.productId}">
+                    <button class="btn-remove-product" th:onclick="|removeProduct(${item.productId})|" title="Xóa khỏi so sánh">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <a th:href="@{/user/products/{id}(id=${item.productId})}">
+                        <img th:src="${item.imageUrl != null ? item.imageUrl : 'https://via.placeholder.com/200'}" class="compare-img" alt="Product Image">
+                    </a>
+                    <a th:href="@{/user/products/{id}(id=${item.productId})}" class="product-name" th:text="${item.name}">Tên SP</a>
+                    <div class="product-price" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + '₫'">Giá</div>
+                    <a th:href="@{/user/products/{id}(id=${item.productId})}" class="btn-buy-now">
+                        <i class="bi bi-cart-plus"></i> Mua ngay
+                    </a>
+                </div>
+
+                <!-- Add Product Button (Show if less than 4 products) -->
+                <div class="add-product-cell" th:if="${comparisonList == null || #lists.size(comparisonList) < 4}" onclick="openProductSelector()">
+                    <div class="add-icon">
+                        <i class="bi bi-plus-lg"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--accent-orange); font-size: 1.1rem;">Thêm máy...</h5>
+                    <p class="text-muted mb-0" style="font-size: 0.85rem;">Chọn thêm để so sánh</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="comparison-dashboard" id="comparisonDashboard">
+
+        <!-- ROW 1: VI XỬ LÝ -->
+        <div class="bento-row" data-row-type="processor">
+            <div class="row-header">
+                <i class="bi bi-cpu text-primary"></i> Vi xử lý (Chip)
+            </div>
+            <div class="cells-container" id="processorRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell">
+                    <div class="spec-value" th:text="${item.processor != null ? item.processor : 'N/A'}">Apple A18 Pro</div>
+                    <div class="spec-unit">Bộ xử lý</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 2: ANTUTU SCORE với Progress Bar -->
+        <div class="bento-row" data-row-type="antutu">
+            <div class="row-header">
+                <i class="bi bi-speedometer text-danger"></i> Hiệu năng (Antutu)
+            </div>
+            <div class="cells-container" id="antutuRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell" th:classappend="${item.bestAntutu} ? 'best-in-class' : ''">
+                    <div th:if="${item.bestAntutu}" class="trophy-badge" title="Vô địch hiệu xuất"><i class="bi bi-trophy-fill"></i></div>
+                    <div class="spec-value numeric" th:text="${item.antutuScore != null ? #numbers.formatInteger(item.antutuScore, 0, 'COMMA') : 'N/A'}">1,850,000</div>
+                    <div class="spec-unit">Điểm Benchmark</div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="antutu-progress-container" th:if="${item.antutuScore != null}">
+                        <div class="antutu-progress-bar">
+                            <div class="antutu-progress-fill" th:style="'width: ' + ${item.antutuScore / 20000.0} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 3: MÀN HÌNH -->
+        <div class="bento-row" data-row-type="screen">
+            <div class="row-header">
+                <i class="bi bi-display text-info"></i> Màn hình
+            </div>
+            <div class="cells-container" id="screenRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell" th:classappend="${item.bestScreenSize} ? 'best-in-class' : ''">
+                    <div th:if="${item.bestScreenSize}" class="trophy-badge" title="Màn hình lớn nhất"><i class="bi bi-arrows-fullscreen"></i></div>
+                    <div class="spec-value numeric">
+                        <span th:text="${item.screenSize != null ? item.screenSize : 'N/A'}">6.7</span><span style="font-size: 1rem;">"</span>
+                    </div>
+                    <div class="spec-unit" th:text="${item.screenTech != null ? item.screenTech : 'Không rõ công nghệ'}">Super Retina XDR OLED</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 4: CAMERA -->
+        <div class="bento-row" data-row-type="camera">
+            <div class="row-header">
+                <i class="bi bi-camera text-success"></i> Camera
+            </div>
+            <div class="cells-container" id="cameraRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell">
+                    <div class="spec-value" style="font-size: 0.95rem; line-height: 1.4;" th:text="${item.cameraInfo != null ? item.cameraInfo : 'N/A'}">48MP + 12MP + 12MP</div>
+                    <div class="spec-unit">Hệ thống camera</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 5: PIN -->
+        <div class="bento-row" data-row-type="battery">
+            <div class="row-header">
+                <i class="bi bi-battery-charging text-success"></i> Dung lượng Pin
+            </div>
+            <div class="cells-container" id="batteryRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell" th:classappend="${item.bestBattery} ? 'best-in-class' : ''">
+                    <div th:if="${item.bestBattery}" class="trophy-badge" title="Pin trâu nhất"><i class="bi bi-lightning-fill"></i></div>
+                    <div class="spec-value numeric" th:text="${item.batteryCapacity != null ? item.batteryCapacity : 'N/A'}">4422</div>
+                    <div class="spec-unit">mAh</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 6: SẠC NHANH -->
+        <div class="bento-row" data-row-type="charging">
+            <div class="row-header">
+                <i class="bi bi-plug-fill text-warning"></i> Công nghệ Sạc
+            </div>
+            <div class="cells-container" id="chargingRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell" th:classappend="${item.bestCharging} ? 'best-in-class' : ''">
+                    <div th:if="${item.bestCharging}" class="trophy-badge" title="Sạc nhanh nhất"><i class="bi bi-ev-station-fill"></i></div>
+                    <div class="spec-value numeric">
+                        <span th:text="${item.chargingSpeed != null ? item.chargingSpeed : 'N/A'}">27</span><span style="font-size: 1rem;">W</span>
+                    </div>
+                    <div class="spec-unit">Tốc độ sạc</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 7: HỆ ĐIỀU HÀNH -->
+        <div class="bento-row" data-row-type="os">
+            <div class="row-header">
+                <i class="bi bi-phone text-secondary"></i> Hệ điều hành
+            </div>
+            <div class="cells-container" id="osRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell">
+                    <div class="spec-value" th:text="${item.os != null ? item.os : 'N/A'}">iOS 18</div>
+                    <div class="spec-unit">Operating System</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 8: TRỌNG LƯỢNG -->
+        <div class="bento-row" data-row-type="weight">
+            <div class="row-header">
+                <i class="bi bi-feather text-secondary"></i> Trọng lượng
+            </div>
+            <div class="cells-container" id="weightRow">
+                <div th:each="item : ${comparisonList}" class="spec-cell" th:classappend="${item.lightestWeight} ? 'best-in-class' : ''">
+                    <div th:if="${item.lightestWeight}" class="trophy-badge" title="Nhẹ nhất"><i class="bi bi-balloon-fill"></i></div>
+                    <div class="spec-value numeric">
+                        <span th:text="${item.weight != null ? item.weight : 'N/A'}">227</span><span style="font-size: 1rem;">g</span>
+                    </div>
+                    <div class="spec-unit">Trọng lượng</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Product Selector Popup -->
+<div class="product-selector-overlay" id="productSelectorOverlay" onclick="closeProductSelector(event)">
+    <div class="product-selector-popup" onclick="event.stopPropagation()">
+        <div class="popup-header">
+            <h3 class="popup-title">Chọn sản phẩm so sánh</h3>
+            <button class="btn-close-popup" onclick="closeProductSelector()">
+                <i class="bi bi-x-lg fs-5"></i>
+            </button>
+        </div>
+
+        <div class="search-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="search-input" id="productSearchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="filterProducts()">
+        </div>
+
+        <div class="product-list" id="productListPopup">
+            <!-- Products will be loaded here via AJAX or server-side -->
+            <div class="text-center py-5 w-100">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Đang tải danh sách sản phẩm...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // Get current product IDs from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentProductIds = urlParams.get('ids') ? urlParams.get('ids').split(',').map(id => parseInt(id)) : [];
+
+    <!-- Sticky Header Shrink Effect - ENHANCED FOR SMOOTH TRANSITIONS -->
+    window.addEventListener('scroll', function() {
+        const stickyHeader = document.getElementById('stickyHeader');
+        if (window.scrollY > 150) {
+            stickyHeader.classList.add('scrolled');
+        } else {
+            stickyHeader.classList.remove('scrolled');
+        }
+    });
+
+    // Toggle "Chỉ xem khác biệt"
+    let showOnlyDifferences = false;
+
+    function toggleDifferences() {
+        showOnlyDifferences = !showOnlyDifferences;
+        const toggleSwitch = document.getElementById('toggleSwitch');
+        toggleSwitch.classList.toggle('active');
+
+        const rows = document.querySelectorAll('.bento-row');
+        rows.forEach(row => {
+            if (showOnlyDifferences) {
+                const cells = row.querySelectorAll('.spec-cell .spec-value');
+                const values = Array.from(cells).map(cell => cell.textContent.trim());
+                const allSame = values.every(val => val === values[0]);
+                
+                if (allSame) {
+                    row.classList.add('hidden-row');
+                } else {
+                    row.classList.remove('hidden-row');
+                }
+            } else {
+                row.classList.remove('hidden-row');
+            }
+        });
+    }
+
+    // Open Product Selector Popup
+    function openProductSelector() {
+        const overlay = document.getElementById('productSelectorOverlay');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Load products via AJAX
+        loadProducts();
+    }
+
+    // Close Product Selector
+    function closeProductSelector(event) {
+        if (event && event.target !== event.currentTarget) return;
+        const overlay = document.getElementById('productSelectorOverlay');
+        overlay.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Load Products via AJAX
+    function loadProducts() {
+        const productListPopup = document.getElementById('productListPopup');
+        
+        fetch('/user/products/api/list?size=50')
+            .then(response => response.json())
+            .then(products => {
+                if (products && products.length > 0) {
+                    productListPopup.innerHTML = products.map(product => `
+                        <div class="product-item" onclick="addProductToComparison(${product.id})" ${currentProductIds.includes(product.id) ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
+                            <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" alt="${product.name}">
+                            <div class="product-item-name">${product.name}</div>
+                            <div class="product-item-price">${formatPrice(product.discountPrice || product.price)}₫</div>
+                        </div>
+                    `).join('');
+                } else {
+                    productListPopup.innerHTML = '<p class="text-center text-muted py-5">Không có sản phẩm nào</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                productListPopup.innerHTML = '<p class="text-center text-danger py-5">Không thể tải danh sách sản phẩm</p>';
+            });
+    }
+
+    // Filter Products
+    function filterProducts() {
+        const searchInput = document.getElementById('productSearchInput');
+        const keyword = searchInput.value.toLowerCase();
+        const productItems = document.querySelectorAll('.product-item');
+        
+        productItems.forEach(item => {
+            const name = item.querySelector('.product-item-name').textContent.toLowerCase();
+            if (name.includes(keyword)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    // Add Product to Comparison
+    function addProductToComparison(productId) {
+        if (currentProductIds.includes(productId)) {
+            alert('Sản phẩm này đã có trong danh sách so sánh');
+            return;
+        }
+
+        if (currentProductIds.length >= 4) {
+            alert('Chỉ có thể so sánh tối đa 4 sản phẩm');
+            return;
+        }
+
+        currentProductIds.push(productId);
+        updateComparisonPage();
+    }
+
+    // Remove Product from Comparison
+    function removeProduct(productId) {
+        currentProductIds = currentProductIds.filter(id => id !== productId);
+        
+        if (currentProductIds.length === 0) {
+            window.location.href = '/user/products';
+            return;
+        }
+        
+        updateComparisonPage();
+    }
+
+    // Update Comparison Page
+    function updateComparisonPage() {
+        const idsParam = currentProductIds.join(',');
+        window.location.href = `/user/compare?ids=${idsParam}`;
+    }
+
+    // Format Price
+    function formatPrice(price) {
+        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Close popup on ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeProductSelector();
+        }
+    });
+</script>
+</body>
+</html>

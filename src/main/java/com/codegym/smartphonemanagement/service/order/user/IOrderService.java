@@ -10,5 +10,13 @@ public interface IOrderService {
 
     OrderResponseDTO getOrderById(Long id);
 
+    OrderResponseDTO getOrderDetail(Long userId, Long orderId);
+
     List<OrderResponseDTO> getOrderHistory(Long userId);
+
+    void reorderOrderToCart(Long userId, Long orderId);
+
+    long countInProgressOrdersByUser(Long userId);
+
+    void cancelOrder(Long userId, Long orderId);
 }

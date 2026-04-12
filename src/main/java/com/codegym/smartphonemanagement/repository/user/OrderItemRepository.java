@@ -9,11 +9,16 @@ import org.springframework.stereotype.Repository;
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
-        SELECT COUNT(oi) > 0
-        FROM OrderItem oi
-        WHERE oi.order.user.id = :userId
-          AND oi.product.id = :productId
-          AND oi.order.status = com.codegym.smartphonemanagement.model.OrderStatus.PAID
-    """)
+    SELECT COUNT(oi) > 0
+    FROM OrderItem oi
+    WHERE oi.order.user.id = :userId
+      AND oi.product.id = :productId
+      AND oi.order.status IN (
+          com.codegym.smartphonemanagement.model.OrderStatus.CONFIRMED,
+          com.codegym.smartphonemanagement.model.OrderStatus.SHIPPING,
+          com.codegym.smartphonemanagement.model.OrderStatus.DELIVERED,
+          com.codegym.smartphonemanagement.model.OrderStatus.PARTIAL_REFUNDED
+      )
+""")
     boolean existsCompletedPurchase(Long userId, Long productId);
 }

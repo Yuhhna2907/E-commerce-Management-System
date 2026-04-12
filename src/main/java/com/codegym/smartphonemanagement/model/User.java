@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,17 @@ public class User {
     @Size(max = 255)
     private String address;
 
+    @Size(max = 100)
+    private String fullName;
+
+    @Size(max = 500)
+    private String avatarUrl;
+
+    private LocalDate dateOfBirth;
+
+    @Size(max = 10)
+    private String gender; // MALE | FEMALE | OTHER
+
     private LocalDateTime createdAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -53,6 +65,13 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Wishlist> wishlists;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<UserAddress> addresses;
 
     @PrePersist
     public void prePersist() {

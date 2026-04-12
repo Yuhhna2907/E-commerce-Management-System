@@ -1,27 +1,759 @@
-<nav th:fragment="header"
-     class="navbar navbar-expand-lg navbar-custom sticky-top shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" th:href="@{/user/products}">
-            <i class="bi bi-phone-vibrate text-warning"></i>
-            <b>SMARTPHONE</b> STORE
+<div th:fragment="header">
+<nav class="navbar navbar-expand-lg floating-navbar" id="mainNavbar">
+    <style>
+        /* ========================================================= */
+        /* 1. FLOATING NAVBAR (Sticky, Shrink on Scroll)             */
+        /* ========================================================= */
+        .floating-navbar {
+            position: sticky;
+            top: 20px;
+            margin: 20px auto 40px auto; /* Cách điệu nổi bật */
+            width: calc(100% - 40px);
+            max-width: 1400px;
+            z-index: 1050;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); /* Đổ bóng tầng mềm */
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Hiệu ứng thu hẹp tinh tế khi cuộn */
+        .floating-navbar.header-scrolled {
+            top: 10px;
+            padding: 10px 24px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 50px -15px rgba(0,0,0,0.1);
+            border-color: rgba(245, 158, 11, 0.15); /* Điểm xuyết viền nhẹ */
+        }
+
+        /* ========================================================= */
+        /* 2. BOOTSTRAP OVERRIDES (Clean & Invisible styling)        */
+        /* ========================================================= */
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            color: #0f172a !important;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .navbar-nav .nav-link {
+            color: #475569;
+            font-weight: 600;
+            font-size: 1.05rem;
+            padding: 8px 18px !important;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* ========================================================= */
+        /* 3. MEGA MENU BENTO BOX                                    */
+        /* ========================================================= */
+        .bento-mega-menu {
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1);
+            padding: 24px;
+            width: 650px;
+            margin-top: 15px !important;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: none;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%) translateY(15px);
+        }
+
+        .nav-item.dropdown:hover .bento-mega-menu {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .bento-box {
+            background: #f8fafc; /* Màu xám sứ siêu nhạt */
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.4s ease;
+            text-decoration: none;
+            color: #0f172a;
+            border: 1px solid transparent;
+        }
+
+        .bento-box:hover {
+            background: #ffffff;
+            border-color: rgba(245, 158, 11, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .bento-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            transition: color 0.3s;
+        }
+        
+        .bento-box:hover .bento-title {
+            color: #f59e0b;
+        }
+
+        .bento-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* ========================================================= */
+        /* 4. EXPANDABLE SEARCH CAPSULE                              */
+        /* ========================================================= */
+        .header-search-capsule {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 50px;
+            padding: 4px;
+            width: 46px;
+            height: 46px;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .header-search-capsule.expanded {
+            width: 280px;
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .header-search-icon {
+            color: #0f172a;
+            font-size: 1.25rem;
+            min-width: 36px;
+            text-align: center;
+            transition: color 0.3s;
+        }
+
+        .header-search-capsule:hover .header-search-icon {
+            color: #f59e0b;
+        }
+
+        .header-search-input {
+            border: none;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            padding-left: 8px;
+            opacity: 0;
+            font-weight: 600;
+            color: #0f172a;
+            transition: opacity 0.3s 0.2s; /* Delay nhẹ để mượt */
+        }
+
+        .header-search-capsule.expanded .header-search-input {
+            opacity: 1;
+        }
+
+        /* ========================================================= */
+        /* 5. LINE ART ICONS & PULSE BADGE                           */
+        /* ========================================================= */
+        .icon-action-btn {
+            position: relative;
+            background: transparent;
+            border: none;
+            color: #0f172a;
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .icon-action-btn:hover {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Chấm đỏ thông báo đơn đang xử lý (Lịch sử) */
+        .header-dot-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid #fff;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.75);
+            pointer-events: none;
+        }
+
+        .nav-interactive-glow {
+            transition: transform 0.28s ease, box-shadow 0.28s ease, color 0.28s ease, background 0.28s ease;
+        }
+
+        .nav-interactive-glow:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.42);
+        }
+
+        .pulse-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #f59e0b; /* Màu Cam Chủ Đạo */
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 20px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            animation: pulse-badge-anim 2s infinite cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes pulse-badge-anim {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+    </style>
+
+    <div class="container-fluid px-3 px-lg-4">
+        <!-- Logo & Brand Focus -->
+        <a class="navbar-brand fw-bold me-5" th:href="@{/user/products}">
+            <div style="background: linear-gradient(135deg, #f59e0b, #fbbf24); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+                <i class="bi bi-phone text-white fs-5" style="transform: skewX(-5deg);"></i>
+            </div>
+            <span>Smart<span style="color: #f59e0b;">Zone</span></span>
         </a>
 
-        <div class="d-flex align-items-center">
-            <a th:href="@{/user/cart}"
-               class="btn btn-outline-light position-relative me-3 border-0">
-                <i class="bi bi-cart3 fs-5"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill cart-badge"
-                      th:if="${cart != null and cart.items != null}"
-                      th:text="${#lists.size(cart.items)}">0</span>
-            </a>
+        <!-- Custom Bootstrap override: Navbar Toggler -->
+        <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <i class="bi bi-list fs-1 text-dark"></i>
+        </button>
 
-            <div class="text-white d-none d-md-block">
-                <small class="text-secondary d-block" style="font-size: 0.7rem;">
-                    Xin chào,
-                </small>
-                <span class="fw-bold text-warning"
-                      th:text="${userName ?: 'Luong Anh Huy'}"></span>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav me-auto gap-1 gap-lg-3">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/user/products}">Khám phá</a>
+                </li>
+                
+                <!-- Mega Menu Dropdown -->
+                <li class="nav-item dropdown position-relative">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button">
+                        Hãng Smartphone
+                    </a>
+                    
+                    <div class="dropdown-menu bento-mega-menu">
+                        <div class="mb-4 d-flex align-items-center justify-content-between">
+                            <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 0.1em;"><i class="bi bi-grid-fill text-warning me-2"></i>Hệ Sinh Thái</span>
+                            <a href="/user/products" class="text-decoration-none fw-bold" style="color: #f59e0b; font-size: 0.85rem;">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                        
+                        <div class="bento-grid">
+                            <a href="/user/products?brand=Apple" class="bento-box d-flex align-items-center gap-3">
+                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <i class="bi bi-apple fs-4" style="color: #1e293b;"></i>
+                                </div>
+                                <div>
+                                    <div class="bento-title">Apple iPhone</div>
+                                    <div class="bento-desc">Đỉnh cao thiết kế & iOS</div>
+                                </div>
+                            </a>
+                            <a href="/user/products?brand=Samsung" class="bento-box d-flex align-items-center gap-3">
+                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <i class="bi bi-android2 fs-4 text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="bento-title">Samsung Galaxy</div>
+                                    <div class="bento-desc">Quyền năng AI bứt phá</div>
+                                </div>
+                            </a>
+                            <a href="/user/products?brand=Xiaomi" class="bento-box d-flex align-items-center gap-3">
+                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <i class="bi bi-lightning-charge fs-4 text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="bento-title">Xiaomi</div>
+                                    <div class="bento-desc">Quốc dân hiệu năng cao</div>
+                                </div>
+                            </a>
+                            <a href="/user/products?brand=Oppo" class="bento-box d-flex align-items-center gap-3">
+                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                    <i class="bi bi-camera fs-4 text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="bento-title">Oppo Flagship</div>
+                                    <div class="bento-desc">Chuyên gia nhiếp ảnh</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                
+                <!-- Expandable Search Capsule -->
+                <form action="/user/products" method="get" class="m-0">
+                    <div class="header-search-capsule" id="headerSearch" onclick="this.classList.add('expanded'); document.getElementById('hInput').focus();">
+                        <i class="bi bi-search header-search-icon"></i>
+                        <input type="text" id="hInput" name="keyword" class="header-search-input" placeholder="Tìm siêu phẩm..."
+                               onblur="if(this.value === '') this.parentElement.classList.remove('expanded');">
+                    </div>
+                </form>
+
+                <!-- Divider -->
+                <div class="d-none d-lg-block mx-1" style="height: 32px; width: 1px; background: rgba(0,0,0,0.1);"></div>
+
+                <!-- Bộ sưu tập (Wishlist) -->
+                <a th:href="@{/user/wishlist}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   title="Bộ sưu tập của tôi"
+                   aria-label="Bộ sưu tập của tôi">
+                    <i class="bi bi-heart fs-4"></i>
+                </a>
+
+                <!-- So sánh sản phẩm -->
+                <a th:href="@{/user/compare(ids=1,2,3)}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   title="So sánh sản phẩm"
+                   aria-label="So sánh sản phẩm">
+                    <i class="bi bi-intersect fs-4"></i>
+                </a>
+
+                <!-- Lịch sử mua hàng -->
+                <a th:href="@{/user/order/history}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   title="Lịch sử mua hàng"
+                   aria-label="Lịch sử mua hàng">
+                    <i class="bi bi-clock-history fs-4"></i>
+                    <span class="header-dot-badge"
+                          th:if="${headerPendingOrdersCount != null and headerPendingOrdersCount > 0}"
+                          th:title="|${headerPendingOrdersCount} đơn đang xử lý|"></span>
+                </a>
+
+                <!-- Thông báo (Real-time) -->
+                <div class="nav-item dropdown position-relative">
+                    <a href="#" class="icon-action-btn nav-interactive-glow position-relative"
+                       id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                        <i class="bi bi-bell fs-4"></i>
+                        <span class="pulse-badge" id="notificationBadge" style="display: none; background: #ef4444; border-color: #ef4444;">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notificationDropdown" style="width: 350px; border-radius: 12px; max-height: 400px; overflow-y: auto; padding: 0;">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold">Thông báo</span>
+                            <button class="btn btn-sm text-primary p-0 shadow-none" onclick="markAllNotificationsAsRead()" style="font-size: 0.8rem;">Đánh dấu đã đọc</button>
+                        </div>
+                        <div id="notificationList">
+                            <div class="p-4 text-center text-muted fw-bold" id="noNotificationText">
+                                Không có thông báo mới
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shopping Cart Icon Line Art -->
+                <a th:href="@{/user/cart}" class="icon-action-btn nav-interactive-glow position-relative">
+                    <i class="bi bi-bag fs-4"></i>
+                    <!-- Pulse Glow Badge -->
+                    <span class="pulse-badge"
+                          th:if="${cart != null and cart.items != null}"
+                          th:text="${#lists.size(cart.items)}">0</span>
+                </a>
+
+                <!-- Account / Profile -->
+                <a th:href="@{/user/profile}" class="icon-action-btn d-flex align-items-center gap-2 px-3" style="width: auto; text-decoration: none;">
+                    <!-- Avatar vòng tròn nếu có URL, nếu không hiện icon -->
+                    <span th:if="${currentUser != null and currentUser.avatarUrl != null and !#strings.isEmpty(currentUser.avatarUrl)}"
+                          style="width:34px; height:34px; border-radius:50%; overflow:hidden; border:2px solid rgba(245,158,11,0.5); flex-shrink:0; display:flex;">
+                        <img th:src="${currentUser.avatarUrl}" alt="avatar"
+                             style="width:100%; height:100%; object-fit:cover;">
+                    </span>
+                    <span th:unless="${currentUser != null and currentUser.avatarUrl != null and !#strings.isEmpty(currentUser.avatarUrl)}"
+                          style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#ea580c); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-person-fill text-white" style="font-size:1.1rem;"></i>
+                    </span>
+                    <div class="text-start d-none d-xl-block" style="line-height: 1.2;">
+                        <span class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Xin chào,</span>
+                        <span class="fw-bold" style="font-size: 0.9rem; color: #0f172a;"
+                              th:text="${currentUser != null ? (currentUser.fullName ?: currentUser.username) : 'Khách'}">Anh Huy</span>
+                    </div>
+                </a>
+                
             </div>
         </div>
     </div>
 </nav>
+
+<!-- Magic Script for Navbar shrink & Search logic -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const header = document.getElementById("mainNavbar");
+        
+        // Sticky Shrink Effect
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 40) {
+                header.classList.add("header-scrolled");
+            } else {
+                header.classList.remove("header-scrolled");
+            }
+        });
+        
+        // Cần đảm bảo việc click vào input không đóng capsule ngay
+        const searchInput = document.getElementById('hInput');
+        if(searchInput) {
+            searchInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+            new bootstrap.Tooltip(el);
+        });
+
+        // Tự động xổ ví Voucher khi load nghiệm (nếu muốn pop-up)
+        setTimeout(() => {
+            document.getElementById('floatingWalletBtn')?.classList.add('pulse-strong');
+        }, 3000);
+    });
+
+    function toggleWalletPopup() {
+        // Disabled popup logic in favor of dedicated page navigation
+    }
+</script>
+
+<style>
+    /* FLOATING WALLET WIDGET */
+    .floating-wallet-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #f59e0b, #eab308);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+        cursor: pointer;
+        z-index: 1060;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .floating-wallet-btn i {
+        font-size: 24px;
+        color: white;
+    }
+    .floating-wallet-btn:hover {
+        transform: scale(1.1) rotate(-5deg);
+    }
+    .pulse-strong {
+        animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+        70% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    .wallet-popup {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 320px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        z-index: 1059;
+        transform: translateY(20px) scale(0.9);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wallet-popup.show {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .wallet-popup-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        border-radius: 20px 20px 0 0;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .wallet-popup-body {
+        padding: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* TICKET DESIGN */
+    .ticket-voucher {
+        position: relative;
+        background: #fff;
+        border: 1px dashed rgba(245, 158, 11, 0.5);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+    .ticket-voucher::before, .ticket-voucher::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 20px;
+        height: 20px;
+        background: #f1f3f5; /* Khớp màu nền app */
+        border-radius: 50%;
+        transform: translateY(-50%);
+        box-shadow: inset 1px 0 0 rgba(245, 158, 11, 0.5);
+    }
+    .ticket-voucher::before {
+        left: -10px;
+        box-shadow: inset -1px 0 0 rgba(245, 158, 11, 0.5);
+    }
+    .ticket-voucher::after {
+        right: -10px;
+        box-shadow: inset 1px 0 0 rgba(245, 158, 11, 0.5);
+    }
+    .ticket-voucher:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+    }
+    
+    .ticket-content {
+        z-index: 1;
+    }
+    .ticket-voucher .btn {
+        z-index: 1;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-weight: bold;
+    }
+</style>
+
+<!-- Floating Icon Link to Wallet Page -->
+<a th:href="@{/user/coupons/wallet}" class="floating-wallet-btn text-decoration-none" id="floatingWalletBtn">
+    <i class="bi bi-gift border-0 font-weight-bold"></i>
+</a>
+
+<script>
+    // Animation Flying Ticket into Wallet
+    function flyToWallet(event, formElement) {
+        event.preventDefault();
+        
+        const btn = formElement.querySelector('button');
+        const walletIcon = document.getElementById('floatingWalletBtn');
+        if (!btn || !walletIcon) {
+            formElement.submit();
+            return;
+        }
+
+        // Tạo cục clone
+        const rect = btn.getBoundingClientRect();
+        const clone = document.createElement('div');
+        clone.innerHTML = '<i class="bi bi-ticket-detailed-fill text-warning fs-3 drop-shadow"></i>';
+        clone.style.position = 'fixed';
+        clone.style.top = rect.top + 'px';
+        clone.style.left = rect.left + 'px';
+        clone.style.zIndex = '9999';
+        clone.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        clone.style.transform = 'scale(1)';
+        document.body.appendChild(clone);
+
+        // Kỹ thuật reflow
+        void clone.offsetWidth;
+
+        // Điểm đến
+        const targetRect = walletIcon.getBoundingClientRect();
+        clone.style.top = (targetRect.top + 10) + 'px';
+        clone.style.left = (targetRect.left + 10) + 'px';
+        clone.style.transform = 'scale(0.2) rotate(360deg)';
+        clone.style.opacity = '0';
+
+        setTimeout(() => {
+            clone.remove();
+            walletIcon.classList.add('pulse-strong');
+            setTimeout(() => {
+                formElement.submit(); // Submit form sau khi animation xong
+            }, 300);
+        }, 800);
+    }
+</script>
+
+<!-- Real-time Notifications Dependencies -->
+<input type="hidden" id="currentUsername" th:value="${currentUser != null ? currentUser.username : ''}" />
+
+<!-- Toast Container for Notifications -->
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastPlacement" style="z-index: 9999;">
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/realtime-notification.js"></script>
+</div>
+
+<!-- ========================================================= -->
+<!-- CHECKOUT PROGRESS STEPPER FRAGMENT                        -->
+<!-- ========================================================= -->
+<div th:fragment="stepper(activeStep)" class="checkout-stepper-wrapper mb-4">
+    <style>
+        .checkout-stepper-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            padding: 15px 0;
+            z-index: 10;
+        }
+        .stepper-progress-bg {
+            position: absolute;
+            top: 33px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 4px;
+            z-index: -1;
+        }
+        .stepper-progress-fill {
+            position: absolute;
+            top: 33px;
+            left: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, #f59e0b, #eab308);
+            border-radius: 4px;
+            z-index: -1;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .stepper-step {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stepper-icon {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 8px;
+            background: #fff;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #94a3b8;
+            font-weight: bold;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            position: relative;
+        }
+        
+        .stepper-step.completed .stepper-icon {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            border-color: #f59e0b;
+            color: #fff;
+            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .stepper-step.active .stepper-icon {
+            border-color: #f59e0b;
+            color: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .stepper-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.3s;
+        }
+        
+        .stepper-step.active .stepper-label,
+        .stepper-step.completed .stepper-label {
+            color: #0f172a;
+        }
+
+        /* Responsive Progress Bar Math */
+        .w-cart .stepper-progress-fill { width: 33.33%; }
+        .w-checkout .stepper-progress-fill { width: 66.66%; }
+        .w-success .stepper-progress-fill { width: 100%; }
+    </style>
+
+    <div class="stepper-progress-bg"></div>
+    <div class="stepper-progress-fill" th:classappend="'w-' + ${activeStep}"></div>
+
+    <div class="d-flex justify-content-between position-relative">
+        <!-- Step 1 -->
+        <div class="stepper-step completed">
+            <div class="stepper-icon"><i class="bi bi-phone"></i></div>
+            <div class="stepper-label d-none d-sm-block">Chọn SP</div>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="stepper-step" th:classappend="${activeStep == 'cart' ? 'active' : (activeStep == 'checkout' or activeStep == 'success' ? 'completed' : '')}">
+            <div class="stepper-icon"><i class="bi bi-cart3"></i></div>
+            <div class="stepper-label d-none d-sm-block">Giỏ hàng</div>
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="stepper-step" th:classappend="${activeStep == 'checkout' ? 'active' : (activeStep == 'success' ? 'completed' : '')}">
+            <div class="stepper-icon"><i class="bi bi-credit-card"></i></div>
+            <div class="stepper-label d-none d-sm-block">Thanh toán</div>
+        </div>
+        
+        <!-- Step 4 -->
+        <div class="stepper-step" th:classappend="${activeStep == 'success' ? 'active completed' : ''}">
+            <div class="stepper-icon"><i class="bi bi-check2-circle"></i></div>
+            <div class="stepper-label d-none d-sm-block">Hoàn tất</div>
+        </div>
+    </div>
+</div>
