@@ -97,7 +97,13 @@ public class UserProductService implements IUserProductService {
         review.setComment(request.getComment());
         review.setCreatedAt(LocalDateTime.now());
 
-        reviewRepository.save(review);
+        // FIX #6: Wrap trong try-catch để handle duplicate constraint violation
+        try {
+            reviewRepository.save(review);
+            reviewRepository.flush(); // FIX #7: Force commit để query thấy review mới
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
+        }
 
         Double avg = reviewRepository.getAverageRating(product.getId());
 

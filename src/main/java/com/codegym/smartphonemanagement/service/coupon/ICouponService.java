@@ -12,4 +12,5 @@ public interface ICouponService {
     void saveToWallet(User user, String code);
     CouponValidationResult validateCoupon(String code, User user, Order orderDraft);
     void applyDiscountToOrder(Order order);
+    void restoreVoucherUsage(String couponCode);
 }

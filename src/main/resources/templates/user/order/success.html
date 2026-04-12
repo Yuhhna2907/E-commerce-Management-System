@@ -824,26 +824,22 @@
                 </div>
             </div>
             <div class="timeline-inner">
-                <div class="timeline-track">
-                    <div class="timeline-station active">
+                <div class="timeline-track" id="orderTimeline" th:data-status="${order.status}">
+                    <div class="timeline-station" data-step="PENDING">
                         <div class="station-icon"><i class="bi bi-bag-check-fill"></i></div>
                         <div class="station-label">Đã đặt</div>
                     </div>
-                    <div class="timeline-station">
+                    <div class="timeline-station" data-step="CONFIRMED">
                         <div class="station-icon"><i class="bi bi-shield-check"></i></div>
                         <div class="station-label">Xác nhận</div>
                     </div>
-                    <div class="timeline-station">
-                        <div class="station-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="station-label">Đóng gói</div>
-                    </div>
-                    <div class="timeline-station">
+                    <div class="timeline-station" data-step="SHIPPING">
                         <div class="station-icon"><i class="bi bi-truck-front-fill"></i></div>
-                        <div class="station-label">Giao hàng</div>
+                        <div class="station-label">Vận chuyển</div>
                     </div>
-                    <div class="timeline-station">
+                    <div class="timeline-station" data-step="DELIVERED">
                         <div class="station-icon"><i class="bi bi-house-heart-fill"></i></div>
-                        <div class="station-label">Đến nơi</div>
+                        <div class="station-label">Đã giao</div>
                     </div>
                 </div>
             </div>
@@ -875,6 +871,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Burst particles animation
         const host = document.querySelector('.check-container');
         if (host) {
             const layer = document.createElement('div');
@@ -905,6 +902,35 @@
             }
         }
 
+        // Timeline logic based on OrderStatus enum
+        const timeline = document.getElementById('orderTimeline');
+        if (timeline) {
+            const currentStatus = timeline.getAttribute('data-status');
+            
+            // Define the order flow matching OrderStatus enum
+            const statusFlow = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED'];
+            
+            // Find current status index
+            const currentIndex = statusFlow.indexOf(currentStatus);
+            
+            // Update timeline stations
+            const stations = timeline.querySelectorAll('.timeline-station');
+            stations.forEach((station, index) => {
+                const stepStatus = station.getAttribute('data-step');
+                const stepIndex = statusFlow.indexOf(stepStatus);
+                
+                if (stepIndex < currentIndex) {
+                    // Past steps - mark as done
+                    station.classList.add('done');
+                } else if (stepIndex === currentIndex) {
+                    // Current step - mark as active
+                    station.classList.add('active');
+                }
+                // Future steps remain default (no class)
+            });
+        }
+
+        // Show timeline after processing
         window.setTimeout(function () {
             const w = document.getElementById('timelineWrap');
             if (w) {

@@ -22,4 +22,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Modifying // Nên thêm cho cả phương thức xóa bằng Object
     @Transactional
     void deleteAllByCart(Cart cart);
+
+    // FIX #5: Đếm số lượng cart items có product này
+    long countByProductId(Long productId);
 }

@@ -21,6 +21,10 @@ public class Coupon {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version; // For optimistic locking to prevent race conditions
+
     @NotBlank(message = "Mã giảm giá không được rỗng")
     @Column(unique = true, nullable = false)
     private String code;

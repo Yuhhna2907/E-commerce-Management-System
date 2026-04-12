@@ -1,9 +1,11 @@
 package com.codegym.smartphonemanagement.controller;
 
 import com.codegym.smartphonemanagement.model.dto.CouponResponseDTO;
+import com.codegym.smartphonemanagement.model.dto.UserProfileDTO;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
+import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,6 +19,9 @@ public class GlobalModelController {
 
     private final ICouponService couponService;
     private final UserRepository userRepository;
+    private final IUserProfileService userProfileService;
+
+    private static final Long MOCK_USER_ID = 1L; // thay bằng Security principal sau
 
     @ModelAttribute("GlobalVouchers")
     public List<CouponResponseDTO> globalVouchers() {
@@ -37,12 +42,21 @@ public class GlobalModelController {
     @ModelAttribute("SavedVoucherCodes")
     public List<String> savedVoucherCodes() {
         // Hardcode mock user ID for now
-        User user = userRepository.findById(1L).orElse(null);
+        User user = userRepository.findById(MOCK_USER_ID).orElse(null);
         if (user == null) {
             return List.of();
         }
         return couponService.getUserWallet(user).stream()
                 .map(com.codegym.smartphonemanagement.model.Coupon::getCode)
                 .collect(Collectors.toList());
+    }
+
+    @ModelAttribute("currentUser")
+    public UserProfileDTO currentUser() {
+        try {
+            return userProfileService.getProfile(MOCK_USER_ID);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

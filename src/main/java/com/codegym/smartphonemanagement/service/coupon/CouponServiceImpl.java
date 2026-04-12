@@ -174,8 +174,34 @@ public class CouponServiceImpl implements ICouponService {
                 }
             }
             
-            // Tăng số lượng đã dùng
-            coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() + 1);
+            // Tăng số lượng đã dùng với retry để handle race condition
+            try {
+                incrementCouponUsage(coupon);
+            } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                // Retry once if optimistic locking fails
+                Coupon refreshedCoupon = couponRepository.findByCode(order.getCouponCode())
+                        .orElseThrow(() -> new RuntimeException("Coupon không tồn tại"));
+                incrementCouponUsage(refreshedCoupon);
+            }
+        }
+    }
+
+    private void incrementCouponUsage(Coupon coupon) {
+        // Double-check usage limit before incrementing
+        if (coupon.getMaxUsageGlobal() != null && coupon.getCurrentUsageGlobal() >= coupon.getMaxUsageGlobal()) {
+            throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng");
+        }
+        coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() + 1);
+        couponRepository.save(coupon);
+    }
+
+    @Override
+    @Transactional
+    public void restoreVoucherUsage(String couponCode) {
+        if (couponCode == null || couponCode.isEmpty()) return;
+        Coupon coupon = couponRepository.findByCode(couponCode).orElse(null);
+        if (coupon != null && coupon.getCurrentUsageGlobal() > 0) {
+            coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() - 1);
             couponRepository.save(coupon);
         }
     }

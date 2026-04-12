@@ -17,6 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByUser_IdAndStatusIn(Long userId, Collection<OrderStatus> statuses);
 
+    long countByStatus(OrderStatus status);
+
     // 2. Tìm đơn hàng theo trạng thái (Ví dụ: Admin muốn lọc các đơn PENDING)
     List<Order> findAllByStatusOrderByCreatedAtDesc(OrderStatus status);
 
@@ -27,8 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.status != 'CANCELLED'")
     BigDecimal calculateTotalRevenue();
 
-    // 2. Đếm tổng số đơn hàng thành công (Trạng thái SHIPPED)
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'SHIPPED'")
+    // 2. Đếm tổng số đơn hàng thành công (Trạng thái DELIVERED)
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'DELIVERED' OR o.status = 'PARTIAL_REFUNDED'")
     long countCompletedOrders();
 
     // 3. Thống kê doanh thu 7 ngày gần nhất (Dùng Native Query cho MySQL)

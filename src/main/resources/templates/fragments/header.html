@@ -365,6 +365,26 @@
                           th:title="|${headerPendingOrdersCount} đơn đang xử lý|"></span>
                 </a>
 
+                <!-- Thông báo (Real-time) -->
+                <div class="nav-item dropdown position-relative">
+                    <a href="#" class="icon-action-btn nav-interactive-glow position-relative"
+                       id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                        <i class="bi bi-bell fs-4"></i>
+                        <span class="pulse-badge" id="notificationBadge" style="display: none; background: #ef4444; border-color: #ef4444;">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notificationDropdown" style="width: 350px; border-radius: 12px; max-height: 400px; overflow-y: auto; padding: 0;">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold">Thông báo</span>
+                            <button class="btn btn-sm text-primary p-0 shadow-none" onclick="markAllNotificationsAsRead()" style="font-size: 0.8rem;">Đánh dấu đã đọc</button>
+                        </div>
+                        <div id="notificationList">
+                            <div class="p-4 text-center text-muted fw-bold" id="noNotificationText">
+                                Không có thông báo mới
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Shopping Cart Icon Line Art -->
                 <a th:href="@{/user/cart}" class="icon-action-btn nav-interactive-glow position-relative">
                     <i class="bi bi-bag fs-4"></i>
@@ -374,12 +394,22 @@
                           th:text="${#lists.size(cart.items)}">0</span>
                 </a>
 
-                <!-- Account / Profile Line Art -->
-                <a href="#" class="icon-action-btn d-flex align-items-center gap-2 px-3" style="width: auto;">
-                    <i class="bi bi-person fs-4"></i>
+                <!-- Account / Profile -->
+                <a th:href="@{/user/profile}" class="icon-action-btn d-flex align-items-center gap-2 px-3" style="width: auto; text-decoration: none;">
+                    <!-- Avatar vòng tròn nếu có URL, nếu không hiện icon -->
+                    <span th:if="${currentUser != null and currentUser.avatarUrl != null and !#strings.isEmpty(currentUser.avatarUrl)}"
+                          style="width:34px; height:34px; border-radius:50%; overflow:hidden; border:2px solid rgba(245,158,11,0.5); flex-shrink:0; display:flex;">
+                        <img th:src="${currentUser.avatarUrl}" alt="avatar"
+                             style="width:100%; height:100%; object-fit:cover;">
+                    </span>
+                    <span th:unless="${currentUser != null and currentUser.avatarUrl != null and !#strings.isEmpty(currentUser.avatarUrl)}"
+                          style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#ea580c); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-person-fill text-white" style="font-size:1.1rem;"></i>
+                    </span>
                     <div class="text-start d-none d-xl-block" style="line-height: 1.2;">
                         <span class="text-muted d-block" style="font-size: 0.7rem; font-weight: 500;">Xin chào,</span>
-                        <span class="fw-bold" style="font-size: 0.9rem; color: #0f172a;" th:text="${userName ?: 'Anh Huy'}"></span>
+                        <span class="fw-bold" style="font-size: 0.9rem; color: #0f172a;"
+                              th:text="${currentUser != null ? (currentUser.fullName ?: currentUser.username) : 'Khách'}">Anh Huy</span>
                     </div>
                 </a>
                 
@@ -593,6 +623,19 @@
         }, 800);
     }
 </script>
+
+<!-- Real-time Notifications Dependencies -->
+<input type="hidden" id="currentUsername" th:value="${currentUser != null ? currentUser.username : ''}" />
+
+<!-- Toast Container for Notifications -->
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastPlacement" style="z-index: 9999;">
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="/js/realtime-notification.js"></script>
 </div>
 
 <!-- ========================================================= -->

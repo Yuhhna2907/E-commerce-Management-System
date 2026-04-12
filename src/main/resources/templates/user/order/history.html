@@ -517,18 +517,29 @@
                     <!-- Cột Phải: Tổng Giá & Status -->
                     <div class="col-md-4 text-md-end">
                         <div class="mb-2">
-                            <!-- Điều kiện hiển thị Trạng thái (Phụ thuộc vào dữ liệu DB, ví dụ tạm) -->
-                            <span th:if="${order.status == 'SHIPPED' or order.status == 'SUCCESS' or order.status == 'COMPLETED' or order.status == 'DELIVERED' or order.status == 'Đã giao'}" class="status-badge success">
-                                <i class="bi bi-check-circle-fill"></i> Hoàn Tất
+                            <span th:if="${order.status == 'PENDING'}" class="status-badge pending">
+                                <i class="bi bi-hourglass-split"></i> Chờ xác nhận
                             </span>
-                            <span th:if="${order.status == 'PENDING' or order.status == 'PAID' or order.status == 'PROCESSING' or order.status == 'Đang xử lý'}" class="status-badge pending">
-                                <i class="bi bi-truck"></i> Đang Xử Lý
+                            <span th:if="${order.status == 'CONFIRMED'}" class="status-badge pending" style="background: rgba(13,110,253,0.12); color: #0d6efd; border-color: rgba(13,110,253,0.3);">
+                                <i class="bi bi-check-circle"></i> Đã xác nhận
                             </span>
-                            <span th:if="${order.status == 'CANCELLED' or order.status == 'Đã hủy'}" class="status-badge cancelled">
-                                <i class="bi bi-x-circle-fill"></i> Đã Hủy
+                            <span th:if="${order.status == 'SHIPPING'}" class="status-badge pending" style="background: rgba(139,92,246,0.12); color: #7c3aed; border-color: rgba(139,92,246,0.3);">
+                                <i class="bi bi-truck"></i> Đang vận chuyển
                             </span>
-                            <span th:unless="${order.status == 'SHIPPED' or order.status == 'SUCCESS' or order.status == 'COMPLETED' or order.status == 'DELIVERED' or order.status == 'Đã giao' or order.status == 'PENDING' or order.status == 'PAID' or order.status == 'PROCESSING' or order.status == 'Đang xử lý' or order.status == 'CANCELLED' or order.status == 'Đã hủy'}" class="status-badge pending">
-                                <i class="bi bi-info-circle-fill"></i> <span th:text="${order.status}">Status</span>
+                            <span th:if="${order.status == 'DELIVERED'}" class="status-badge success">
+                                <i class="bi bi-check-circle-fill"></i> Đã giao hàng
+                            </span>
+                            <span th:if="${order.status == 'CANCELLED'}" class="status-badge cancelled">
+                                <i class="bi bi-x-circle-fill"></i> Đã hủy
+                            </span>
+                            <span th:if="${order.status == 'REFUND_REQUESTED'}" class="status-badge pending" style="background: rgba(249,115,22,0.12); color: #c2410c; border-color: rgba(249,115,22,0.3);">
+                                <i class="bi bi-arrow-return-left"></i> Chờ hoàn trả
+                            </span>
+                            <span th:if="${order.status == 'REFUNDED'}" class="status-badge cancelled">
+                                <i class="bi bi-arrow-return-left"></i> Đã hoàn trả
+                            </span>
+                            <span th:if="${order.status == 'PARTIAL_REFUNDED'}" class="status-badge pending" style="background: rgba(249,115,22,0.15); color: #9a3412; border-color: rgba(249,115,22,0.3);">
+                                <i class="bi bi-arrow-return-left"></i> Hoàn một phần
                             </span>
                         </div>
                         
@@ -538,14 +549,13 @@
                         </div>
                         
                         <div class="action-bar justify-content-md-end mt-4">
-                            <form th:action="@{/user/order/reorder/{id}(id=${order.id})}" method="post" class="d-inline">
-                                <button type="submit" class="btn-action primary link-micro-hit"><i class="bi bi-bag-plus"></i> Đặt lại</button>
+                            <a th:href="@{/user/order/detail/{id}(id=${order.id})}" class="btn-action primary link-micro-hit text-decoration-none d-inline-flex align-items-center"><i class="bi bi-eye"></i> Chi tiết</a>
+                            <form th:if="${order.canCancel}" th:action="@{/user/order/{id}/cancel(id=${order.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn-action link-micro-hit" style="color: #dc2626;" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')"><i class="bi bi-x-circle"></i> Hủy</button>
                             </form>
-                            <a th:href="@{/user/order/success/{id}(id=${order.id})}" class="btn-action link-micro-hit text-decoration-none d-inline-flex align-items-center"><i class="bi bi-receipt"></i> Hóa đơn</a>
-                            <a th:if="${not #lists.isEmpty(order.items)}"
-                               th:with="firstDetail=@{/user/products/{id}(id=${order.items[0].productId})}"
-                               th:href="${firstDetail} + '#reviews'"
-                               class="btn-action link-micro-hit text-decoration-none d-inline-flex align-items-center" title="Đánh giá"><i class="bi bi-star"></i> Đánh giá</a>
+                            <form th:action="@{/user/order/reorder/{id}(id=${order.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn-action link-micro-hit"><i class="bi bi-bag-plus"></i> Đặt lại</button>
+                            </form>
                         </div>
                     </div>
                     

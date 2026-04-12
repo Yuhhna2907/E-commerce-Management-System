@@ -1,4 +1,4 @@
-package com.codegym.smartphonemanagement.controller.admin;
+package com.codegym.smartphonemanagement.controller.seller;
 
 import com.codegym.smartphonemanagement.model.Coupon;
 import com.codegym.smartphonemanagement.model.dto.AdminCouponRequestDTO;

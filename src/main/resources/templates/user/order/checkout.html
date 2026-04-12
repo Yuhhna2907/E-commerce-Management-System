@@ -729,6 +729,29 @@
                 <div class="card-bento">
                     <h5 class="section-title"><i class="bi bi-geo-alt"></i> Thông tin nhận hàng (1/2)</h5>
 
+                    <!-- Quick-fill from saved addresses -->
+                    <div th:if="${savedAddresses != null and !#lists.isEmpty(savedAddresses)}"
+                         class="mb-4 p-3 rounded-3"
+                         style="background:rgba(245,158,11,0.06); border: 1.5px dashed #f59e0b;">
+                        <label class="form-label fw-bold mb-2" style="font-size:0.85rem; color:#d97706;">
+                            <i class="bi bi-geo-alt-fill me-1"></i> Chọn từ địa chỉ đã lưu
+                        </label>
+                        <select class="form-select" onchange="fillFromSavedAddress(this)">
+                            <option value="">-- Dùng địa chỉ đã lưu --</option>
+                            <option th:each="addr : ${savedAddresses}"
+                                    th:value="${addr.id}"
+                                    th:text="${(addr.isDefault ? '⭐ ' : '') + addr.label + ' — ' + addr.receiverName}"
+                                    th:data-name="${addr.receiverName}"
+                                    th:data-phone="${addr.receiverPhone}"
+                                    th:data-detail="${addr.addressDetail}"
+                                    th:data-ward="${addr.ward}"
+                                    th:data-district="${addr.district}"
+                                    th:data-province="${addr.province}"
+                                    th:selected="${addr.isDefault}">
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="form-floating input-icon-wrap form-field-tight">
                         <i class="bi bi-person input-icon-line" aria-hidden="true"></i>
                         <input type="text" th:field="*{customerName}"
@@ -1072,6 +1095,36 @@
                 }
             });
         }
+    }
+
+    // Auto-fill address fields from saved address dropdown
+    function fillFromSavedAddress(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.value) return;
+
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val) {
+                // For select elements, try to match option text first, then fall back to plain set
+                if (el.tagName === 'SELECT') {
+                    for (let o of el.options) {
+                        if (o.text === val || o.value === val) { o.selected = true; break; }
+                    }
+                    // Trigger change event so dependent dropdowns update
+                    el.dispatchEvent(new Event('change'));
+                } else {
+                    el.value = val;
+                }
+            }
+        };
+
+        set('customerName',  opt.dataset.name);
+        set('receiverPhone', opt.dataset.phone);
+        set('addressDetail', opt.dataset.detail);
+        // Province → district → ward cascades via existing API logic
+        set('province',      opt.dataset.province);
+        setTimeout(() => set('district', opt.dataset.district), 600);
+        setTimeout(() => set('ward',     opt.dataset.ward), 1200);
     }
 </script>
 

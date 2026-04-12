@@ -2,9 +2,10 @@ package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
-import com.codegym.smartphonemanagement.service.order.DTO.OrderRequestDTO;
-import com.codegym.smartphonemanagement.service.order.DTO.OrderResponseDTO;
+import com.codegym.smartphonemanagement.service.order.RefundService;
+import com.codegym.smartphonemanagement.service.order.DTO.*;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
+import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,8 @@ public class UserOrderController {
 
     private final IOrderService orderService;
     private final ICartService cartService;
+    private final RefundService refundService;
+    private final IUserProfileService userProfileService;
 
     // Giả lập ID người dùng (Duy thay bằng Security context sau nhé)
     private final Long USER_ID = 1L;
@@ -60,6 +63,7 @@ public class UserOrderController {
 
         model.addAttribute("cart", cart);
         model.addAttribute("orderRequest", requestDto);
+        model.addAttribute("savedAddresses", userProfileService.getAddresses(USER_ID));
         return "user/order/checkout"; // Trả về file checkout.html
     }
 
@@ -111,6 +115,63 @@ public class UserOrderController {
         List<OrderResponseDTO> history = orderService.getOrderHistory(USER_ID);
         model.addAttribute("orders", history);
         return "user/order/history";
+    }
+
+    /**
+     * Xem chi tiết đơn hàng (timeline + sản phẩm)
+     */
+    @GetMapping("/detail/{id}")
+    public String showOrderDetail(@PathVariable Long id, Model model) {
+        OrderResponseDTO order = orderService.getOrderDetail(USER_ID, id);
+        model.addAttribute("order", order);
+        return "user/order/detail";
+    }
+
+    /**
+     * User hủy đơn (chỉ khi PENDING)
+     */
+    @PostMapping("/{id}/cancel")
+    public String cancelOrder(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            orderService.cancelOrder(USER_ID, id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng thành công. Kho hàng và voucher đã được hoàn lại.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/user/order/history";
+    }
+
+    /**
+     * Trang form gửi yêu cầu refund
+     */
+    @GetMapping("/{id}/refund")
+    public String showRefundForm(@PathVariable Long id, Model model) {
+        OrderResponseDTO order = orderService.getOrderDetail(USER_ID, id);
+        if (!order.isCanRefund()) {
+            return "redirect:/user/order/detail/" + id;
+        }
+        model.addAttribute("order", order);
+        model.addAttribute("refundRequest", new RefundRequestDTO());
+        return "user/order/refund_form";
+    }
+
+    /**
+     * Submit yêu cầu refund
+     */
+    @PostMapping("/{id}/refund")
+    public String submitRefund(@PathVariable Long id,
+                               @ModelAttribute RefundRequestDTO refundDTO,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            refundDTO.setOrderId(id);
+            refundService.createRefundRequest(USER_ID, refundDTO);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Yêu cầu hoàn trả đã được gửi. Vui lòng chờ Admin duyệt.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/user/order/" + id + "/refund";
+        }
+        return "redirect:/user/order/detail/" + id;
     }
 
     @PostMapping("/reorder/{orderId}")

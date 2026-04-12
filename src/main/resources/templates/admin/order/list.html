@@ -2,23 +2,45 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý đơn hàng - Smartphone Store</title>
+    <title>Quản lý đơn hàng - SmartZone Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .header-red {
-            background-color: #d70018;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+        .header-red { background-color: #d70018; position: sticky; top: 0; z-index: 1000; }
         .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
         .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
         .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
         .footer { background: #212529; color: white; }
-        .badge-pending { background-color: #ffc107; color: #000; }
-        .badge-shipped { background-color: #198754; color: #fff; }
-        .badge-paid { background-color: #0d6efd; color: #fff; }
+
+        .badge-status { padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.8rem; }
+        .badge-pending { background: rgba(245,158,11,0.15); color: #d97706; }
+        .badge-confirmed { background: rgba(13,110,253,0.12); color: #0d6efd; }
+        .badge-shipping { background: rgba(139,92,246,0.12); color: #7c3aed; }
+        .badge-delivered { background: rgba(16,185,129,0.12); color: #059669; }
+        .badge-cancelled { background: rgba(239,68,68,0.12); color: #dc2626; }
+        .badge-refund_requested { background: rgba(249,115,22,0.12); color: #c2410c; }
+        .badge-refunded { background: rgba(239,68,68,0.15); color: #be123c; }
+        .badge-partial_refunded { background: rgba(249,115,22,0.15); color: #9a3412; }
+
+        .status-filter-btn {
+            border: 1px solid #dee2e6; background: #fff;
+            padding: 6px 14px; border-radius: 50px;
+            font-weight: 600; font-size: 0.85rem;
+            color: #64748b; transition: all 0.2s;
+            text-decoration: none;
+        }
+        .status-filter-btn:hover, .status-filter-btn.active {
+            background: #0f172a; color: #fff; border-color: #0f172a;
+        }
+        .status-filter-btn .badge {
+            font-size: 0.7rem; padding: 2px 6px; border-radius: 50px;
+            background: rgba(239,68,68,0.2); color: #dc2626;
+        }
+
+        .action-dropdown .dropdown-toggle::after { display: none; }
+        .action-dropdown .dropdown-menu { border-radius: 12px; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
+        .action-dropdown .dropdown-item { border-radius: 8px; font-weight: 600; padding: 8px 16px; font-size: 0.9rem; }
+        .action-dropdown .dropdown-item:hover { background: #f8fafc; }
     </style>
 </head>
 <body>
@@ -37,25 +59,25 @@
         <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
             <h6 class="text-muted text-uppercase fw-bold small mb-3">Danh mục quản lý</h6>
 
-            <a th:href="@{/admin/dashboard}" class="sidebar-link"
-               th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
+            <a th:href="@{/admin/dashboard}" class="sidebar-link" th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
                 <i class="bi bi-speedometer2 me-2"></i> Tổng quan
             </a>
-
             <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product'} ? 'active'">
                 <i class="bi bi-box-seam me-2"></i> Sản phẩm
             </a>
-
             <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category'} ? 'active'">
                 <i class="bi bi-tags me-2"></i> Danh mục
             </a>
-
             <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order'} ? 'active'">
                 <i class="bi bi-cart-check me-2"></i> Đơn hàng
+                <span th:if="${countPending != null && countPending > 0}" class="badge bg-warning text-dark ms-1" th:text="${countPending}"></span>
             </a>
-
+            <a th:href="@{/admin/orders/refunds}" class="sidebar-link" th:classappend="${pageTitle == 'refund'} ? 'active'">
+                <i class="bi bi-arrow-return-left me-2"></i> Hoàn trả
+                <span th:if="${countRefundRequested != null && countRefundRequested > 0}" class="badge bg-danger ms-1" th:text="${countRefundRequested}"></span>
+            </a>
             <a th:href="@{/admin/coupons}" class="sidebar-link" th:classappend="${pageTitle == 'coupon'} ? 'active'">
-                <i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi / Voucher
+                <i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi
             </a>
             <hr>
             <a th:href="@{/admin/products}" class="text-danger">
@@ -64,24 +86,50 @@
         </div>
 
         <div class="col-md-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark">Danh sách đơn hàng</h3>
-                <div class="btn-group shadow-sm">
-                    <a th:href="@{/admin/orders}" class="btn btn-sm"
-                       th:classappend="${currentStatus == null ? 'btn-dark' : 'btn-outline-dark'}">Tất cả</a>
-                    <a th:href="@{/admin/orders(status='PENDING')}" class="btn btn-sm"
-                       th:classappend="${currentStatus?.name() == 'PENDING' ? 'btn-warning' : 'btn-outline-warning'}">Chờ xử lý</a>
-                    <a th:href="@{/admin/orders(status='SHIPPED')}" class="btn btn-sm"
-                       th:classappend="${currentStatus?.name() == 'SHIPPED' ? 'btn-success' : 'btn-outline-success'}">Đang giao</a>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fw-bold text-dark mb-0">Quản lý đơn hàng</h3>
+            </div>
+
+            <!-- Status Filters -->
+            <div class="d-flex gap-2 flex-wrap mb-4">
+                <a th:href="@{/admin/orders}" class="status-filter-btn"
+                   th:classappend="${currentStatus == null} ? 'active'">Tất cả</a>
+                <a th:href="@{/admin/orders(status='PENDING')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
+                    <i class="bi bi-hourglass-split me-1"></i> Chờ xác nhận
+                </a>
+                <a th:href="@{/admin/orders(status='CONFIRMED')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'CONFIRMED'} ? 'active'">
+                    <i class="bi bi-check-circle me-1"></i> Đã xác nhận
+                </a>
+                <a th:href="@{/admin/orders(status='SHIPPING')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'SHIPPING'} ? 'active'">
+                    <i class="bi bi-truck me-1"></i> Đang giao
+                </a>
+                <a th:href="@{/admin/orders(status='DELIVERED')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'DELIVERED'} ? 'active'">
+                    <i class="bi bi-house-check me-1"></i> Đã giao
+                </a>
+                <a th:href="@{/admin/orders(status='CANCELLED')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'CANCELLED'} ? 'active'">
+                    <i class="bi bi-x-circle me-1"></i> Đã hủy
+                </a>
+                <a th:href="@{/admin/orders(status='REFUND_REQUESTED')}" class="status-filter-btn"
+                   th:classappend="${currentStatus?.name() == 'REFUND_REQUESTED'} ? 'active'">
+                    <i class="bi bi-arrow-return-left me-1"></i> Yêu cầu hoàn
+                </a>
             </div>
 
             <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${message}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-x-circle-fill me-2"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
 
-            <div class="table-responsive bg-white shadow-sm rounded">
+            <div class="table-responsive bg-white shadow-sm rounded-3">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light text-center">
                     <tr>
@@ -90,36 +138,56 @@
                         <th>Tổng tiền</th>
                         <th>Trạng thái</th>
                         <th>Ngày đặt</th>
-                        <th width="200">Thao tác</th>
+                        <th width="220">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="order : ${orders}" class="text-center">
-                        <td th:text="${order.id}" class="fw-bold"></td>
+                        <td class="fw-bold" th:text="'#' + ${order.id}"></td>
                         <td class="text-start">
                             <div class="fw-bold" th:text="${order.customerName}"></div>
-                            <small class="text-muted"><i class="bi bi-telephone"></i> [[${order.receiverPhone}]]</small>
+                            <small class="text-muted"><i class="bi bi-telephone"></i> <span th:text="${order.receiverPhone}"></span></small>
                         </td>
-                        <td class="text-danger fw-bold">
-                            [[${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}]] ₫
+                        <td class="text-danger fw-bold price-mono" style="font-family: monospace;">
+                            <span th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}"></span> ₫
                         </td>
                         <td>
-                                <span class="badge"
-                                      th:classappend="${order.status == 'PENDING' ? 'badge-pending' : (order.status == 'SHIPPED' ? 'badge-shipped' : 'badge-paid')}"
-                                      th:text="${order.status == 'PENDING' ? 'Chờ xử lý' : (order.status == 'SHIPPED' ? 'Đang giao' : 'Đã giao')}">
-                                </span>
+                            <span class="badge-status"
+                                  th:classappend="'badge-' + ${order.status.toLowerCase()}"
+                                  th:text="${order.statusDisplay}">Status</span>
                         </td>
                         <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
                         <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-info" th:onclick="'showDetail(' + ${order.id} + ')'" title="Xem chi tiết">
+                            <div class="d-flex gap-1 justify-content-center align-items-center">
+                                <!-- Xem chi tiết -->
+                                <a th:href="@{/admin/orders/detail/{id}(id=${order.id})}"
+                                   class="btn btn-sm btn-outline-info" title="Chi tiết">
                                     <i class="bi bi-eye"></i>
-                                </button>
+                                </a>
 
-                                <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/update-status/{id}(id=${order.id})}" method="post" class="d-inline">
-                                    <input type="hidden" name="status" value="SHIPPED">
-                                    <button type="submit" class="btn btn-sm btn-success ms-1" onclick="return confirm('Duy muốn duyệt đơn hàng này?')">
+                                <!-- Action buttons dựa theo status -->
+                                <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/{id}/confirm(id=${order.id})}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-success" onclick="return confirm('Xác nhận đơn hàng này?')">
                                         <i class="bi bi-check-lg"></i> Duyệt
+                                    </button>
+                                </form>
+
+                                <form th:if="${order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/ship(id=${order.id})}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-primary">
+                                        <i class="bi bi-truck"></i> Giao
+                                    </button>
+                                </form>
+
+                                <form th:if="${order.status == 'SHIPPING'}" th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-success">
+                                        <i class="bi bi-house-check"></i> Đã giao
+                                    </button>
+                                </form>
+
+                                <form th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}"
+                                      th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đơn hàng này?')">
+                                        <i class="bi bi-x-lg"></i>
                                     </button>
                                 </form>
                             </div>
@@ -135,6 +203,7 @@
     </div>
 </div>
 
+<!-- Order Detail Modal (existing, enhanced) -->
 <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg">
@@ -143,22 +212,14 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div id="customerInfo" class="row mb-4 p-3 bg-light rounded g-3">
-                </div>
-
+                <div id="customerInfo" class="row mb-4 p-3 bg-light rounded g-3"></div>
                 <h6 class="fw-bold mb-3"><i class="bi bi-box me-2"></i>Danh sách sản phẩm</h6>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle">
                         <thead class="table-light">
-                        <tr>
-                            <th>Sản phẩm</th>
-                            <th class="text-center">Đơn giá</th>
-                            <th class="text-center">SL</th>
-                            <th class="text-end">Thành tiền</th>
-                        </tr>
+                        <tr><th>Sản phẩm</th><th class="text-center">Đơn giá</th><th class="text-center">SL</th><th class="text-end">Thành tiền</th></tr>
                         </thead>
-                        <tbody id="orderDetailBody">
-                        </tbody>
+                        <tbody id="orderDetailBody"></tbody>
                         <tfoot>
                         <tr>
                             <td colspan="3" class="text-end fw-bold">TỔNG CỘNG:</td>
@@ -188,37 +249,27 @@
             .then(r => r.json())
             .then(data => {
                 document.getElementById('displayOrderId').textContent = data.id;
-
-                // Hiển thị thông tin khách
                 document.getElementById('customerInfo').innerHTML = `
-            <div class="col-md-6">
-                <strong>Người nhận:</strong> ${data.customerName}<br>
-                <strong>Số điện thoại:</strong> ${data.receiverPhone}
-            </div>
-            <div class="col-md-6">
-                <strong>Địa chỉ:</strong> ${data.shippingAddress}<br>
-                <strong>Ghi chú:</strong> ${data.note || 'Không có'}
-            </div>
-        `;
-
-                // Đổ danh sách sản phẩm
+                    <div class="col-md-6">
+                        <strong>Người nhận:</strong> ${data.customerName}<br>
+                        <strong>Số điện thoại:</strong> ${data.receiverPhone}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Địa chỉ:</strong> ${data.shippingAddress}<br>
+                        <strong>Ghi chú:</strong> ${data.note || 'Không có'}
+                    </div>
+                `;
                 let html = '';
                 data.items.forEach(item => {
-                    html += `
-                <tr>
-                    <td>
-                        <img src="${item.imageUrl}" width="40" class="me-2 rounded">
-                        ${item.productName}
-                    </td>
-                    <td class="text-center">${new Intl.NumberFormat('vi-VN').format(item.price)} ₫</td>
-                    <td class="text-center">${item.quantity}</td>
-                    <td class="text-end fw-bold">${new Intl.NumberFormat('vi-VN').format(item.subTotal)} ₫</td>
-                </tr>
-            `;
+                    html += `<tr>
+                        <td><img src="${item.imageUrl}" width="40" class="me-2 rounded">${item.productName}</td>
+                        <td class="text-center">${new Intl.NumberFormat('vi-VN').format(item.price)} ₫</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-end fw-bold">${new Intl.NumberFormat('vi-VN').format(item.subTotal)} ₫</td>
+                    </tr>`;
                 });
                 document.getElementById('orderDetailBody').innerHTML = html;
                 document.getElementById('totalOrderPrice').textContent = new Intl.NumberFormat('vi-VN').format(data.totalPrice) + ' ₫';
-
                 new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
             })
             .catch(err => alert("Lỗi tải chi tiết: " + err));
