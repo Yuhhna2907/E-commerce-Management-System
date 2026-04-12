@@ -8,6 +8,8 @@ import java.util.List;
 public class OrderResponseDTO {
     private Long id;
     private BigDecimal totalPrice;
+    private BigDecimal totalDiscount;
+    private String couponCode;
     private String status;
     private LocalDateTime createdAt;
     private String customerName;
@@ -15,4 +17,14 @@ public class OrderResponseDTO {
     private String shippingAddress;
     private String note;
     private List<OrderItemResponseDTO> items;
+    private String paymentMethodDisplay;
+    // OMS timeline
+    private List<OrderHistoryDTO> timeline;
+    // Refund info (nếu có)
+    private RefundResponseDTO activeRefund;
+    // Trạng thái hiển thị tiếng Việt
+    private String statusDisplay;
+    // Cho user biết có thể hủy / refund không
+    private boolean canCancel;
+    private boolean canRefund;
 }

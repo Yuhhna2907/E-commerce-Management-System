@@ -42,4 +42,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying
     @Query("UPDATE Product p SET p.active = :status WHERE p.id = :id")
     void updateActiveStatus(@Param("id") Long id, @Param("status") Boolean status);
+
+    // FIX #4: Check duplicate product name
+    boolean existsByNameAndActiveTrue(String name);
 }

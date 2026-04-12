@@ -63,15 +63,19 @@ public class CartService implements ICartService {
     @Override
     @Transactional
     public CartResponseDTO addToCart(Long userId, CartItemRequestDTO request) {
+        // FIX #2: Validate số lượng phải > 0
+        if (request.getQuantity() == null || request.getQuantity() <= 0) {
+            throw new BadRequestException("Số lượng phải lớn hơn 0");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
 
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
-        ProductVariant variant = product.getVariants().stream()
-                .filter(v -> v.getVariantId().equals(request.getVariantId()))
-                .findFirst()
+        // FIX #1: Load variant với pessimistic lock để tránh race condition
+        ProductVariant variant = productVariantRepository.findById(request.getVariantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại"));
 
         Cart cart = getOrCreateCart(user);
@@ -91,11 +95,9 @@ public class CartService implements ICartService {
 
             item.setQuantity(newQuantity);
 
-            if (item.getPriceAtTime() == null) {
-                item.setPriceAtTime(currentPrice);
-            }
-
-            item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(newQuantity)));
+            // FIX #3: Cập nhật giá mới để user được hưởng giá tốt hơn
+            item.setPriceAtTime(currentPrice);
+            item.setTotalPrice(currentPrice.multiply(BigDecimal.valueOf(newQuantity)));
         } else {
             checkStock(variant, request.getQuantity());
 
@@ -135,10 +137,15 @@ public class CartService implements ICartService {
                 .findByCartAndProductAndProductVariant(cart, product, variant)
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
 
-        checkStock(variant, request.getQuantity());
+        int newQty = request.getQuantity();
+        int previousQty = item.getQuantity();
+        /* Chỉ chặn khi tăng số lượng; cho phép giảm khi kho = 0 (giỏ đang “vượt” tồn sau khi hết hàng) */
+        if (newQty > previousQty) {
+            checkStock(variant, newQty);
+        }
 
-        item.setQuantity(request.getQuantity());
-        item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(request.getQuantity())));
+        item.setQuantity(newQty);
+        item.setTotalPrice(item.getPriceAtTime().multiply(BigDecimal.valueOf(newQty)));
         cartItemRepository.save(item);
 
         return mapToResponseDTO(cart);

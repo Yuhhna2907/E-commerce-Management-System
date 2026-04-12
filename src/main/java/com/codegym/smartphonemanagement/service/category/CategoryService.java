@@ -37,9 +37,15 @@ public class CategoryService implements ICategoryService {
     public void delete(Long id) {
         Category category = findById(id);
         if (category != null) {
-            // Check an toàn: không cho xóa nếu có sản phẩm trỏ tới
-            if (category.getProducts() != null && !category.getProducts().isEmpty()) {
-                throw new RuntimeException("Danh mục đang có " + category.getProducts().size() + " sản phẩm, không thể xóa!");
+            // FIX #10: Chỉ đếm sản phẩm active
+            long activeProductCount = category.getProducts() != null 
+                ? category.getProducts().stream()
+                    .filter(p -> p.getActive() != null && p.getActive())
+                    .count()
+                : 0;
+            
+            if (activeProductCount > 0) {
+                throw new RuntimeException("Danh mục đang có " + activeProductCount + " sản phẩm đang hoạt động, không thể xóa!");
             }
             categoryRepository.deleteById(id);
         }

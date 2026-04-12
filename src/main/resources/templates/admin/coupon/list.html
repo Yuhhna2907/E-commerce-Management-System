@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Khuyến mãi - Smartphone Store</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .header-red {
+            background-color: #d70018;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+        .footer { background: #212529; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/admin/dashboard}">
+            <i class="bi bi-phone"></i> SMARTPHONE STORE
+        </a>
+        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold">Danh mục quản lý</h6>
+
+            <a th:href="@{/admin/dashboard}" class="sidebar-link">
+                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
+            </a>
+
+            <a th:href="@{/admin/products}" class="sidebar-link">
+                <i class="bi bi-box-seam me-2"></i> Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/categories}" class="sidebar-link">
+                <i class="bi bi-tags me-2"></i> Danh mục
+            </a>
+
+            <a th:href="@{/admin/orders}" class="sidebar-link">
+                <i class="bi bi-cart-check me-2"></i> Đơn hàng
+            </a>
+
+            <a th:href="@{/admin/coupons}" class="sidebar-link active">
+                <i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi / Voucher
+            </a>
+            <hr>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark">Danh sách Khuyến mãi</h3>
+                <a th:href="@{/admin/coupons/create}" class="btn btn-danger shadow-sm">
+                    <i class="bi bi-plus-lg"></i> Thêm mã giảm giá
+                </a>
+            </div>
+
+            <div class="table-responsive bg-white shadow-sm rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th>Mã Code</th>
+                        <th>Loại giảm</th>
+                        <th>Giá trị</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(coupons)}">
+                        <td colspan="7" class="text-center py-4 text-muted">Chưa có mã giảm giá nào được tạo.</td>
+                    </tr>
+                    <tr th:each="coupon : ${coupons}" class="text-center">
+                        <td class="fw-bold text-danger" th:text="${coupon.code}"></td>
+                        <td>
+                            <span class="badge bg-secondary" th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : 'VNĐ'}"></span>
+                        </td>
+                        <td class="fw-bold" th:text="${coupon.discountType.name() == 'PERCENTAGE'} ? ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + '%' : ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                        <td th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <span th:classappend="${coupon.status.name() == 'ACTIVE' ? 'bg-success' : (coupon.status.name() == 'EXPIRED' ? 'bg-danger' : 'bg-warning')}"
+                                  class="badge"
+                                  th:text="${coupon.status.name() == 'ACTIVE' ? 'Hoạt động' : (coupon.status.name() == 'EXPIRED' ? 'Hết hạn' : 'Tạm ngưng')}">
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a th:href="@{'/admin/coupons/edit/' + ${coupon.id}}" class="btn btn-sm btn-outline-warning" title="Sửa">
+                                    <i class="bi bi-wrench"></i> Sửa
+                                </a>
+                                <a th:href="@{'/admin/coupons/delete/' + ${coupon.id}}" onclick="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi này không? Việc này không thể hoàn tác!');" class="btn btn-sm btn-outline-danger" title="Xóa">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

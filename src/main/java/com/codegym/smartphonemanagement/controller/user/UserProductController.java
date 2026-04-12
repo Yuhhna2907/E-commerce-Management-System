@@ -14,7 +14,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -65,8 +67,22 @@ public class UserProductController {
         ProductResponseDTO product = userProductService.getProductById(id);
         List<ReviewResponseDTO> reviews = userProductService.getReviewsByProductId(id);
 
+        Map<Integer, Double> starPercents = new HashMap<>();
+        Map<Integer, Long> starCounts = new HashMap<>();
+
+        for (int i = 1; i <= 5; i++) {
+            final int star = i;
+            long count = reviews.stream().filter(r -> r.getRating() == star).count();
+            double percent = (product.getTotalReviews() > 0) ? (count * 100.0 / product.getTotalReviews()) : 0;
+
+            starCounts.put(i, count);
+            starPercents.put(i, percent);
+        }
+
         model.addAttribute("product", product);
         model.addAttribute("reviews", reviews);
+        model.addAttribute("starPercents", starPercents);
+        model.addAttribute("starCounts", starCounts);
 
         return "user/product/detail";
     }
@@ -87,5 +103,24 @@ public class UserProductController {
     @ResponseBody
     public List<ReviewResponseDTO> getReviews(@PathVariable Long id) {
         return userProductService.getReviewsByProductId(id);
+    }
+
+    @GetMapping("/api/list")
+    @ResponseBody
+    public ResponseEntity<List<ProductResponseDTO>> getProductsForComparison(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        Page<ProductResponseDTO> productPage = userProductService.searchProducts(
+                keyword,
+                null,
+                null,
+                null,
+                page,
+                size,
+                "asc"
+        );
+        return ResponseEntity.ok(productPage.getContent());
     }
 }

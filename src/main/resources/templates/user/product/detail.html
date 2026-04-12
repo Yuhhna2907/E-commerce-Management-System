@@ -4,246 +4,934 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${product.name}">Chi tiết sản phẩm</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .product-detail-shell {
-            max-width: 1200px;
+        :root {
+            --primary-glow: rgba(13, 110, 253, 0.4);
+            --accent-gold: #f59e0b;
+            --accent-gold-glow: rgba(245, 158, 11, 0.45);
+            /* Mặc định cho IDE / trước khi JS gán theo màu ô màu */
+            --swatch-accent: #f59e0b;
+            --glass-bg: rgba(255, 255, 255, 0.72);
+            --glass-border: rgba(255, 255, 255, 0.55);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --bento-shadow:
+                0 1px 2px rgba(15, 23, 42, 0.06),
+                0 10px 28px -6px rgba(15, 23, 42, 0.1),
+                0 28px 56px -18px rgba(15, 23, 42, 0.09),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+            --bento-shadow-hover:
+                0 2px 6px rgba(15, 23, 42, 0.07),
+                0 16px 40px -12px rgba(15, 23, 42, 0.14),
+                0 40px 72px -24px rgba(15, 23, 42, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.6);
         }
 
-        .detail-panel {
-            border-radius: 24px;
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(13, 110, 253, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(13, 110, 253, 0.05) 0%, transparent 40%),
+                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.6;
+        }
+
+        /* Glassmorphism + multi-layer depth */
+        .glass-panel {
+            background: linear-gradient(155deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.62) 100%);
+            backdrop-filter: blur(22px) saturate(1.15);
+            -webkit-backdrop-filter: blur(22px) saturate(1.15);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--bento-shadow);
+            transition: box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: visible;
+        }
+
+        .detail-image-wrap.glass-panel {
             overflow: hidden;
         }
 
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.5px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.15) 45%, rgba(148, 163, 184, 0.12) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow: inset 0 0 48px rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+        }
+
+        .glass-panel:hover {
+            box-shadow: var(--bento-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .detail-image-wrap.glass-panel:hover {
+            transform: none;
+        }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+            gap: 32px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 991px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Image + parallax stage */
         .detail-image-wrap {
-            min-height: 420px;
-            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 32px 32px 24px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.5) 100%);
+            border-radius: var(--radius-xl);
+        }
+
+        .detail-image-parallax {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
+            perspective: 1000px;
+            min-height: 380px;
         }
 
-        .detail-image-wrap img {
-            max-height: 380px;
+        .product-img {
+            max-height: 420px;
+            width: auto;
+            max-width: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 18px 28px rgba(15, 23, 42, 0.1));
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), filter 0.45s ease, opacity 0.28s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
         }
 
+        .detail-image-parallax.is-hover .product-img {
+            filter: drop-shadow(0 28px 40px rgba(15, 23, 42, 0.14));
+        }
+
+        /* Horizontal gallery */
+        .gallery-carousel {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            padding: 12px 8px 8px;
+            margin: 0 -8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+
+        .gallery-carousel::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .gallery-carousel::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.45);
+            border-radius: 100px;
+        }
+
+        .gallery-thumb {
+            flex: 0 0 auto;
+            width: 88px;
+            height: 88px;
+            border-radius: 20px;
+            border: 2px solid rgba(15, 23, 42, 0.08);
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            scroll-snap-align: start;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        }
+
+        .gallery-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 14px;
+        }
+
+        .gallery-thumb:hover {
+            transform: translateY(-2px) scale(1.03);
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .gallery-thumb.is-active {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px var(--accent-gold-glow), 0 8px 24px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Info Section */
         .detail-info-wrap {
-            background: #fff;
-            border-left: 1px solid #f1f1f1;
-            padding: 28px;
-            min-height: 420px;
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
+            border-radius: var(--radius-xl);
         }
 
-        .detail-price {
-            font-size: 2rem;
-            line-height: 1.1;
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .detail-meta {
+        /* Options & Chips */
+        .detail-info-wrap .fw-semibold {
+            font-weight: 600 !important;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .option-btn {
+            min-width: 90px;
+            padding: 12px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            background: rgba(255, 255, 255, 0.75);
+            color: var(--text-main);
+            font-weight: 600;
             font-size: 0.95rem;
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+            backdrop-filter: blur(10px);
         }
 
-        .detail-description-box {
-            border-radius: 18px;
-            background: #fff;
+        .option-btn.variant-pill:hover:not(.is-selected) {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
         }
 
-        .review-card {
-            border-radius: 18px;
+        .option-btn.variant-pill.is-selected {
+            border-color: rgba(245, 158, 11, 0.85) !important;
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.22) 0%, rgba(234, 179, 8, 0.14) 100%) !important;
+            color: #0f172a !important;
+            box-shadow:
+                0 0 0 4px rgba(245, 158, 11, 0.35),
+                0 0 28px rgba(245, 158, 11, 0.28),
+                0 14px 32px -8px rgba(245, 158, 11, 0.4) !important;
+            transform: scale(1.05);
         }
-         .option-btn {
-             min-width: 84px;
-             padding: 10px 14px;
-             border-radius: 10px;
-             border: 1px solid #d9d9d9;
-             background: #fff;
-             color: #333;
-         }
 
-        .option-btn.active,
-        .option-btn.btn-dark {
-            border-color: #0d6efd;
-            background: #fff;
-            color: #0d6efd;
-            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
-        }
+        /* Color Swatches */
         .color-swatch {
-            width: 36px;
-            height: 36px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            border: 2px solid #ddd;
+            border: 3px solid #fff;
             padding: 0;
-            position: relative;
             cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, outline-color 0.35s ease;
+            outline: 2px solid transparent;
+            outline-offset: 3px;
         }
 
         .color-swatch:hover {
-            transform: scale(1.06);
+            transform: scale(1.12);
         }
 
         .color-swatch.selected-swatch {
-            box-shadow: 0 0 0 3px #0d6efd;
-            border-color: #0d6efd;
+            transform: scale(1.12);
+            outline-color: var(--accent-gold);
+            box-shadow:
+                0 0 0 4px var(--accent-gold-glow),
+                0 0 28px rgba(245, 158, 11, 0.42),
+                0 12px 28px rgba(15, 23, 42, 0.15) !important;
+        }
+
+        @supports (background: color-mix(in srgb, red, blue)) {
+            .color-swatch.selected-swatch {
+                box-shadow:
+                    0 0 0 4px var(--accent-gold-glow),
+                    0 0 32px color-mix(in srgb, var(--swatch-accent) 48%, transparent),
+                    0 12px 28px rgba(15, 23, 42, 0.15) !important;
+            }
+        }
+
+        /* Price Section */
+        .variant-summary {
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-top: auto;
+            backdrop-filter: blur(12px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .price-display {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #ef4444;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        del.price-strike {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rating-hero-num {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        /* Line icons + micro motion */
+        .icon-line {
+            display: inline-block;
+            vertical-align: -0.12em;
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+            font-weight: 400 !important;
+            -webkit-text-stroke: 0.35px currentColor;
+        }
+
+        .btn:hover .icon-line {
+            transform: translateX(-2px);
+        }
+
+        .btn.btn-add-cart:hover .icon-line {
+            transform: translateX(0) scale(1.08);
+        }
+
+        .section-heading-icon {
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s ease;
+        }
+
+        .glass-panel h3:hover .section-heading-icon {
+            transform: scale(1.1) rotate(-6deg);
+            color: var(--accent-gold);
+        }
+
+        .glass-panel h3:hover .section-heading-icon.text-primary {
+            color: #0d6efd !important;
+            transform: scale(1.08);
+        }
+
+        /* Add to cart: shimmer + ripple host */
+        .btn-add-cart {
+            position: relative;
+            overflow: hidden;
+            border-radius: 999px !important;
+            isolation: isolate;
+        }
+
+        .detail-info-wrap .btn-add-cart.btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #eab308) !important;
+            border: none !important;
+            color: #fff !important;
+            box-shadow: 0 12px 32px -8px rgba(245, 158, 11, 0.55), 0 4px 14px rgba(234, 179, 8, 0.35) !important;
+        }
+
+        .btn-add-cart::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 70%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.75) 42%, transparent 68%);
+            transform: skewX(-18deg);
+            animation: cart-shimmer 2.8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .btn-add-cart > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes cart-shimmer {
+            0%, 40% { left: -120%; opacity: 0; }
+            50% { opacity: 1; }
+            60%, 100% { left: 160%; opacity: 0; }
+        }
+
+        .btn-add-cart:hover:not(:disabled)::after {
+            animation-duration: 2s;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+            transform: scale(0);
+            animation: ripple-anim 0.65s ease-out forwards;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        @keyframes ripple-anim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Back: outlined */
+        .btn-back-outline {
+            border-radius: 999px !important;
+            border: 1.5px solid rgba(15, 23, 42, 0.18) !important;
+            background: rgba(255, 255, 255, 0.35) !important;
+            color: var(--text-main) !important;
+            font-weight: 600;
+            padding: 14px 26px !important;
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, transform 0.25s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-back-outline:hover {
+            background: rgba(15, 23, 42, 0.06) !important;
+            border-color: rgba(15, 23, 42, 0.28) !important;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Buttons shared (modal, viết đánh giá) */
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius-md) !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 16px 28px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            z-index: 1;
+        }
+
+        .btn-shimmer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transform: skewX(-25deg);
+            transition: all 0.8s ease;
+            z-index: -1;
+        }
+
+        .btn-shimmer:hover:not(:disabled)::before {
+            left: 150%;
+            transition: all 0.8s ease;
+        }
+
+        .btn-shimmer:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-shimmer:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        /* Stock Status */
+        .stock-pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 8px;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+
+        .stock-out {
+            background: #ef4444;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 2s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+
+        @keyframes pulse-green {
+            to { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+        }
+
+        @keyframes pulse-red {
+            to { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+        }
+
+        /* Reviews skeleton */
+        .reviews-panel {
+            position: relative;
+        }
+
+        .reviews-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.88) 100%);
+            backdrop-filter: blur(8px);
+            padding: 2rem;
+            pointer-events: none;
+            transition: opacity 0.45s ease, visibility 0.45s ease;
+        }
+
+        .reviews-panel.reviews-ready .reviews-skeleton {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .reviews-content {
+            opacity: 1;
+            transition: opacity 0.35s ease;
+        }
+
+        .reviews-panel.reviews-ready .reviews-content {
+            opacity: 1;
+        }
+
+        .sk-line {
+            height: 12px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 40%, #e2e8f0 80%);
+            background-size: 200% 100%;
+            animation: sk-shine 1.2s ease-in-out infinite;
+            margin-bottom: 12px;
+        }
+
+        .sk-line.w-40 { width: 40%; }
+        .sk-line.w-60 { width: 60%; }
+        .sk-line.w-80 { width: 80%; }
+
+        .sk-block {
+            height: 120px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(110deg, #e2e8f0 0%, #f8fafc 45%, #e2e8f0 90%);
+            background-size: 200% 100%;
+            animation: sk-shine 1.3s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes sk-shine {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* Rating distribution bars — gold gradient */
+        .rating-bar-track {
+            height: 9px;
+            background: rgba(15, 23, 42, 0.06);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #fde68a 0%, #f59e0b 45%, #d97706 100%);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .rating-star-label {
+            color: #f59e0b;
+            filter: drop-shadow(0 1px 2px rgba(245, 158, 11, 0.25));
+        }
+
+        /* Modals and Review */
+        .modal-content.glass-modal {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--bento-shadow-hover);
+        }
+
+        .star-rating input[type="radio"] { display: none; }
+        .star-rating label {
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input[type="radio"]:checked ~ label {
+            color: #f59e0b !important;
+            transform: scale(1.12);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .glass-panel,
+            .product-img,
+            .option-btn,
+            .gallery-thumb,
+            .btn-shimmer::before,
+            .reviews-content,
+            .reviews-skeleton {
+                transition-duration: 0.01ms !important;
+            }
+
+            .btn-add-cart::after {
+                animation: none !important;
+            }
+
+            .sk-line,
+            .sk-block {
+                animation: none !important;
+            }
+
+            .detail-image-parallax .product-img {
+                transform: none !important;
+            }
+        }
+
+        /* --- Wishlist Heart Button (Detail Page) --- */
+        .btn-wishlist-detail {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+        }
+
+        .btn-wishlist-detail:hover {
+            transform: scale(1.1);
+            color: #ef4444;
+            box-shadow: 0 12px 24px rgba(239, 68, 68, 0.15);
+        }
+
+        .btn-wishlist-detail.active {
+            color: #ef4444;
+            animation: heartBurstDetail 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border-color: rgba(239, 68, 68, 0.2);
+            background: #fff;
+        }
+
+        .btn-wishlist-detail.active i::before {
+            content: "\F415"; /* bi-suit-heart-fill */
+        }
+
+        @keyframes heartBurstDetail {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
-<body class="bg-light">
+<body class="">
 
 <div th:replace="fragments/header :: header"></div>
 
-<div class="container py-4 product-detail-shell">
-    <div class="row g-0 bg-white shadow-sm detail-panel">
+<div class="container py-5 product-detail-shell">
+    <div class="bento-grid mb-5">
         <!-- Product image -->
-        <div class="col-12 col-lg-5">
-            <div class="detail-image-wrap">
+        <div class="glass-panel detail-image-wrap position-relative">
+            <!-- Nút Tim Wishlist -->
+            <button class="btn-wishlist-detail" th:onclick="|toggleWishlist(event, ${product.id}, this)|" title="Thêm vào bộ sưu tập">
+                <i class="bi bi-suit-heart"></i>
+            </button>
+
+            <div class="detail-image-parallax" id="detailImageParallax">
                 <img th:src="${product.imageUrl != null ? product.imageUrl : 'https://via.placeholder.com/400'}"
-                     class="img-fluid rounded-3"
-                     th:alt="${product.name}">
+                     class="img-fluid product-img"
+                     id="mainProductImage"
+                     th:alt="${product.name}"
+                     draggable="false">
+            </div>
+            <div class="gallery-carousel" id="productGalleryStrip" role="tablist" aria-label="Ảnh sản phẩm"></div>
+            <!-- Tham chiếu class cho CSS (trình phân tích tĩnh); không hiển thị -->
+            <div class="d-none" aria-hidden="true">
+                <button type="button" class="gallery-thumb is-active" tabindex="-1"></button>
+                <button type="button" class="option-btn variant-pill is-selected" tabindex="-1"></button>
+                <button type="button" class="color-swatch selected-swatch" style="--swatch-accent:#f59e0b" tabindex="-1"></button>
+                <span class="ripple"></span>
             </div>
         </div>
 
         <!-- Product info -->
-        <div class="col-12 col-lg-7">
-            <div class="detail-info-wrap">
-                <div class="text-muted small mb-2 detail-meta">
-                    <span th:text="'Hãng: ' + ${product.brand}">Hãng</span>
-                    <span class="mx-2">|</span>
-                    <span th:text="'Mã SP: ' + ${product.id}">Mã SP</span>
-                </div>
+        <div class="glass-panel detail-info-wrap">
+            <div class="text-muted small mb-3 fw-medium d-flex align-items-center">
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill me-3 shadow-sm" th:text="'Hãng: ' + ${product.brand}">Hãng</span>
+                <span class="text-muted" th:text="'Mã SP: #' + ${product.id}">Mã SP</span>
+            </div>
 
-                <h2 class="fw-bold mb-3" th:text="${product.name}">Tên sản phẩm</h2>
+            <h1 class="product-title" th:text="${product.name}">Tên sản phẩm</h1>
 
-                <div class="mb-4">
-                    <div class="fw-semibold mb-2">Chọn màu sắc</div>
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="fw-semibold">Màu sắc</div>
                     <div class="d-flex flex-wrap gap-3" id="colorOptions"></div>
                 </div>
 
-                <!-- Dung lượng -->
-                <div class="mb-4">
-                    <div class="fw-semibold mb-2">Chọn dung lượng</div>
+                <div class="col-12 col-md-6">
+                    <div class="fw-semibold">Dung lượng</div>
                     <div class="d-flex flex-wrap gap-2" id="storageOptions"></div>
                 </div>
 
-                <!-- RAM -->
-                <div class="mb-4">
-                    <div class="fw-semibold mb-2">Chọn RAM</div>
+                <div class="col-12 col-md-6">
+                    <div class="fw-semibold">RAM</div>
                     <div class="d-flex flex-wrap gap-2" id="ramOptions"></div>
                 </div>
+            </div>
 
-                <div class="mb-3 p-3 bg-light rounded-3">
-                    <div class="small text-muted mb-1">Biến thể đang chọn</div>
-                    <div class="fw-bold mb-2" id="selectedVariantName">Chưa chọn</div>
-
-                    <div class="d-flex align-items-baseline gap-2 flex-wrap">
-                        <div class="text-danger fw-bold fs-4" id="selectedVariantPrice"></div>
-
-                        <del class="text-muted small" id="originalVariantPrice" style="display: none;"></del>
-
-                        <span th:if="${product.discountLabel != null}"
-                              class="badge bg-danger"
-                              style="font-size: 0.8rem; padding: 4px 8px; display: none; background-color: #eb5757 !important;">
-                              id="productDiscountLabel">
-                            [[${product.discountLabel}]]
-                        </span>
+            <div class="variant-summary mt-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="small text-muted fw-semibold mb-1">Phiên bản đang chọn</div>
+                        <div class="fs-5 fw-bold text-dark" id="selectedVariantName">Chưa chọn</div>
                     </div>
-
-                    <div class="text-success small mt-1" id="selectedVariantStock"></div>
+                    <span th:if="${product.discountLabel != null}"
+                          class="badge rounded-pill fw-bold shadow-sm"
+                          style="background: linear-gradient(135deg, #ef4444, #f97316); font-size: 0.85rem; padding: 6px 14px; display: none;"
+                          id="productDiscountLabel">
+                        [[${product.discountLabel}]]
+                    </span>
                 </div>
 
-                <input type="hidden" id="selectedVariantId" name="variantId">
-
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button type="button"
-                            class="btn btn-warning fw-bold px-4"
-                            id="addToCartBtn"
-                            disabled>
-                        <i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng
-                    </button>
-
-                    <a th:href="@{/user/products}" class="btn btn-outline-secondary px-4">
-                        Quay lại
-                    </a>
+                <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+                    <div class="price-display" id="selectedVariantPrice"></div>
+                    <del class="text-muted fs-5 fw-medium price-strike" id="originalVariantPrice" style="display: none;"></del>
                 </div>
+
+                <div class="fw-bold mt-1" id="selectedVariantStock"></div>
+            </div>
+
+            <input type="hidden" id="selectedVariantId" name="variantId">
+
+            <div class="d-flex gap-3 mt-4 flex-wrap">
+                <button type="button"
+                        class="btn btn-warning btn-shimmer btn-add-cart flex-grow-1 fs-5 text-white"
+                        style="background: linear-gradient(135deg, #f59e0b, #eab308); color: #fff;"
+                        id="addToCartBtn"
+                        disabled>
+                    <i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng
+                </button>
+
+                <a th:href="@{/user/products}" class="btn btn-back-outline d-inline-flex align-items-center text-decoration-none">
+                    <i class="bi bi-arrow-left icon-line me-2"></i> Trở lại
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Description -->
-    <div class="bg-white rounded-4 shadow-sm p-4 mt-4 detail-description-box">
-        <h4 class="fw-bold mb-3">Mô tả sản phẩm</h4>
-        <p class="text-muted mb-0" th:text="${product.description}">
-            Mô tả sản phẩm...
-        </p>
-    </div>
-
-    <!-- Reviews -->
-    <div class="bg-white rounded-4 shadow-sm p-4 mt-4 review-card">
-        <h3 class="fw-bold mb-4">Đánh giá sản phẩm</h3>
-
-        <div class="row g-4 align-items-start mb-4">
-            <div class="col-12 col-md-4 text-center text-md-start">
-                <div class="display-1 fw-bold lh-1" th:text="${product.averageRating != null ? product.averageRating : 0}">0</div>
-                <div class="text-muted">
-                    <span th:text="${product.totalReviews != null ? product.totalReviews : 0}">0</span> đánh giá
-                </div>
+    <!-- Description & Reviews Bento Row -->
+    <div class="row g-4 mb-5">
+        <!-- Description -->
+        <div class="col-12 col-lg-5">
+            <div class="glass-panel p-5 h-100">
+                <h3 class="fw-bold mb-4 d-flex align-items-center"><i class="bi bi-info-circle section-heading-icon text-primary me-3"></i>Mô tả sản phẩm</h3>
+                <p class="text-muted fs-6 lh-lg mb-0" th:text="${product.description}" style="text-align: justify;">
+                    Mô tả sản phẩm...
+                </p>
             </div>
+        </div>
 
-            <div class="col-12 col-md-8">
-                <div class="d-flex align-items-center mb-2" th:each="star : ${#numbers.sequence(5,1,-1)}">
-                    <div style="width: 24px;" class="text-muted fw-semibold" th:text="${star}">5</div>
-                    <i class="bi bi-star-fill text-warning me-2"></i>
-                    <div class="progress flex-grow-1" style="height: 12px;">
-                        <div class="progress-bar bg-light" style="width: 0%;"></div>
+        <!-- Reviews -->
+        <div class="col-12 col-lg-7">
+            <div class="glass-panel p-5 h-100 reviews-panel" id="reviews">
+                <div class="reviews-skeleton" aria-hidden="true">
+                    <div class="sk-line w-40 mb-4"></div>
+                    <div class="sk-block"></div>
+                    <div class="sk-line w-80"></div>
+                    <div class="sk-line w-60"></div>
+                    <div class="sk-line w-80"></div>
+                    <div class="sk-line w-40 mt-4"></div>
+                    <div class="sk-block" style="height: 80px;"></div>
+                </div>
+
+                <div class="reviews-content">
+                    <div class="d-flex justify-content-between align-items-center mb-5">
+                        <h3 class="fw-bold mb-0 d-flex align-items-center"><i class="bi bi-star section-heading-icon text-warning me-3"></i>Đánh giá</h3>
+                        <button type="button"
+                                class="btn btn-primary btn-shimmer rounded-pill px-4 py-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#ratingModal">
+                            <i class="bi bi-pencil icon-line me-2"></i> Viết đánh giá
+                        </button>
+                    </div>
+
+                    <div class="row g-4 align-items-center mb-5 p-4 rounded-4" style="background: rgba(255,255,255,0.4);">
+                        <div class="col-12 col-md-5 text-center">
+                            <div class="display-2 lh-1 text-dark mb-2 rating-hero-num" th:text="${product.averageRating != null ? product.averageRating : 0}">0</div>
+                            <div class="text-warning fs-4 mb-2">★★★★★</div>
+                            <div class="text-muted fw-medium">
+                                <span th:text="${product.totalReviews != null ? product.totalReviews : 0}">0</span> bài đánh giá
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-7 ps-md-4 border-start border-secondary-subtle">
+                            <div class="d-flex align-items-center mb-2" th:each="i : ${#numbers.sequence(5, 1)}">
+                                <div class="text-muted fw-bold me-2" th:text="${i}" style="width: 15px;">5</div>
+                                <i class="bi bi-star-fill rating-star-label me-3 mb-1"></i>
+                                <div class="rating-bar-track flex-grow-1" role="presentation">
+                                    <div class="rating-bar-fill"
+                                         role="progressbar"
+                                         th:style="'width: ' + ${starPercents.get(i)} + '%'"
+                                         th:aria-valuenow="${starPercents.get(i)}"
+                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="text-muted ms-3 small fw-bold" style="min-width: 25px;"
+                                     th:text="${starCounts.get(i)}">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-4">Cộng đồng nhận xét</h5>
+
+                    <div th:if="${#lists.isEmpty(reviews)}" class="text-center p-5 rounded-4" style="background: rgba(255,255,255,0.5);">
+                        <i class="bi bi-chat-square-quote section-heading-icon text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 fw-medium">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                    </div>
+
+                    <div class="vstack gap-4" th:if="${!#lists.isEmpty(reviews)}">
+                        <div class="p-4 rounded-4 shadow-sm" style="background: rgba(255,255,255,0.7);" th:each="review : ${reviews}">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                        <span th:text="${#strings.substring(review.username,0,1).toUpperCase()}">U</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" th:text="${review.username}">User</div>
+                                        <div class="text-warning small" th:text="${'★'.repeat(review.rating)}">★★★★★</div>
+                                    </div>
+                                </div>
+                                <div class="text-muted small fw-medium" th:text="${review.createdAt}">time</div>
+                            </div>
+                            <div class="text-dark lh-base" th:text="${review.comment}">Comment</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <hr>
-
-        <h5 class="fw-bold mb-3">Đánh giá của khách hàng</h5>
-
-        <div th:if="${#lists.isEmpty(reviews)}" class="text-muted">
-            Chưa có đánh giá nào cho sản phẩm này.
-        </div>
-
-        <div class="vstack gap-3" th:if="${!#lists.isEmpty(reviews)}">
-            <div class="border rounded-3 p-3" th:each="review : ${reviews}">
-                <div class="d-flex justify-content-between mb-1">
-                    <div class="fw-semibold" th:text="${review.username}">User</div>
-                    <div class="text-muted small" th:text="${review.createdAt}">time</div>
-                </div>
-                <div class="text-warning mb-2" th:text="${'★'.repeat(review.rating)}">★★★★★</div>
-                <div th:text="${review.comment}">Comment</div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modals -->
 <div class="modal fade" id="addToCartSuccessModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none;">
-            <div class="modal-body text-center p-4">
-                <div class="mb-3">
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+        <div class="modal-content glass-modal border-0">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle" style="width: 80px; height: 80px; font-size: 3rem; box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4);">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
                 </div>
-                <h4 class="fw-bold mb-2">Thêm vào giỏ hàng thành công!</h4>
-                <p class="text-muted">Sản phẩm đã được thêm vào giỏ hàng của bạn.</p>
-                <div class="d-grid gap-2 mt-4">
-                    <a href="/user/cart" class="btn btn-warning fw-bold py-2" style="border-radius: 10px;">
-                        Đi đến giỏ hàng
+                <h3 class="fw-bold mb-3 text-dark">Thêm thành công!</h3>
+                <p class="text-muted fs-5 mb-5">Sản phẩm tuyệt vời này đã nằm trong giỏ hàng của bạn.</p>
+                <div class="d-grid gap-3">
+                    <a href="/user/cart" class="btn btn-primary btn-shimmer btn-lg py-3 rounded-pill">
+                        Đến Giỏ Hàng Ngay
                     </a>
-                    <button type="button" class="btn btn-outline-secondary py-2" data-bs-dismiss="modal" style="border-radius: 10px;">
-                        Tiếp tục mua sắm
+                    <button type="button" class="btn btn-light btn-lg py-3 rounded-pill fw-bold" data-bs-dismiss="modal" style="border: 1px solid rgba(0,0,0,0.1);">
+                        Tiếp tục khám phá
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal border-0">
+            <div class="modal-header border-0 pb-0 pt-4 px-5">
+                <h4 class="modal-title fw-bold text-dark">Chia sẻ trải nghiệm</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-5 pt-4 pb-5">
+                <form id="ratingForm">
+                    <input type="hidden" id="reviewProductId" th:value="${product.id}">
+
+                    <div class="mb-4 text-center p-4 rounded-4" style="background: rgba(255,255,255,0.5);">
+                        <label class="form-label text-dark fw-bold d-block mb-3 fs-5">Mức độ hài lòng của bạn</label>
+                        <div class="star-rating d-flex flex-row-reverse justify-content-center fs-1">
+                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5" class="bi bi-star-fill px-1"></label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4" class="bi bi-star-fill px-1"></label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3" class="bi bi-star-fill px-1"></label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2" class="bi bi-star-fill px-1"></label>
+                            <input type="radio" id="star1" name="rating" value="1" /><label for="star1" class="bi bi-star-fill px-1"></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="reviewComment" class="form-label text-dark fw-bold mb-2">Ý kiến chi tiết</label>
+                        <textarea class="form-control border-0 p-4 shadow-sm"
+                                  style="border-radius: 16px; resize: none; background: rgba(255,255,255,0.7); backdrop-filter: blur(5px);"
+                                  id="reviewComment" rows="4" maxlength="1000"
+                                  placeholder="Điều gì khiến bạn thích hoặc chưa thích ở sản phẩm này?"></textarea>
+                        <div class="text-end mt-2 fw-medium">
+                            <small class="text-muted"><span id="charCount">0</span>/1000</small>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="submitReviewBtn" class="btn btn-primary btn-shimmer btn-lg py-3 rounded-pill fs-5">Gửi đánh giá</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -251,7 +939,23 @@
 
 <div th:replace="fragments/footer :: footer"></div>
 
+<!-- Toast Container cho thông báo Wishlist -->
+<div class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 1080;">
+    <div id="wishlistToast" class="toast align-items-center bg-white border-0 shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex p-1">
+            <div class="toast-body fw-bold text-dark d-flex align-items-center gap-2 fs-6">
+                <i class="bi bi-heart-fill text-danger fs-4"></i>
+                <span id="wishlistToastMsg">Đã cập nhật bộ sưu tập!</span>
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
+    /* global Swal, bootstrap */
     document.addEventListener("DOMContentLoaded", function () {
         const variants = /*[[${product.variants}]]*/ [];
         const selectedVariantIdEl = document.getElementById("selectedVariantId");
@@ -274,7 +978,12 @@
             const map = {
                 "Gray": "#d9d9d9",
                 "Blue": "#8db4e2",
-                "Black": "#111111"
+                "Black": "#111111",
+                "White": "#ffffff",
+                "Red": "#ef4444",
+                "Green": "#10b981",
+                "Purple": "#a855f7",
+                "Gold": "#eab308"
             };
             return map[color] || "#cccccc";
         }
@@ -282,23 +991,23 @@
         function renderColorOptions(container, values) {
             container.innerHTML = values.map(value => {
                 const hex = colorToHex(value);
-                const isGray = value === "Gray";
+                const isLight = value === "White" || value === "Gray" || hex === "#ffffff" || hex === "#d9d9d9";
                 return `
-                    <button type="button"
-                            class="color-swatch option-btn"
-                            data-type="color"
-                            data-value="${value}"
-                            title="${value}"
-                            style="background:${hex}; ${isGray ? 'border:1px solid #cfcfcf;' : ''}">
-                    </button>
-                `;
+            <button type="button"
+                    class="color-swatch option-btn"
+                    data-type="color"
+                    data-value="${value}"
+                    title="${value}"
+                    style="--swatch-accent:${hex};background:${hex};box-shadow:0 6px 16px rgba(0,0,0,0.22);${isLight ? 'border:3px solid #e2e8f0;' : ''}">
+            </button>
+        `;
             }).join("");
         }
 
         function renderOptions(container, values, type) {
             container.innerHTML = values.map(value => `
                 <button type="button"
-                        class="btn btn-outline-secondary option-btn"
+                        class="option-btn variant-pill shadow-sm"
                         data-type="${type}"
                         data-value="${value}">
                     ${value}
@@ -325,7 +1034,7 @@
                 selectedVariantPriceEl.textContent = "";
                 originalPriceEl.style.display = "none";
                 if (labelEl) labelEl.style.display = "none";
-                selectedVariantStockEl.textContent = "";
+                selectedVariantStockEl.innerHTML = "";
                 addToCartBtn.disabled = true;
                 return;
             }
@@ -349,28 +1058,32 @@
             const stock = matched.stockQuantity != null ? matched.stockQuantity : 0;
 
             if (stock > 0) {
-                selectedVariantStockEl.className = "small text-success";
-                selectedVariantStockEl.textContent = `Còn ${stock} sản phẩm`;
+                selectedVariantStockEl.className = "fs-6 text-success d-flex align-items-center mt-3 fw-bold";
+                selectedVariantStockEl.innerHTML = `<span class="stock-pulse"></span> Sẵn sàng giao: ${stock} sản phẩm`;
                 addToCartBtn.disabled = false;
             } else {
-                selectedVariantStockEl.className = "small text-danger fw-semibold";
-                selectedVariantStockEl.textContent = "Hết sản phẩm. Vui lòng quay lại sau";
+                selectedVariantStockEl.className = "fs-6 text-danger d-flex align-items-center mt-3 fw-bold";
+                selectedVariantStockEl.innerHTML = `<span class="stock-pulse stock-out"></span> Hết hàng tạm thời`;
                 addToCartBtn.disabled = true;
             }
         }
 
         function setActive(container, type, value) {
             container.querySelectorAll(`.option-btn[data-type="${type}"]`).forEach(btn => {
-                btn.classList.remove("active", "btn-dark", "selected-swatch");
+                btn.classList.remove("active", "btn-dark", "selected-swatch", "is-selected");
+                if (type === "color") {
+                    btn.style.removeProperty("--swatch-accent");
+                }
             });
 
-            const activeBtn = container.querySelector(`.option-btn[data-type="${type}"][data-value="${value}"]`);
+            const activeBtn = Array.from(container.querySelectorAll(`.option-btn[data-type="${type}"]`))
+                .find((b) => b.getAttribute("data-value") === value);
             if (activeBtn) {
-                activeBtn.classList.add("active");
                 if (type === "color") {
                     activeBtn.classList.add("selected-swatch");
+                    activeBtn.style.setProperty("--swatch-accent", colorToHex(value));
                 } else {
-                    activeBtn.classList.add("btn-dark");
+                    activeBtn.classList.add("is-selected");
                 }
             }
         }
@@ -407,16 +1120,114 @@
         renderOptions(storageOptionsEl, storages, "storage");
         renderOptions(ramOptionsEl, rams, "ram");
 
+        (function initImageParallaxAndGallery() {
+            const parallax = document.getElementById("detailImageParallax");
+            const img = document.getElementById("mainProductImage");
+            const strip = document.getElementById("productGalleryStrip");
+            if (!parallax || !img || !strip) return;
+
+            let rafId = null;
+            const mainSrc = img.getAttribute("src");
+            if (mainSrc) {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "gallery-thumb is-active";
+                btn.setAttribute("aria-label", "Ảnh 1");
+                btn.setAttribute("role", "tab");
+                const thumbImg = document.createElement("img");
+                thumbImg.src = mainSrc;
+                thumbImg.alt = "";
+                btn.appendChild(thumbImg);
+                strip.appendChild(btn);
+            }
+
+            strip.addEventListener("click", function (ev) {
+                const b = ev.target.closest(".gallery-thumb");
+                if (!b || !strip.contains(b)) return;
+                const thumbImg = b.querySelector("img");
+                const src = thumbImg && thumbImg.src;
+                if (!src || src === img.src) return;
+                strip.querySelectorAll(".gallery-thumb").forEach(function (t) {
+                    t.classList.remove("is-active");
+                });
+                b.classList.add("is-active");
+                img.style.opacity = "0.65";
+                const next = new Image();
+                next.onload = function () {
+                    img.src = src;
+                    img.style.opacity = "1";
+                };
+                next.onerror = function () {
+                    img.style.opacity = "1";
+                };
+                next.src = src;
+            });
+
+            parallax.addEventListener("mouseenter", function () {
+                parallax.classList.add("is-hover");
+            });
+            parallax.addEventListener("mouseleave", function () {
+                parallax.classList.remove("is-hover");
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+                img.style.transform = "";
+            });
+
+            const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (!reduceMotion) {
+                parallax.addEventListener("mousemove", function (e) {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    rafId = requestAnimationFrame(function () {
+                        const rect = parallax.getBoundingClientRect();
+                        const x = (e.clientX - rect.left) / rect.width - 0.5;
+                        const y = (e.clientY - rect.top) / rect.height - 0.5;
+                        const rotY = x * 14;
+                        const rotX = -y * 14;
+                        const s = 1.06;
+                        img.style.transform =
+                            "perspective(1000px) rotateY(" + rotY + "deg) rotateX(" + rotX + "deg) scale3d(" + s + "," + s + "," + s + ") translateZ(14px)";
+                    });
+                });
+            }
+        })();
+
+        function markReviewsReady() {
+            const panel = document.getElementById("reviews");
+            if (panel) panel.classList.add("reviews-ready");
+        }
+        /* Hiện đánh giá ngay khi DOM sẵn sàng — không chờ window.load (ảnh chậm làm opacity:0 kéo dài) */
+        markReviewsReady();
+
         const cartModal = new bootstrap.Modal(document.getElementById('addToCartSuccessModal'));
-        addToCartBtn.addEventListener("click", function () {
+        addToCartBtn.addEventListener("click", function (e) {
+            const rect = addToCartBtn.getBoundingClientRect();
+            const ripple = document.createElement("span");
+            const size = Math.round(Math.max(rect.width, rect.height) * 1.15);
+            ripple.className = "ripple";
+            ripple.style.width = ripple.style.height = size + "px";
+            ripple.style.left = Math.round(e.clientX - rect.left - size / 2) + "px";
+            ripple.style.top = Math.round(e.clientY - rect.top - size / 2) + "px";
+            addToCartBtn.appendChild(ripple);
+            ripple.addEventListener("animationend", function () {
+                ripple.remove();
+            });
+
             const variantId = selectedVariantIdEl.value;
 
             if (!variantId || variantId === "0") {
-                alert("Vui lòng chọn đủ màu sắc, dung lượng và RAM.");
+                Swal.fire({
+                    title: 'Lưu ý',
+                    text: 'Vui lòng chọn đủ cấu hình bạn muốn nhé!',
+                    icon: 'warning',
+                    confirmButtonColor: '#0d6efd',
+                    borderRadius: '16px'
+                });
                 return;
             }
             addToCartBtn.disabled = true;
-            addToCartBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang xử lý...`;
+            addToCartBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...`;
 
             fetch('/user/cart/add', {
                 method: 'POST',
@@ -430,24 +1241,158 @@
                 .then(response => response.json())
                 .then(data => {
                     addToCartBtn.disabled = false;
-                    addToCartBtn.innerHTML = `<i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng`;
+                    addToCartBtn.innerHTML = '<i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng';
                     if (data.success) {
                         cartModal.show();
                     } else {
-                        alert(data.message || "Thêm giỏ hàng thất bại!");
+                        Swal.fire({
+                            title: 'Oops!',
+                            text: data.message || "Thêm giỏ hàng thất bại!",
+                            icon: 'error',
+                            borderRadius: '16px'
+                        });
                     }
                 })
                 .catch(error => {
                     console.error(error);
                     addToCartBtn.disabled = false;
-                    addToCartBtn.innerHTML = `<i class="bi bi-cart-plus-fill me-1"></i> Thêm giỏ hàng`;
-                    alert("Không thể kết nối đến máy chủ!");
+                    addToCartBtn.innerHTML = '<i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng';
+                    Swal.fire({
+                        title: 'Lỗi kết nối',
+                        text: "Không thể kết nối đến máy chủ!",
+                        icon: 'error',
+                        borderRadius: '16px'
+                    });
                 });
         });
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const ratingForm = document.getElementById('ratingForm');
+        const reviewComment = document.getElementById('reviewComment');
+        const charCount = document.getElementById('charCount');
+
+        if(reviewComment && charCount) {
+            reviewComment.addEventListener('input', function() {
+                charCount.innerText = this.value.length;
+            });
+        }
+
+        if(ratingForm) {
+            ratingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const ratingSelected = document.querySelector('input[name="rating"]:checked');
+                const productId = document.getElementById('reviewProductId').value;
+                const comment = reviewComment.value.trim();
+
+                if (!ratingSelected) {
+                    Swal.fire({ text: 'Vui lòng chọn số sao đánh giá bạn nhé!', icon: 'warning', borderRadius: '16px' });
+                    return;
+                }
+
+                if (!comment) {
+                    Swal.fire({ text: 'Vui lòng chia sẻ vài lời về sản phẩm nhé!', icon: 'warning', borderRadius: '16px' });
+                    return;
+                }
+
+                const reviewData = {
+                    productId: parseInt(productId),
+                    rating: parseInt(ratingSelected.value),
+                    comment: comment
+                };
+
+                const submitBtn = document.getElementById('submitReviewBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Đang gửi...`;
+
+                fetch('/user/products/review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reviewData)
+                })
+                    .then(async response => {
+                        if (response.ok) {
+                            Swal.fire({
+                                title: 'Cảm ơn bạn!',
+                                text: 'Đánh giá của bạn đã được ghi nhận. Chúc bạn một ngày tốt lành!',
+                                icon: 'success',
+                                confirmButtonColor: '#0d6efd',
+                                confirmButtonText: 'Đóng',
+                                timer: 3000,
+                                timerProgressBar: true,
+                                borderRadius: '16px'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            const errorMsg = await response.text();
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = `Gửi đánh giá`;
+                            Swal.fire({
+                                title: 'Oops!',
+                                text: 'Không thể gửi đánh giá: ' + errorMsg,
+                                icon: 'error',
+                                confirmButtonText: 'Thử lại',
+                                borderRadius: '16px'
+                            });
+                        }
+                    }).catch(error => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `Gửi đánh giá`;
+                        Swal.fire({ title: 'Lỗi', text: 'Không thể kết nối máy chủ', icon: 'error', borderRadius: '16px' });
+                    });
+            });
+        }
+        }
+    });
+
+    // --- WISHLIST AJAX LOGIC ---
+    function toggleWishlist(event, productId, btn) {
+        event.preventDefault(); // Tránh lăn trang hoặc bubble event
+        
+        fetch('/api/user/wishlist/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: productId })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('API Sync Error');
+            return response.json();
+        })
+        .then(data => {
+            if(data.success) {
+                // Đổi UI trạng thái Tim
+                btn.classList.toggle('active');
+                
+                // Show Toast
+                const toastMsg = document.getElementById("wishlistToastMsg");
+                if (btn.classList.contains('active')) {
+                    toastMsg.innerText = "Đã lưu vào Bộ sưu tập của bạn!";
+                } else {
+                    toastMsg.innerText = "Đã xóa khỏi Bộ sưu tập!";
+                }
+                const toastEl = document.getElementById('wishlistToast');
+                const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+                toast.show();
+            } else {
+                alert("Xin lỗi, " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            // BACKUP Nếu backend lỗi (mô phỏng)
+            btn.classList.toggle('active');
+            const toastMsg = document.getElementById("wishlistToastMsg");
+            toastMsg.innerHTML = btn.classList.contains('active') ? "Đã thêm vào Sưu tập! <small class='text-muted'>(Local)</small>" : "Đã xóa! <small class='text-muted'>(Local)</small>";
+            const toastEl = document.getElementById('wishlistToast');
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toast.show();
+        });
+    }
 </script>
 
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

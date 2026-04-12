@@ -4,6 +4,7 @@ import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
 import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,8 +32,14 @@ public class ProductService implements IProductService {
     // 🔹 CREATE
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CartItemRepository cartItemRepository; // FIX #5: Thêm dependency
 
     public ProductResponseDTO create(ProductRequestDTO request) {
+
+        // FIX #4: Kiểm tra duplicate product name
+        if (productRepository.existsByNameAndActiveTrue(request.getName())) {
+            throw new BadRequestException("Sản phẩm với tên '" + request.getName() + "' đã tồn tại");
+        }
 
         // 1️⃣ Kiểm tra category tồn tại
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -152,6 +160,15 @@ public class ProductService implements IProductService {
 
         if (!product.getActive()) {
             throw new BadRequestException("Product đã bị xoá trước đó");
+        }
+
+        // FIX #5: Kiểm tra có trong giỏ hàng không
+        long cartCount = cartItemRepository.countByProductId(id);
+        if (cartCount > 0) {
+            throw new BadRequestException(
+                "Không thể xóa sản phẩm này vì đang có " + cartCount + " người dùng có trong giỏ hàng. " +
+                "Vui lòng đợi họ thanh toán hoặc xóa khỏi giỏ."
+            );
         }
 
         product.setActive(false);
