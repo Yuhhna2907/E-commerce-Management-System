@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,10 +109,12 @@ public class CouponServiceImpl implements ICouponService {
     private BigDecimal calculateDiscountAmt(Coupon coupon, Order order) {
         // Eligibility specific products check
         BigDecimal applicableTotal = BigDecimal.ZERO;
-        boolean hasProductRestriction = coupon.getApplicableProducts() != null && !coupon.getApplicableProducts().isEmpty();
+        Set<Long> applicableProductIds = getApplicableProductIds(coupon);
+        boolean hasProductRestriction = !applicableProductIds.isEmpty();
 
         for (OrderItem item : order.getItems()) {
-            if (!hasProductRestriction || coupon.getApplicableProducts().contains(item.getProduct())) {
+            Long productId = item.getProduct() != null ? item.getProduct().getId() : null;
+            if (!hasProductRestriction || (productId != null && applicableProductIds.contains(productId))) {
                 BigDecimal itemTotal = item.getPrice().multiply(new BigDecimal(item.getQuantity()));
                 applicableTotal = applicableTotal.add(itemTotal);
             }
@@ -150,14 +153,22 @@ public class CouponServiceImpl implements ICouponService {
 
         if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
             // Allocate discount among items proportionally
+            Set<Long> applicableProductIds = getApplicableProductIds(coupon);
+            boolean hasProductRestriction = !applicableProductIds.isEmpty();
             BigDecimal applicableTotal = order.getItems().stream()
-                    .filter(i -> coupon.getApplicableProducts() == null || coupon.getApplicableProducts().isEmpty() || coupon.getApplicableProducts().contains(i.getProduct()))
+                    .filter(i -> {
+                        Long pid = i.getProduct() != null ? i.getProduct().getId() : null;
+                        return !hasProductRestriction || (pid != null && applicableProductIds.contains(pid));
+                    })
                     .map(i -> i.getPrice().multiply(new BigDecimal(i.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal allocatedSoFar = BigDecimal.ZERO;
             List<OrderItem> validItems = order.getItems().stream()
-                    .filter(i -> coupon.getApplicableProducts() == null || coupon.getApplicableProducts().isEmpty() || coupon.getApplicableProducts().contains(i.getProduct()))
+                    .filter(i -> {
+                        Long pid = i.getProduct() != null ? i.getProduct().getId() : null;
+                        return !hasProductRestriction || (pid != null && applicableProductIds.contains(pid));
+                    })
                     .collect(Collectors.toList());
 
             for (int i = 0; i < validItems.size(); i++) {
@@ -204,5 +215,14 @@ public class CouponServiceImpl implements ICouponService {
             coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() - 1);
             couponRepository.save(coupon);
         }
+    }
+
+    private Set<Long> getApplicableProductIds(Coupon coupon) {
+        if (coupon.getApplicableProducts() == null || coupon.getApplicableProducts().isEmpty()) {
+            return Set.of();
+        }
+        return coupon.getApplicableProducts().stream()
+                .map(Product::getId)
+                .collect(Collectors.toSet());
     }
 }

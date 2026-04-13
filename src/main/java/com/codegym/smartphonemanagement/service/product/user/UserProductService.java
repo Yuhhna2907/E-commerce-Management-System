@@ -36,36 +36,35 @@ public class UserProductService implements IUserProductService {
     @Override
     public Page<ProductResponseDTO> searchProducts(
             String keyword,
-            String brand,
+            List<String> brands,
+            List<String> rams,
+            List<String> storages,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Double minScreen,
+            Double maxScreen,
+            Integer minBattery,
+            Integer maxBattery,
+            Double minWeight,
+            Double maxWeight,
+            List<String> osList,
+            Boolean inStockOnly,
             int page,
             int size,
             String sortDirection
     ) {
-
-        // Normalize dữ liệu
-        if (keyword != null && keyword.trim().isEmpty()) {
-            keyword = null;
-        }
-
-        if (brand != null && brand.trim().isEmpty()) {
-            brand = null;
-        }
-
         Sort sort = "desc".equalsIgnoreCase(sortDirection)
                 ? Sort.by("price").descending()
                 : Sort.by("price").ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Product> productPage = productRepository.searchForUser(
-                keyword,
-                brand,
-                minPrice,
-                maxPrice,
-                pageable
+        org.springframework.data.jpa.domain.Specification<Product> spec = ProductSpecificationUser.filterProducts(
+                keyword, brands, rams, storages, minPrice, maxPrice,
+                minScreen, maxScreen, minBattery, maxBattery, minWeight, maxWeight, osList, inStockOnly
         );
+
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
 
         return productPage.map(this::convertToDTO);
     }
@@ -272,5 +271,20 @@ public class UserProductService implements IUserProductService {
 
             return dto;
         }).toList();
+    }
+
+    @Override
+    public List<String> getAvailableBrands() {
+        return productRepository.findDistinctBrands();
+    }
+
+    @Override
+    public List<String> getAvailableRams() {
+        return productRepository.findDistinctRams();
+    }
+
+    @Override
+    public List<String> getAvailableStorages() {
+        return productRepository.findDistinctStorages();
     }
 }

@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.service.cart.user;
 
+import com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 
@@ -23,4 +24,7 @@ public interface ICartService {
     // Bỏ hàm getCartByUserId nếu nó trùng lặp với getCart
 
     CartResponseDTO getCartByUserId(Long userId);
+    
+    // Save for Later - Move cart item to wishlist
+    SaveForLaterResponse saveForLater(Long userId, Long cartItemId, Long productId);
 }
