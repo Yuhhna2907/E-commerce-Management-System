@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +32,46 @@ public class UserWishlistController {
      */
     @GetMapping("/user/wishlist")
     public String showWishlistPage(Model model) {
-        List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
-        List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
-                .map(p -> userProductService.getProductById(p.getId()))
-                .collect(Collectors.toList());
-        model.addAttribute("wishlistItems", wishlistItems);
+        try {
+            List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
+            
+            // Filter out null products and convert to DTO
+            List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
+                    .filter(p -> p != null && p.getId() != null)
+                    .map(p -> {
+                        try {
+                            return userProductService.getProductById(p.getId());
+                        } catch (Exception e) {
+                            System.err.println("Error converting product " + p.getId() + ": " + e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+            
+            model.addAttribute("wishlistItems", wishlistItems);
+            System.out.println("Wishlist size: " + wishlistItems.size());
+            
+        } catch (Exception e) {
+            System.err.println("Error loading wishlist: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("wishlistItems", List.of());
+        }
+        
+        // Add breadcrumb navigation
+        List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Trang chủ")
+                .url("/user/products")
+                .active(false)
+                .build());
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Danh sách yêu thích")
+                .url(null)
+                .active(true)
+                .build());
+        model.addAttribute("breadcrumbs", breadcrumbs);
+        
         return "user/wishlist/list";
     }
 

@@ -3,6 +3,7 @@ package com.codegym.smartphonemanagement.service.cart.user;
 import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.*;
+import com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse;
 import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
 import com.codegym.smartphonemanagement.repository.user.CartRepository;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
@@ -31,6 +32,7 @@ public class CartService implements ICartService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final DiscountService discountService;
+    private final com.codegym.smartphonemanagement.repository.user.WishlistRepository wishlistRepository;
 
     private Cart getOrCreateCart(User user) {
         return cartRepository.findByUser(user)
@@ -222,5 +224,72 @@ public class CartService implements ICartService {
                 .items(itemDTOs)
                 .totalPrice(total)
                 .build();
+    }
+    
+    @Override
+    @Transactional
+    public SaveForLaterResponse saveForLater(Long userId, Long cartItemId, Long productId) {
+        try {
+            // 1. Validate user
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+            
+            // 2. Find cart item
+            CartItem cartItem = cartItemRepository.findById(cartItemId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại trong giỏ hàng"));
+            
+            // 3. Verify ownership
+            if (!cartItem.getCart().getUser().getId().equals(userId)) {
+                throw new BadRequestException("Bạn không có quyền thao tác sản phẩm này");
+            }
+            
+            // 4. Get product
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+            
+            // 5. Remove from cart
+            Cart cart = cartItem.getCart();
+            cart.getItems().remove(cartItem);
+            cartItemRepository.delete(cartItem);
+            
+            // 6. Add to wishlist (check if already exists)
+            boolean alreadyInWishlist = wishlistRepository.existsByUserIdAndProductId(userId, productId);
+            if (!alreadyInWishlist) {
+                com.codegym.smartphonemanagement.model.Wishlist wishlist = 
+                    com.codegym.smartphonemanagement.model.Wishlist.builder()
+                        .user(user)
+                        .product(product)
+                        .addedAt(java.time.LocalDateTime.now())
+                        .build();
+                wishlistRepository.save(wishlist);
+            }
+            
+            // 7. Get updated counts
+            int cartCount = cart.getItems().size();
+            int wishlistCount = wishlistRepository.countByUserId(userId);
+            
+            // 8. Return response
+            return SaveForLaterResponse.builder()
+                    .success(true)
+                    .message("Đã lưu " + product.getName() + " vào danh sách yêu thích")
+                    .cartItemCount(cartCount)
+                    .wishlistItemCount(wishlistCount)
+                    .build();
+                    
+        } catch (ResourceNotFoundException | BadRequestException e) {
+            return SaveForLaterResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .cartItemCount(0)
+                    .wishlistItemCount(0)
+                    .build();
+        } catch (Exception e) {
+            return SaveForLaterResponse.builder()
+                    .success(false)
+                    .message("Không thể lưu sản phẩm: " + e.getMessage())
+                    .cartItemCount(0)
+                    .wishlistItemCount(0)
+                    .build();
+        }
     }
 }

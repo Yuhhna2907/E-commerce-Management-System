@@ -193,7 +193,7 @@
                                         <div class="small fw-bold" style="color: #64748b;">
                                             <i class="bi bi-clock-history me-1"></i> HSD: <span th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}">31/12/2026</span>
                                         </div>
-                                        <a th:href="@{/user/cart}" class="btn btn-primary fw-bold text-uppercase px-4 rounded-pill shadow-sm" style="font-size: 0.9rem;">
+                                        <a th:href="@{/user/cart(voucherCode=${coupon.code})}" class="btn btn-primary fw-bold text-uppercase px-4 rounded-pill shadow-sm" style="font-size: 0.9rem;">
                                             Dùng ngay
                                         </a>
                                     </div>

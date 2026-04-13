@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.order.RefundService;
@@ -14,6 +15,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -64,6 +66,26 @@ public class UserOrderController {
         model.addAttribute("cart", cart);
         model.addAttribute("orderRequest", requestDto);
         model.addAttribute("savedAddresses", userProfileService.getAddresses(USER_ID));
+        
+        // Add breadcrumb navigation
+        List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Trang chủ")
+                .url("/user/products")
+                .active(false)
+                .build());
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Giỏ hàng")
+                .url("/user/cart")
+                .active(false)
+                .build());
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Thanh toán")
+                .url(null)
+                .active(true)
+                .build());
+        model.addAttribute("breadcrumbs", breadcrumbs);
+        
         return "user/order/checkout"; // Trả về file checkout.html
     }
 

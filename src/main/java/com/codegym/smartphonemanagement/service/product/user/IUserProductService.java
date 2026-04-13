@@ -11,13 +11,24 @@ import java.util.List;
 public interface IUserProductService {
     Page<ProductResponseDTO> searchProducts(
             String keyword,
-            String brand,
+            List<String> brands,
+            List<String> rams,
+            List<String> storages,
             BigDecimal minPrice,
             BigDecimal maxPrice,
+            Double minScreen,
+            Double maxScreen,
+            Integer minBattery,
+            Integer maxBattery,
+            Double minWeight,
+            Double maxWeight,
+            List<String> osList,
+            Boolean inStockOnly,
             int page,
             int size,
             String sortDirection
     );
+
     ProductResponseDTO getProductById(Long id);
 
     ReviewResponseDTO reviewProduct(Long userId, ReviewRequestDTO request);
@@ -26,4 +37,7 @@ public interface IUserProductService {
 
     List<com.codegym.smartphonemanagement.service.product.DTO.ComparisonItemDTO> compareProducts(List<Long> productIds);
 
+    List<String> getAvailableBrands();
+    List<String> getAvailableRams();
+    List<String> getAvailableStorages();
 }

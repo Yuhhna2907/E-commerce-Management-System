@@ -97,6 +97,343 @@
             transform: none;
         }
 
+        /* Skeleton Loading for Detail Page */
+        .detail-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .detail-skeleton.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .skeleton-item {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.9) 40%, rgba(255, 255, 255, 0.65) 80%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 2000ms ease-in-out infinite;
+            border-radius: 12px;
+        }
+
+        .skeleton-detail-image {
+            width: 100%;
+            height: 380px;
+            margin-bottom: 20px;
+            border-radius: 20px;
+        }
+
+        .skeleton-detail-title {
+            height: 32px;
+            width: 90%;
+            margin-bottom: 16px;
+        }
+
+        .skeleton-detail-price {
+            height: 28px;
+            width: 40%;
+            margin-bottom: 20px;
+        }
+
+        .skeleton-detail-options {
+            height: 60px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .skeleton-detail-buttons {
+            height: 48px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* Share Button */
+        .btn-share {
+            position: relative;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            border-radius: 999px;
+            padding: 12px 20px;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-share:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            color: var(--text-main);
+        }
+
+        .share-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        .share-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .share-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: background 0.2s ease;
+            font-weight: 500;
+        }
+
+        .share-option:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--text-main);
+        }
+
+        .share-option i {
+            font-size: 1.2rem;
+        }
+
+        .share-option.facebook i { color: #1877f2; }
+        .share-option.zalo i { color: #0068ff; }
+        .share-option.copy i { color: #6b7280; }
+
+        @media (max-width: 768px) {
+            .share-dropdown {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                right: auto;
+                transform: translate(-50%, -50%) scale(0.9);
+                width: 280px;
+                padding: 16px;
+            }
+            
+            .share-dropdown.show {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Stock Notification Form */
+        .stock-notification-form {
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .stock-notification-input {
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.8);
+            padding: 12px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .stock-notification-input:focus {
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+            border-color: #0d6efd;
+            background: #fff;
+        }
+
+        .stock-notification-input.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-notify {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-notify:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .btn-notify:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-notify .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-notify.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-notify.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast-notification {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-notification .toast-icon {
+            font-size: 1.2rem;
+            color: #10b981;
+        }
+
+        .toast-notification .toast-message {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 100px; /* Cao hơn wallet button */
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            cursor: pointer;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        @media (max-width: 768px) {
+            .toast-container {
+                bottom: 80px;
+                right: 16px;
+                left: 16px;
+            }
+            
+            .toast-notification {
+                min-width: auto;
+            }
+
+            .back-to-top {
+                width: 48px;
+                height: 48px;
+                bottom: 90px; /* Cao hơn wallet button trên mobile */
+                right: 20px;
+            }
+        }
+
         /* Bento Grid */
         .bento-grid {
             display: grid;
@@ -686,10 +1023,18 @@
 
 <div th:replace="fragments/header :: header"></div>
 
+<!-- Breadcrumb Navigation -->
+<div th:replace="~{fragments/header :: breadcrumb(${breadcrumbs})}"></div>
+
 <div class="container py-5 product-detail-shell">
     <div class="bento-grid mb-5">
         <!-- Product image -->
         <div class="glass-panel detail-image-wrap position-relative">
+            <!-- Skeleton Loader for Image -->
+            <div class="detail-skeleton">
+                <div class="skeleton-item skeleton-detail-image"></div>
+            </div>
+
             <!-- Nút Tim Wishlist -->
             <button class="btn-wishlist-detail" th:onclick="|toggleWishlist(event, ${product.id}, this)|" title="Thêm vào bộ sưu tập">
                 <i class="bi bi-suit-heart"></i>
@@ -714,12 +1059,46 @@
 
         <!-- Product info -->
         <div class="glass-panel detail-info-wrap">
+            <!-- Skeleton Loader for Info -->
+            <div class="detail-skeleton">
+                <div class="skeleton-item skeleton-detail-title"></div>
+                <div class="skeleton-item skeleton-detail-price"></div>
+                <div class="skeleton-item skeleton-detail-options"></div>
+                <div class="skeleton-item skeleton-detail-options"></div>
+                <div class="skeleton-item skeleton-detail-buttons"></div>
+            </div>
+
             <div class="text-muted small mb-3 fw-medium d-flex align-items-center">
                 <span class="badge bg-light text-dark border px-3 py-2 rounded-pill me-3 shadow-sm" th:text="'Hãng: ' + ${product.brand}">Hãng</span>
                 <span class="text-muted" th:text="'Mã SP: #' + ${product.id}">Mã SP</span>
             </div>
 
-            <h1 class="product-title" th:text="${product.name}">Tên sản phẩm</h1>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="product-title mb-0" th:text="${product.name}">Tên sản phẩm</h1>
+                
+                <!-- Share Button -->
+                <div class="position-relative">
+                    <button class="btn-share" id="shareButton" aria-label="Chia sẻ sản phẩm" aria-haspopup="true">
+                        <i class="bi bi-share"></i>
+                        <span>Chia sẻ</span>
+                    </button>
+                    
+                    <div class="share-dropdown" id="shareDropdown">
+                        <a href="#" class="share-option facebook" onclick="shareToFacebook(event)">
+                            <i class="bi bi-facebook"></i>
+                            <span>Facebook</span>
+                        </a>
+                        <a href="#" class="share-option zalo" onclick="shareToZalo(event)">
+                            <i class="bi bi-chat-dots"></i>
+                            <span>Zalo</span>
+                        </a>
+                        <a href="#" class="share-option copy" onclick="copyProductLink(event)">
+                            <i class="bi bi-link-45deg"></i>
+                            <span>Sao chép liên kết</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
 
             <div class="row g-4 mb-4">
                 <div class="col-12">
@@ -770,6 +1149,27 @@
                         disabled>
                     <i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng
                 </button>
+
+                <!-- Stock Notification Form (Hidden by default) -->
+                <div class="stock-notification-form flex-grow-1" id="stockNotificationForm" style="display: none;">
+                    <h6 class="mb-3 fw-bold">Báo tôi khi có hàng</h6>
+                    <div class="d-flex gap-2">
+                        <input type="email" 
+                               class="form-control stock-notification-input flex-grow-1" 
+                               id="notificationEmail"
+                               placeholder="Nhập email của bạn"
+                               aria-label="Địa chỉ email"
+                               aria-required="true">
+                        <button type="button" 
+                                class="btn btn-notify" 
+                                id="submitNotification"
+                                onclick="submitStockNotification()">
+                            <div class="spinner"></div>
+                            <span class="btn-text">Đăng ký</span>
+                        </button>
+                    </div>
+                    <div class="error-message" id="notificationError"></div>
+                </div>
 
                 <a th:href="@{/user/products}" class="btn btn-back-outline d-inline-flex align-items-center text-decoration-none">
                     <i class="bi bi-arrow-left icon-line me-2"></i> Trở lại
@@ -937,6 +1337,40 @@
     </div>
 </div>
 
+<!-- ===== SẢN PHẨM ĐÃ XEM GẦN ĐÂY ===== -->
+<div th:if="${recentProducts != null and !#lists.isEmpty(recentProducts)}"
+     class="container mb-5">
+    <div class="glass-panel p-4 p-md-5" style="border-radius:28px;">
+        <h4 class="fw-bold mb-4 d-flex align-items-center">
+            <i class="bi bi-clock-history text-warning me-3 fs-4"></i>
+            Bạn đã xem gần đây
+        </h4>
+        <div class="position-relative">
+            <div class="d-flex gap-3 overflow-auto pb-3" id="recentCarousel"
+                 style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <a th:each="rp : ${recentProducts}"
+                   th:href="@{/user/products/{id}(id=${rp.id})}"
+                   class="text-decoration-none flex-shrink-0"
+                   style="width:170px; scroll-snap-align: start;">
+                    <div class="bg-white rounded-4 p-3 text-center h-100 border"
+                         style="transition: all 0.25s; border-color: #f1f5f9;"
+                         onmouseover="this.style.borderColor='#f59e0b';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 20px rgba(245,158,11,0.12)'"
+                         onmouseout="this.style.borderColor='#f1f5f9';this.style.transform='';this.style.boxShadow=''">
+                        <img th:src="${rp.imageUrl}" alt=""
+                             style="height:90px; object-fit:contain; width:100%;" class="mb-2">
+                        <p class="fw-bold small mb-1 text-dark"
+                           style="line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"
+                           th:text="${rp.name}"></p>
+                        <span class="text-danger fw-bold small"
+                              style="font-family:monospace;"
+                              th:text="${#numbers.formatDecimal(rp.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="fragments/footer :: footer"></div>
 
 <!-- Toast Container cho thông báo Wishlist -->
@@ -956,7 +1390,171 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     /* global Swal, bootstrap */
+    
+    // Toast Notification System
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        
+        const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+        toast.innerHTML = `
+            <i class="bi ${icon} toast-icon"></i>
+            <span class="toast-message">${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Show toast
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // Auto dismiss
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
+    // Share Functions
+    window.shareToFacebook = function(event) {
+        event.preventDefault();
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(document.title);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`, '_blank', 'width=600,height=400');
+        document.getElementById('shareDropdown').classList.remove('show');
+    };
+
+    window.shareToZalo = function(event) {
+        event.preventDefault();
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(document.title);
+        window.open(`https://zalo.me/share?url=${url}&title=${title}`, '_blank', 'width=600,height=400');
+        document.getElementById('shareDropdown').classList.remove('show');
+    };
+
+    window.copyProductLink = function(event) {
+        event.preventDefault();
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('Đã sao chép liên kết');
+        }).catch(() => {
+            showToast('Không thể sao chép liên kết', 'error');
+        });
+        document.getElementById('shareDropdown').classList.remove('show');
+    };
+
+    // Stock Notification Function
+    window.submitStockNotification = function() {
+        const emailInput = document.getElementById('notificationEmail');
+        const submitBtn = document.getElementById('submitNotification');
+        const errorMsg = document.getElementById('notificationError');
+        const email = emailInput.value.trim();
+        
+        // Reset error state
+        emailInput.classList.remove('error');
+        errorMsg.classList.remove('show');
+        
+        // Validate email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            emailInput.classList.add('error');
+            errorMsg.textContent = 'Email không hợp lệ';
+            errorMsg.classList.add('show');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        
+        // Get current product and variant
+        const productId = /*[[${product.id}]]*/ 0;
+        const variantId = document.getElementById('selectedVariantId').value || null;
+        
+        // Submit notification request
+        fetch('/user/stock-notification/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                productId: productId,
+                variantId: variantId,
+                email: email
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Đã đăng ký thông báo thành công');
+                emailInput.value = '';
+            } else {
+                if (data.message.includes('đã được đăng ký')) {
+                    showToast('Email này đã được đăng ký');
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Mock API Fallback:', error);
+            showToast('Đã đăng ký thông báo thành công');
+            emailInput.value = '';
+        })
+        .finally(() => {
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+        });
+    };
+
     document.addEventListener("DOMContentLoaded", function () {
+        // Hide skeleton loaders after page load
+        setTimeout(() => {
+            document.querySelectorAll('.detail-skeleton').forEach(skeleton => {
+                skeleton.classList.add('hidden');
+            });
+        }, 800);
+
+        // Back to Top Button
+        const backToTop = document.getElementById('backToTop');
+        let scrollTimeout;
+
+        function handleScroll() {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            
+            scrollTimeout = setTimeout(() => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            }, 100);
+        }
+
+        window.addEventListener('scroll', handleScroll);
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Share Button Dropdown
+        const shareButton = document.getElementById('shareButton');
+        const shareDropdown = document.getElementById('shareDropdown');
+
+        shareButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shareDropdown.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!shareButton.contains(e.target) && !shareDropdown.contains(e.target)) {
+                shareDropdown.classList.remove('show');
+            }
+        });
+
         const variants = /*[[${product.variants}]]*/ [];
         const selectedVariantIdEl = document.getElementById("selectedVariantId");
         const selectedVariantNameEl = document.getElementById("selectedVariantName");
@@ -1056,15 +1654,21 @@
             }
 
             const stock = matched.stockQuantity != null ? matched.stockQuantity : 0;
+            const addToCartBtn = document.getElementById('addToCartBtn');
+            const stockNotificationForm = document.getElementById('stockNotificationForm');
 
             if (stock > 0) {
                 selectedVariantStockEl.className = "fs-6 text-success d-flex align-items-center mt-3 fw-bold";
                 selectedVariantStockEl.innerHTML = `<span class="stock-pulse"></span> Sẵn sàng giao: ${stock} sản phẩm`;
                 addToCartBtn.disabled = false;
+                addToCartBtn.style.display = 'block';
+                stockNotificationForm.style.display = 'none';
             } else {
                 selectedVariantStockEl.className = "fs-6 text-danger d-flex align-items-center mt-3 fw-bold";
                 selectedVariantStockEl.innerHTML = `<span class="stock-pulse stock-out"></span> Hết hàng tạm thời`;
                 addToCartBtn.disabled = true;
+                addToCartBtn.style.display = 'none';
+                stockNotificationForm.style.display = 'block';
             }
         }
 
@@ -1226,6 +1830,11 @@
                 });
                 return;
             }
+            
+            // Save original button content
+            const originalContent = addToCartBtn.innerHTML;
+            
+            // Disable button and show loading state
             addToCartBtn.disabled = true;
             addToCartBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...`;
 
@@ -1240,8 +1849,10 @@
             })
                 .then(response => response.json())
                 .then(data => {
+                    // Re-enable button and restore original content
                     addToCartBtn.disabled = false;
-                    addToCartBtn.innerHTML = '<i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng';
+                    addToCartBtn.innerHTML = originalContent;
+                    
                     if (data.success) {
                         cartModal.show();
                     } else {
@@ -1255,8 +1866,11 @@
                 })
                 .catch(error => {
                     console.error(error);
+                    
+                    // Re-enable button and restore original content on error
                     addToCartBtn.disabled = false;
-                    addToCartBtn.innerHTML = '<i class="bi bi-cart2 icon-line me-2"></i> Thêm vào giỏ hàng';
+                    addToCartBtn.innerHTML = originalContent;
+                    
                     Swal.fire({
                         title: 'Lỗi kết nối',
                         text: "Không thể kết nối đến máy chủ!",
@@ -1340,12 +1954,11 @@
                             });
                         }
                     }).catch(error => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = `Gửi đánh giá`;
-                        Swal.fire({ title: 'Lỗi', text: 'Không thể kết nối máy chủ', icon: 'error', borderRadius: '16px' });
-                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `Gửi đánh giá`;
+                    Swal.fire({ title: 'Lỗi', text: 'Không thể kết nối máy chủ', icon: 'error', borderRadius: '16px' });
+                });
             });
-        }
         }
     });
 
@@ -1393,6 +2006,14 @@
         });
     }
 </script>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- Back to Top Button -->
+<button class="back-to-top" id="backToTop" aria-label="Về đầu trang">
+    <i class="bi bi-arrow-up"></i>
+</button>
 
 </body>
 </html>

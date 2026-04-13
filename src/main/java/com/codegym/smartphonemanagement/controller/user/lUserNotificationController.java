@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/user/notifications")
 @RequiredArgsConstructor
-public class UserNotificationController {
+public class lUserNotificationController {
 
     private final NotificationService notificationService;
     private final UserRepository userRepository;

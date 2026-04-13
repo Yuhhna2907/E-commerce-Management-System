@@ -76,6 +76,7 @@
                         <th>Mã Code</th>
                         <th>Loại giảm</th>
                         <th>Giá trị</th>
+                        <th>Phạm vi áp dụng</th>
                         <th>Bắt đầu</th>
                         <th>Kết thúc</th>
                         <th>Trạng thái</th>
@@ -84,7 +85,7 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(coupons)}">
-                        <td colspan="7" class="text-center py-4 text-muted">Chưa có mã giảm giá nào được tạo.</td>
+                        <td colspan="8" class="text-center py-4 text-muted">Chưa có mã giảm giá nào được tạo.</td>
                     </tr>
                     <tr th:each="coupon : ${coupons}" class="text-center">
                         <td class="fw-bold text-danger" th:text="${coupon.code}"></td>
@@ -92,6 +93,13 @@
                             <span class="badge bg-secondary" th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : 'VNĐ'}"></span>
                         </td>
                         <td class="fw-bold" th:text="${coupon.discountType.name() == 'PERCENTAGE'} ? ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + '%' : ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                        <td>
+                            <span th:if="${coupon.applicableProducts == null or #lists.isEmpty(coupon.applicableProducts)}"
+                                  class="badge bg-primary-subtle text-primary border">Toàn bộ sản phẩm</span>
+                            <span th:unless="${coupon.applicableProducts == null or #lists.isEmpty(coupon.applicableProducts)}"
+                                  class="badge bg-warning-subtle text-warning-emphasis border"
+                                  th:text="${#lists.size(coupon.applicableProducts)} + ' sản phẩm'">0 sản phẩm</span>
+                        </td>
                         <td th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy HH:mm')}"></td>
                         <td th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}"></td>
                         <td>

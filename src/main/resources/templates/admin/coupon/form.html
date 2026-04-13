@@ -126,6 +126,22 @@
                                 <label class="form-label fw-bold">Mô tả mã (Dành cho nội bộ hoặc thể hiện ngoài Widget)</label>
                                 <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
                             </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">
+                                    Áp dụng cho sản phẩm
+                                    <span class="text-muted small fw-normal">(Để trống = áp dụng toàn bộ sản phẩm)</span>
+                                </label>
+                                <select class="form-select" th:field="*{applicableProductIds}" multiple size="8">
+                                    <option th:each="p : ${allProducts}"
+                                            th:value="${p.id}"
+                                            th:text="${p.name + ' (' + #numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT') + ' ₫)'}">
+                                    </option>
+                                </select>
+                                <div class="form-text">
+                                    Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều sản phẩm.
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-4 text-end">

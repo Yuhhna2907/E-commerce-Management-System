@@ -112,6 +112,12 @@ public class UserProfileServiceImpl implements IUserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
+        // GIỚI HẠN 5 ĐỊA CHỈ
+        long count = userAddressRepository.findByUserIdOrderByIsDefaultDesc(userId).size();
+        if (count >= 5) {
+            throw new RuntimeException("Bạn chỉ được lưu tối đa 5 địa chỉ. Hãy xóa bớt địa chỉ cũ nhé!");
+        }
+
         boolean shouldSetDefault = Boolean.TRUE.equals(dto.getIsDefault())
                 || !userAddressRepository.existsByUserId(userId);
         if (shouldSetDefault) {
@@ -135,13 +141,36 @@ public class UserProfileServiceImpl implements IUserProfileService {
 
     @Override
     @Transactional
+    public void updateAddress(Long userId, Long addressId, UserAddressRequestDTO dto) {
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
+                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
+
+        address.setLabel(dto.getLabel() != null && !dto.getLabel().isBlank() ? dto.getLabel() : address.getLabel());
+        address.setReceiverName(dto.getReceiverName());
+        address.setReceiverPhone(dto.getReceiverPhone());
+        address.setAddressDetail(dto.getAddressDetail());
+        address.setWard(dto.getWard());
+        address.setDistrict(dto.getDistrict());
+        address.setProvince(dto.getProvince());
+
+        // Nếu set làm mặc định mới
+        if (Boolean.TRUE.equals(dto.getIsDefault()) && !Boolean.TRUE.equals(address.getIsDefault())) {
+            userAddressRepository.clearDefaultByUserId(userId);
+            address.setIsDefault(true);
+        }
+
+        userAddressRepository.save(address);
+    }
+
+    @Override
+    @Transactional
     public void setDefaultAddress(Long userId, Long addressId) {
         userAddressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
 
         userAddressRepository.clearDefaultByUserId(userId);
 
-        UserAddress address = userAddressRepository.findById(addressId).get();
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId).get();
         address.setIsDefault(true);
         userAddressRepository.save(address);
     }

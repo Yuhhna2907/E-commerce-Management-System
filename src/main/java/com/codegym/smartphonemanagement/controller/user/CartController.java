@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
 import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Product;
@@ -16,7 +17,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -58,6 +61,20 @@ public class CartController {
         }
 
         model.addAttribute("cart", cartResponse);
+
+        // Add breadcrumb navigation
+        List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Trang chủ")
+                .url("/user/products")
+                .active(false)
+                .build());
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Giỏ hàng")
+                .url(null)
+                .active(true)
+                .build());
+        model.addAttribute("breadcrumbs", breadcrumbs);
 
         return "user/cart/list"; // file HTML
     }
@@ -149,5 +166,14 @@ public class CartController {
     public String clearCart() {
         cartService.clearCart(USER_ID);
         return "redirect:/user/cart";
+    }
+    
+    // Save for Later - Move cart item to wishlist
+    @PostMapping("/save-for-later")
+    @ResponseBody
+    public com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse saveForLater(
+            @RequestParam Long cartItemId,
+            @RequestParam Long productId) {
+        return cartService.saveForLater(USER_ID, cartItemId, productId);
     }
 }

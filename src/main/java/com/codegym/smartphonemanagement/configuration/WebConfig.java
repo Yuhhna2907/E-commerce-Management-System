@@ -11,5 +11,13 @@ public class WebConfig implements WebMvcConfigurer {
         // Ánh xạ link /uploads/** vào thư mục vật lý trong project
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:src/main/resources/static/uploads/");
+        
+        // Ánh xạ link /images/** vào thư mục static/images/
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/images/");
+        
+        // Ánh xạ các static resources khác (CSS, JS, etc.)
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/");
     }
 }
