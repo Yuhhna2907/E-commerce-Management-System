@@ -1,11 +1,15 @@
-package com.codegym.smartphonemanagement.service.impl;
+package com.codegym.smartphonemanagement.service.notification;
 
 import com.codegym.smartphonemanagement.model.Notification;
 import com.codegym.smartphonemanagement.model.NotificationType;
+import org.springframework.scheduling.annotation.Scheduled;
+import java.time.LocalDateTime;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.NotificationRepository;
 import com.codegym.smartphonemanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +24,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void migrateOldUrls() {
+        int updated = notificationRepository.fixOldNotificationUrls();
+        if (updated > 0) {
+            System.out.println("[Notification] Migrated " + updated + " old notification URLs.");
+        }
+    }
 
     @Override
     @Transactional
@@ -77,5 +90,11 @@ public class NotificationServiceImpl implements NotificationService {
         List<Notification> unreadList = notificationRepository.findByUserAndIsReadFalseOrderByCreatedAtDesc(user);
         unreadList.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(unreadList);
+    }
+    
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void cleanUpOldNotifications() {
+        notificationRepository.deleteByCreatedAtBefore(LocalDateTime.now().minusDays(30));
     }
 }

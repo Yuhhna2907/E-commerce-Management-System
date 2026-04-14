@@ -187,7 +187,7 @@ public class OrderService implements IOrderService {
         // Send Notification
         String msg = String.format("Đơn hàng #%d của bạn đã chuyển sang trạng thái: %s", 
              order.getId(), STATUS_DISPLAY.getOrDefault(newStatus, newStatus.name()));
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
     }
 
     // Backward compat — old signature

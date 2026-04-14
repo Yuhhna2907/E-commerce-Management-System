@@ -2,6 +2,7 @@ package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.model.dto.*;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
+import com.codegym.smartphonemanagement.service.profile.IRecentlyViewedService;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
 import com.codegym.smartphonemanagement.repository.user.ReviewRepository;
 import com.codegym.smartphonemanagement.repository.user.WishlistRepository;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class UserProfileController {
 
     private final IUserProfileService profileService;
+    private final IRecentlyViewedService recentlyViewedService;
     private final IOrderService orderService;
     private final ReviewRepository reviewRepository;
     private final WishlistRepository wishlistRepository;
@@ -38,6 +40,7 @@ public class UserProfileController {
                 .filter(r -> r.getUser() != null && r.getUser().getId().equals(USER_ID))
                 .toList());
         model.addAttribute("wishlists", wishlistRepository.findByUserIdOrderByAddedAtDesc(USER_ID));
+        model.addAttribute("recentProducts", recentlyViewedService.getRecentProducts(USER_ID, 20));
         model.addAttribute("activeTab", "info");
         return "user/profile/index";
     }
@@ -111,6 +114,22 @@ public class UserProfileController {
         try {
             profileService.deleteAddress(USER_ID, id);
             redirectAttributes.addFlashAttribute("successMsg", "Đã xóa địa chỉ.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
+        }
+        return "redirect:/user/profile?tab=addresses";
+    }
+
+    // =========================================================
+    // POST: Cập nhật địa chỉ
+    // =========================================================
+    @PostMapping("/addresses/{id}/edit")
+    public String updateAddress(@PathVariable Long id,
+                                @ModelAttribute UserAddressRequestDTO dto,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            profileService.updateAddress(USER_ID, id, dto);
+            redirectAttributes.addFlashAttribute("successMsg", "Cập nhật địa chỉ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
         }

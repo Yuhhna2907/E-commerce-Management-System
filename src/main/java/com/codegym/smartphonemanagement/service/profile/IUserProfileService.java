@@ -20,5 +20,7 @@ public interface IUserProfileService {
 
     void deleteAddress(Long userId, Long addressId);
 
+    void updateAddress(Long userId, Long addressId, UserAddressRequestDTO dto);
+
     UserAddressDTO getDefaultAddress(Long userId);
 }

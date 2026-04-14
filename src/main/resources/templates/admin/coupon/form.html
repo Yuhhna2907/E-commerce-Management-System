@@ -204,6 +204,22 @@
                                               placeholder="Nhập điều kiện áp dụng hoặc thông tin mã..."></textarea>
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">
+                                    Áp dụng cho sản phẩm
+                                    <span class="text-muted small fw-normal">(Để trống = áp dụng toàn bộ sản phẩm)</span>
+                                </label>
+                                <select class="form-select" th:field="*{applicableProductIds}" multiple size="8">
+                                    <option th:each="p : ${allProducts}"
+                                            th:value="${p.id}"
+                                            th:text="${p.name + ' (' + #numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT') + ' ₫)'}">
+                                    </option>
+                                </select>
+                                <div class="form-text">
+                                    Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều sản phẩm.
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-4 border-start ps-md-4">

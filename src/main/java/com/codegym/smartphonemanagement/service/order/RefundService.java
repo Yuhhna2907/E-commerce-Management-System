@@ -249,7 +249,7 @@ public class RefundService {
         // Notify user
         String msg = String.format("Yêu cầu hoàn trả cho đơn hàng #%d đã được duyệt. Trạng thái đơn: %s", 
                 order.getId(), newStatus.name());
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
 
         return mapToDTO(req);
     }
@@ -280,7 +280,7 @@ public class RefundService {
                 
         // Notify user
         String msg = String.format("Yêu cầu hoàn trả cho đơn hàng #%d đã bị từ chối.", order.getId());
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
 
         return mapToDTO(req);
     }

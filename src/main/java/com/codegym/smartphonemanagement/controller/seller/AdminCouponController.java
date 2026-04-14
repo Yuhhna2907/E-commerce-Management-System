@@ -1,12 +1,16 @@
 package com.codegym.smartphonemanagement.controller.seller;
 
 import com.codegym.smartphonemanagement.model.Coupon;
+import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.dto.AdminCouponRequestDTO;
 import com.codegym.smartphonemanagement.repository.CouponRepository;
+import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin/coupons")
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminCouponController {
 
     private final CouponRepository couponRepository;
+    private final ProductRepository productRepository;
 
     @GetMapping
     public String listCoupons(Model model) {
@@ -24,6 +29,7 @@ public class AdminCouponController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("coupon", new AdminCouponRequestDTO());
+        model.addAttribute("allProducts", productRepository.findByActiveTrue(org.springframework.data.domain.Pageable.unpaged()).getContent());
         return "admin/coupon/form";
     }
 
@@ -44,8 +50,13 @@ public class AdminCouponController {
         dto.setStartDate(coupon.getStartDate());
         dto.setEndDate(coupon.getEndDate());
         dto.setDescription(coupon.getDescription());
+        dto.setApplicableProductIds(
+                coupon.getApplicableProducts() == null ? List.of() :
+                        coupon.getApplicableProducts().stream().map(Product::getId).toList()
+        );
         
         model.addAttribute("coupon", dto);
+        model.addAttribute("allProducts", productRepository.findByActiveTrue(org.springframework.data.domain.Pageable.unpaged()).getContent());
         return "admin/coupon/form";
     }
 
@@ -73,6 +84,11 @@ public class AdminCouponController {
         coupon.setStartDate(dto.getStartDate());
         coupon.setEndDate(dto.getEndDate());
         coupon.setDescription(dto.getDescription());
+        if (dto.getApplicableProductIds() != null && !dto.getApplicableProductIds().isEmpty()) {
+            coupon.setApplicableProducts(productRepository.findAllById(dto.getApplicableProductIds()));
+        } else {
+            coupon.setApplicableProducts(List.of());
+        }
 
         couponRepository.save(coupon);
         return "redirect:/admin/coupons";

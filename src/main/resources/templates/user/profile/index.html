@@ -330,6 +330,9 @@
                     <a class="nav-link" th:classappend="${param.tab != null and param.tab[0] == 'security'} ? 'active'" href="?tab=security">
                         <i class="bi bi-shield-lock"></i> Bảo mật
                     </a>
+                    <a class="nav-link" th:classappend="${param.tab != null and param.tab[0] == 'recent'} ? 'active'" href="?tab=recent">
+                        <i class="bi bi-clock-history"></i> Đã xem gần đây
+                    </a>
                 </nav>
             </div>
         </div>
@@ -425,47 +428,61 @@
             <div class="content-card" th:if="${param.tab != null and param.tab[0] == 'addresses'}">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
-                        <h4 class="section-title"><i class="bi bi-geo-alt me-2 text-warning"></i>Sổ địa chỉ</h4>
-                        <p class="text-muted small mb-0">Quản lý các địa chỉ giao hàng của bạn</p>
+                        <h4 class="section-title">
+                            <i class="bi bi-geo-alt me-2 text-warning"></i>Sổ địa chỉ
+                            <span class="badge bg-light text-muted ms-2 border fw-medium" style="font-size: 0.75rem;" 
+                                  th:text="${#lists.size(addresses)} + '/5'">0/5</span>
+                        </h4>
+                        <p class="text-muted small mb-0">Quản lý các địa chỉ giao hàng của bạn (Tối đa 5 địa chỉ)</p>
                     </div>
-                    <button class="btn-save btn" data-bs-toggle="collapse" data-bs-target="#addAddressForm" style="padding:10px 20px; font-size:0.9rem;">
+                    <button th:if="${#lists.size(addresses) < 5}" 
+                            class="btn-save btn" data-bs-toggle="collapse" data-bs-target="#addAddressForm" style="padding:10px 20px; font-size:0.9rem;">
                         <i class="bi bi-plus-lg me-1"></i> Thêm địa chỉ
                     </button>
+                    <div th:if="${#lists.size(addresses) >= 5}" class="text-warning small fw-bold">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Đã đạt giới hạn 5 địa chỉ
+                    </div>
                 </div>
 
-                <!-- Form thêm địa chỉ -->
+                <!-- Form thêm địa chỉ (Cascading Select) -->
                 <div class="collapse mb-4" id="addAddressForm">
-                    <div class="p-4 rounded-3" style="background: rgba(245,158,11,0.05); border: 1.5px dashed #f59e0b;">
+                    <div class="p-4 rounded-4" style="background: rgba(245,158,11,0.05); border: 1.5px dashed #f59e0b;">
                         <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle text-warning me-2"></i>Địa chỉ mới</h6>
-                        <form th:action="@{/user/profile/addresses/add}" method="POST">
+                        <form th:action="@{/user/profile/addresses/add}" method="POST" id="formAddAddress">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Nhãn địa chỉ</label>
+                                    <label class="form-label fw-semibold">Nhãn địa chỉ</label>
                                     <input type="text" class="form-control" name="label" placeholder="Nhà riêng, Văn phòng...">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Tên người nhận</label>
+                                    <label class="form-label fw-semibold">Tên người nhận</label>
                                     <input type="text" class="form-control" name="receiverName" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Số điện thoại</label>
-                                    <input type="tel" class="form-control" name="receiverPhone" placeholder="0912345678" required>
+                                    <label class="form-label fw-semibold">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="receiverPhone" placeholder="09xxxxxxxx" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Số nhà, tên đường</label>
-                                    <input type="text" class="form-control" name="addressDetail">
+                                    <label class="form-label fw-semibold">Số nhà, tên đường</label>
+                                    <input type="text" class="form-control" name="addressDetail" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Phường/Xã</label>
-                                    <input type="text" class="form-control" name="ward">
+                                    <label class="form-label fw-semibold">Tỉnh / Thành phố</label>
+                                    <select class="form-select" id="province" name="province" required>
+                                        <option value="" selected disabled hidden>Chọn tỉnh / thành</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Quận/Huyện</label>
-                                    <input type="text" class="form-control" name="district">
+                                    <label class="form-label fw-semibold">Quận / Huyện</label>
+                                    <select class="form-select" id="district" name="district" required disabled>
+                                        <option value="" selected disabled hidden>Chọn quận / huyện</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Tỉnh/Thành phố</label>
-                                    <input type="text" class="form-control" name="province">
+                                    <label class="form-label fw-semibold">Phường / Xã</label>
+                                    <select class="form-select" id="ward" name="ward" required disabled>
+                                        <option value="" selected disabled hidden>Chọn phường / xã</option>
+                                    </select>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-check">
@@ -473,7 +490,8 @@
                                         <label class="form-check-label fw-semibold" for="chkDefault">Đặt làm địa chỉ mặc định</label>
                                     </div>
                                 </div>
-                                <div class="col-12">
+                                <div class="col-12 text-end">
+                                    <button type="button" class="btn btn-light me-2" data-bs-toggle="collapse" data-bs-target="#addAddressForm">Hủy</button>
                                     <button type="submit" class="btn btn-save" style="font-size:0.9rem; padding:10px 24px;">
                                         <i class="bi bi-check2 me-1"></i> Lưu địa chỉ
                                     </button>
@@ -486,7 +504,7 @@
                 <!-- Danh sách địa chỉ -->
                 <div class="row g-3" th:if="${not #lists.isEmpty(addresses)}">
                     <div class="col-md-6" th:each="addr : ${addresses}">
-                        <div class="address-card" th:classappend="${addr.isDefault} ? 'is-default'">
+                        <div class="address-card h-100" th:classappend="${addr.isDefault} ? 'is-default'">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="fw-bold" th:text="${addr.label ?: 'Địa chỉ'}">Nhà riêng</span>
                                 <span class="default-badge" th:if="${addr.isDefault}"><i class="bi bi-check2 me-1"></i>Mặc định</span>
@@ -494,7 +512,20 @@
                             <p class="mb-1 fw-semibold" th:text="${addr.receiverName}">Tên người nhận</p>
                             <p class="mb-1 text-muted small"><i class="bi bi-telephone me-1 text-warning"></i><span th:text="${addr.receiverPhone}"></span></p>
                             <p class="mb-3 text-muted small"><i class="bi bi-geo-alt me-1 text-warning"></i><span th:text="${addr.getFullAddress()}"></span></p>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 mt-auto">
+                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-3 btn-edit-address" 
+                                        style="font-size:0.82rem;"
+                                        th:data-id="${addr.id}"
+                                        th:data-label="${addr.label}"
+                                        th:data-name="${addr.receiverName}"
+                                        th:data-phone="${addr.receiverPhone}"
+                                        th:data-detail="${addr.addressDetail}"
+                                        th:data-ward="${addr.ward}"
+                                        th:data-district="${addr.district}"
+                                        th:data-province="${addr.province}"
+                                        th:data-default="${addr.isDefault}">
+                                    <i class="bi bi-pencil me-1"></i>Sửa
+                                </button>
                                 <form th:unless="${addr.isDefault}" th:action="@{/user/profile/addresses/{id}/default(id=${addr.id})}" method="POST" class="m-0">
                                     <button type="submit" class="btn btn-outline-accent btn-sm py-1 px-3" style="font-size:0.82rem;">
                                         <i class="bi bi-star me-1"></i>Mặc định
@@ -515,6 +546,9 @@
                      class="text-center py-5 text-muted">
                     <i class="bi bi-geo-alt display-4 d-block mb-3" style="opacity:0.3;"></i>
                     <p class="fw-semibold">Bạn chưa có địa chỉ nào được lưu</p>
+                    <p class="small">Thêm địa chỉ để thanh toán cực nhanh!</p>
+                </div>
+            </div>
                     <p class="small">Thêm địa chỉ để checkout nhanh hơn!</p>
                 </div>
             </div>
@@ -663,13 +697,128 @@
                 </form>
             </div>
 
+            <!-- ===== TAB: ĐÃ XEM GẦN ĐÂY ===== -->
+            <div class="content-card" th:if="${param.tab != null and param.tab[0] == 'recent'}">
+                <div class="mb-4">
+                    <h4 class="section-title"><i class="bi bi-clock-history me-2 text-warning"></i>Sản phẩm đã xem gần đây</h4>
+                    <p class="text-muted small mb-0">Các sản phẩm bạn đã ghé thăm gần đây nhất</p>
+                </div>
+
+                <div class="row g-3" th:if="${recentProducts != null and !#lists.isEmpty(recentProducts)}">
+                    <div class="col-6 col-sm-4 col-md-3" th:each="rp : ${recentProducts}">
+                        <a th:href="@{/user/products/{id}(id=${rp.id})}" class="wishlist-card">
+                            <div class="text-center mb-2">
+                                <img th:src="${rp.imageUrl}" alt="" class="img-fluid"
+                                     style="height:90px; object-fit:contain;">
+                            </div>
+                            <p class="fw-bold mb-1 small text-center" th:text="${rp.name}" style="line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"></p>
+                            <div class="text-center">
+                                <span class="text-danger fw-bold" style="font-family:monospace; font-size:0.88rem;"
+                                      th:text="${#numbers.formatDecimal(rp.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                            </div>
+                            <div class="text-center mt-1" th:if="${rp.averageRating != null and rp.averageRating > 0}">
+                                <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                    <i class="bi" style="font-size:0.7rem;"
+                                       th:classappend="${i <= rp.averageRating} ? 'bi-star-fill star-filled' : 'bi-star star-empty'"></i>
+                                </th:block>
+                                <span class="text-muted" style="font-size:0.7rem;" th:text="'(' + ${rp.totalReviews} + ')'"></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${recentProducts == null or #lists.isEmpty(recentProducts)}" class="text-center py-5 text-muted">
+                    <i class="bi bi-clock-history display-4 d-block mb-3" style="opacity:0.3;"></i>
+                    <p class="fw-semibold">Bạn chưa xem sản phẩm nào</p>
+                    <a href="/user/products" class="btn btn-save mt-2" style="font-size:0.9rem; padding:10px 24px;">
+                        <i class="bi bi-phone me-1"></i> Khám phá ngay
+                    </a>
+                </div>
+            </div>
+
         </div><!-- /col-lg-9 -->
     </div><!-- /row -->
 </div><!-- /profile-wrapper -->
 
+<!-- ===== MODAL: CHỈNH SỬA ĐỊA CHỈ ===== -->
+<div class="modal fade" id="editAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-modal border-0">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i>Chỉnh sửa địa chỉ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formEditAddress" method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nhãn địa chỉ</label>
+                            <input type="text" class="form-control" name="label" id="edit_label" placeholder="Nhà riêng, Văn phòng...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tên người nhận</label>
+                            <input type="text" class="form-control" name="receiverName" id="edit_receiverName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số điện thoại</label>
+                            <input type="tel" class="form-control" name="receiverPhone" id="edit_receiverPhone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Số nhà, tên đường</label>
+                            <input type="text" class="form-control" name="addressDetail" id="edit_addressDetail" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tỉnh / Thành phố</label>
+                            <select class="form-select" id="edit_province" name="province" required>
+                                <option value="" selected disabled hidden>Chọn tỉnh / thành</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Quận / Huyện</label>
+                            <select class="form-select" id="edit_district" name="district" required disabled>
+                                <option value="" selected disabled hidden>Chọn quận / huyện</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Phường / Xã</label>
+                            <select class="form-select" id="edit_ward" name="ward" required disabled>
+                                <option value="" selected disabled hidden>Chọn phường / xã</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isDefault" id="edit_isDefault" value="true">
+                                <label class="form-check-label fw-semibold" for="edit_isDefault">Đặt làm địa chỉ mặc định</label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end mt-4">
+                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-save px-4">Cập nhật</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="fragments/footer :: footer"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
+    const host = "https://provinces.open-api.vn/api/";
+
+    // 0. Render Helpers
+    var renderData = (array, selectId, title) => {
+        let row = `<option value="" selected disabled hidden>${title}</option>`;
+        if(array) {
+            array.forEach(element => {
+                row += `<option data-id="${element.code}" value="${element.name}">${element.name}</option>`
+            });
+        }
+        const el = document.getElementById(selectId);
+        if (el) el.innerHTML = row;
+    }
+
     // Toggle password visibility
     function togglePwd(inputId, btn) {
         const input = document.getElementById(inputId);
@@ -687,6 +836,7 @@
     function checkStrength(val) {
         const fill = document.getElementById('strengthFill');
         const text = document.getElementById('strengthText');
+        if (!fill || !text) return;
         let score = 0;
         if (val.length >= 6) score++;
         if (val.length >= 10) score++;
@@ -702,13 +852,124 @@
         text.style.color = colors[score] || '#94a3b8';
     }
 
-    // Auto-activate correct tab from URL param
     document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. Tab Activation Logic ---
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');
         if (!tab) {
             document.querySelector('.profile-nav a[href="?tab=info"]')?.classList.add('active');
         }
+
+        // --- 2. Cascading Select (Province API) ---
+        const setupCascading = (pId, dId, wId) => {
+            const pSel = document.getElementById(pId);
+            const dSel = document.getElementById(dId);
+            const wSel = document.getElementById(wId);
+            if (!pSel) return;
+
+            pSel.addEventListener("change", function() {
+                const pCode = this.options[this.selectedIndex].getAttribute("data-id");
+                if (pCode) {
+                    fetch(host + "p/" + pCode + "?depth=2")
+                        .then(res => res.json())
+                        .then(data => {
+                            renderData(data.districts, dId, "Chọn quận / huyện");
+                            dSel.disabled = false;
+                            wSel.innerHTML = '<option value="" selected disabled hidden>Chọn phường / xã</option>';
+                            wSel.disabled = true;
+                        });
+                }
+            });
+
+            dSel.addEventListener("change", function() {
+                const dCode = this.options[this.selectedIndex].getAttribute("data-id");
+                if (dCode) {
+                    fetch(host + "d/" + dCode + "?depth=2")
+                        .then(res => res.json())
+                        .then(data => {
+                            renderData(data.wards, wId, "Chọn phường / xã");
+                            wSel.disabled = false;
+                        });
+                }
+            });
+        };
+
+        // Fetch Initial Provinces for both forms
+        fetch(host + "?depth=1")
+            .then(res => res.json())
+            .then(data => {
+                renderData(data, "province", "Chọn tỉnh / thành");
+                renderData(data, "edit_province", "Chọn tỉnh / thành");
+            });
+
+        setupCascading("province", "district", "ward");
+        setupCascading("edit_province", "edit_district", "edit_ward");
+
+        // --- 3. Edit Address Modal Populate ---
+        const editModal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+        const editForm = document.getElementById('formEditAddress');
+
+        document.querySelectorAll('.btn-edit-address').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const label = this.dataset.label;
+                const name = this.dataset.name;
+                const phone = this.dataset.phone;
+                const detail = this.dataset.detail;
+                const pVal = this.dataset.province;
+                const dVal = this.dataset.district;
+                const wVal = this.dataset.ward;
+                const isDef = this.dataset.default === 'true';
+
+                editForm.action = `/user/profile/addresses/${id}/edit`;
+                document.getElementById('edit_label').value = label;
+                document.getElementById('edit_receiverName').value = name;
+                document.getElementById('edit_receiverPhone').value = phone;
+                document.getElementById('edit_addressDetail').value = detail;
+                document.getElementById('edit_isDefault').checked = isDef;
+
+                // Chọn Province và trigger load Districts
+                const pSel = document.getElementById('edit_province');
+                const dSel = document.getElementById('edit_district');
+                const wSel = document.getElementById('edit_ward');
+
+                Array.from(pSel.options).forEach(opt => {
+                    if (opt.value === pVal) {
+                        opt.selected = true;
+                        // Trigger change để load districts
+                        const event = new Event('change');
+                        pSel.dispatchEvent(event);
+
+                        // Đợi Districts load xong
+                        const checkD = setInterval(() => {
+                            if (dSel.options.length > 1) {
+                                Array.from(dSel.options).forEach(dOpt => {
+                                    if (dOpt.value === dVal) {
+                                        dOpt.selected = true;
+                                        dSel.dispatchEvent(new Event('change'));
+                                        clearInterval(checkD);
+
+                                        // Đợi Wards load xong
+                                        const checkW = setInterval(() => {
+                                            if (wSel.options.length > 1) {
+                                                Array.from(wSel.options).forEach(wOpt => {
+                                                    if (wOpt.value === wVal) {
+                                                        wOpt.selected = true;
+                                                        clearInterval(checkW);
+                                                    }
+                                                });
+                                            }
+                                        }, 100);
+                                    }
+                                });
+                            }
+                        }, 100);
+                    }
+                });
+
+                editModal.show();
+            });
+        });
     });
 </script>
 </body>

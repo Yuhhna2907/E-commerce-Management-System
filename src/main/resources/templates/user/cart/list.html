@@ -84,6 +84,68 @@
             background: var(--glass-strong);
         }
 
+        /* Skeleton Loading for Cart */
+        .cart-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .cart-skeleton.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .skeleton-item {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.9) 40%, rgba(255, 255, 255, 0.65) 80%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 2000ms ease-in-out infinite;
+            border-radius: 12px;
+        }
+
+        .skeleton-cart-image {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-md);
+            flex-shrink: 0;
+        }
+
+        .skeleton-cart-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .skeleton-cart-title {
+            height: 20px;
+            width: 70%;
+        }
+
+        .skeleton-cart-price {
+            height: 24px;
+            width: 40%;
+        }
+
+        .skeleton-cart-controls {
+            height: 40px;
+            width: 60%;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
         .product-img-wrapper {
             position: relative;
             width: 120px;
@@ -223,6 +285,33 @@
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
             transform: scale(1.1) rotate(5deg);
         }
+        
+        /* Save for Later button */
+        .btn-save-later {
+            color: #cbd5e1;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .btn-save-later:hover {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .btn-save-later:active {
+            transform: scale(0.95);
+        }
 
         /* ----- Order Summary (Right Column) ----- */
         .summary-card {
@@ -357,6 +446,14 @@
         .btn-checkout:active {
             transform: translateY(0);
         }
+        
+        .btn-checkout:disabled {
+            background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.6;
+        }
 
         /* ----- Empty Cart State ----- */
         .empty-cart-container {
@@ -415,11 +512,112 @@
             box-shadow: 0 40px 80px -20px rgba(0,0,0,0.2);
             overflow: hidden;
         }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast-notification {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-notification .toast-icon {
+            font-size: 1.2rem;
+            color: #10b981;
+        }
+
+        .toast-notification .toast-message {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 100px; /* Cao hơn wallet button */
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            cursor: pointer;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        @media (max-width: 768px) {
+            .toast-container {
+                bottom: 80px;
+                right: 16px;
+                left: 16px;
+            }
+            
+            .toast-notification {
+                min-width: auto;
+            }
+
+            .back-to-top {
+                width: 48px;
+                height: 48px;
+                bottom: 90px; /* Cao hơn wallet button trên mobile */
+                right: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div th:replace="fragments/header :: header"></div>
+
+<!-- Breadcrumb Navigation -->
+<div th:replace="~{fragments/header :: breadcrumb(${breadcrumbs})}"></div>
 
 <div class="container section-padding pb-4">
     <!-- Progress Stepper -->
@@ -463,6 +661,16 @@
             <div th:if="${cart.items != null and !#lists.isEmpty(cart.items)}">
                 
                 <div th:each="item : ${cart.items}" class="bento-card js-cart-item-row" th:attr="data-item-id=${item.productId}, data-variant-id=${item.variantId}">
+                    <!-- Skeleton Loader -->
+                    <div class="cart-skeleton">
+                        <div class="skeleton-item skeleton-cart-image"></div>
+                        <div class="skeleton-cart-content">
+                            <div class="skeleton-item skeleton-cart-title"></div>
+                            <div class="skeleton-item skeleton-cart-price"></div>
+                            <div class="skeleton-item skeleton-cart-controls"></div>
+                        </div>
+                    </div>
+
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <div class="product-img-wrapper ps-2">
@@ -495,10 +703,28 @@
 
                                 <!-- Action Buttons -->
                                 <div class="d-flex flex-column align-items-end justify-content-between" style="min-height: 110px;">
-                                    <!-- Remove Button -->
-                                    <button class="btn-remove js-btn-remove" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" th:attr="data-item-id=${item.id}">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
+                                    <!-- Button Group -->
+                                    <div class="d-flex gap-2">
+                                        <!-- Save for Later Button -->
+                                        <button class="btn-save-later js-btn-save-later" 
+                                                th:attr="data-cart-item-id=${item.id},
+                                                         data-product-id=${item.productId},
+                                                         data-product-name=${item.productName}"
+                                                title="Lưu vào danh sách yêu thích">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                        
+                                        <!-- Remove Button -->
+                                        <button class="btn-remove js-btn-remove" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#confirmDeleteModal" 
+                                                th:attr="data-item-id=${item.id},
+                                                         data-product-name=${item.productName},
+                                                         data-product-image=${item.imageUrl},
+                                                         data-product-specs=${item.color + ' | ' + item.storage + (item.ram != null ? ' | ' + item.ram : '')}">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </button>
+                                    </div>
 
                                     <!-- Quantity Controller -->
                                     <div class="qty-controller mt-auto">
@@ -593,12 +819,18 @@
                     </div>
                 </div>
 
-                <a th:href="@{/user/order/checkout}" class="text-decoration-none">
-                    <button class="btn-checkout">
+                <a th:href="@{/user/order/checkout}" class="text-decoration-none js-checkout-link">
+                    <button class="btn-checkout js-checkout-btn">
                         TIẾN HÀNH THANH TOÁN
                         <i class="bi bi-lock-fill fs-5 bg-white bg-opacity-25 rounded-circle p-1 ms-1 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;"></i>
                     </button>
                 </a>
+                
+                <!-- Out of stock warning -->
+                <div class="alert alert-danger mt-3 mb-0 py-2 px-3 small fw-bold d-none js-out-of-stock-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Vui lòng xóa sản phẩm hết hàng trước khi thanh toán
+                </div>
                 
                 <p class="text-center text-muted small mt-4 mb-0 fw-medium">
                     <i class="bi bi-shield-check text-success me-1"></i> Thanh toán an toàn và bảo mật 100%
@@ -620,17 +852,27 @@
                     <i class="bi bi-trash3-fill fs-1"></i>
                 </div>
                 <h3 class="fw-bold mb-3">Xóa sản phẩm</h3>
-                <p class="text-muted fw-medium mb-4 fs-5">
-                    Bạn có chắc chắn muốn nói lời tạm biệt với siêu phẩm này khỏi giỏ hàng?
+                
+                <!-- Product Info Preview -->
+                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-3" id="deleteProductPreview">
+                    <img id="deleteProductImage" src="" alt="" class="rounded" style="width: 60px; height: 60px; object-fit: contain;">
+                    <div class="text-start flex-grow-1">
+                        <div class="fw-bold text-dark mb-1" id="deleteProductName">Tên sản phẩm</div>
+                        <div class="small text-muted" id="deleteProductSpecs">Thông số</div>
+                    </div>
+                </div>
+                
+                <p class="text-muted fw-medium mb-4 fs-6">
+                    Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?
                 </p>
             </div>
             <div class="modal-footer border-0 d-flex gap-3 flex-nowrap px-5 pb-5 pt-0">
                 <button type="button" class="btn btn-light w-50 py-3 rounded-pill fw-bold border fs-5" data-bs-dismiss="modal">
                     Hủy bỏ
                 </button>
-                <form id="deleteForm" method="post" class="w-50 m-0">
-                    <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold fs-5" style="box-shadow: 0 10px 25px -8px rgba(220,53,69,0.8);">
-                        Xóa ngay
+                <form id="deleteForm" method="post" class="w-50 m-0 js-delete-form">
+                    <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold fs-5 js-delete-btn" style="box-shadow: 0 10px 25px -8px rgba(220,53,69,0.8);">
+                        <span class="js-delete-btn-text">Xóa ngay</span>
                     </button>
                 </form>
             </div>
@@ -641,14 +883,136 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // 0. SAVE FOR LATER LOGIC
+    document.querySelectorAll('.js-btn-save-later').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const cartItemId = this.getAttribute('data-cart-item-id');
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+            
+            // Disable button
+            this.disabled = true;
+            const originalIcon = this.innerHTML;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            try {
+                const response = await fetch('/user/cart/save-for-later', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        cartItemId: cartItemId,
+                        productId: productId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success toast
+                    showToast(data.message, 'success');
+                    
+                    // Fade out and remove cart item
+                    const cartItem = this.closest('.bento-card');
+                    cartItem.style.transition = 'all 0.4s ease';
+                    cartItem.style.opacity = '0';
+                    cartItem.style.transform = 'translateX(20px)';
+                    
+                    setTimeout(() => {
+                        window.location.reload(); // Reload to update cart
+                    }, 400);
+                } else {
+                    showToast(data.message || 'Không thể lưu sản phẩm', 'error');
+                    this.disabled = false;
+                    this.innerHTML = originalIcon;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Đã xảy ra lỗi khi lưu sản phẩm', 'error');
+                this.disabled = false;
+                this.innerHTML = originalIcon;
+            }
+        });
+    });
+    
+    // Toast notification function
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        `;
+        
+        const icon = type === 'success' ? 
+            '<i class="bi bi-check-circle-fill" style="font-size: 1.2rem;"></i>' :
+            '<i class="bi bi-exclamation-circle-fill" style="font-size: 1.2rem;"></i>';
+        
+        toast.innerHTML = icon + '<span>' + message + '</span>';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(400px)';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+
     // 1. DELETE MODAL LOGIC
     const deleteModal = document.getElementById('confirmDeleteModal');
     if (deleteModal) {
         deleteModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const itemId = button.getAttribute('data-item-id');
+            const productName = button.getAttribute('data-product-name');
+            const productImage = button.getAttribute('data-product-image');
+            const productSpecs = button.getAttribute('data-product-specs');
+            
+            // Update form action
             const form = document.getElementById('deleteForm');
             form.action = '/user/cart/remove/' + itemId;
+            
+            // Update product preview
+            document.getElementById('deleteProductName').textContent = productName || 'Sản phẩm';
+            document.getElementById('deleteProductSpecs').textContent = productSpecs || '';
+            document.getElementById('deleteProductImage').src = productImage || 'https://via.placeholder.com/60';
+        });
+    }
+    
+    // 1.5 DELETE FORM LOADING STATE
+    const deleteForm = document.querySelector('.js-delete-form');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const deleteBtn = this.querySelector('.js-delete-btn');
+            const deleteBtnText = this.querySelector('.js-delete-btn-text');
+            
+            if (deleteBtn && deleteBtnText) {
+                // Disable button and show loading
+                deleteBtn.disabled = true;
+                deleteBtnText.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xóa...';
+            }
+            
+            // Form will submit normally
+            return true;
         });
     }
 
@@ -680,6 +1044,128 @@
     // document.querySelectorAll('.js-qty-form').forEach(form => {
     //     form.addEventListener('submit', function(e) { /* Xử lý Ajax và gọi animateCountUp(document.getElementById('cartTotal'), oldPrice, newPrice) */ });
     // });
+    // 3. AUTO-FILL VOUCHER FROM URL
+    document.addEventListener('DOMContentLoaded', () => {
+        // Hide skeleton loaders after page load
+        setTimeout(() => {
+            document.querySelectorAll('.cart-skeleton').forEach(skeleton => {
+                skeleton.classList.add('hidden');
+            });
+        }, 800);
+
+        // Toast Notification System
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            toast.innerHTML = `
+                <i class="bi ${icon} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto dismiss
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // Back to Top Button
+        const backToTop = document.getElementById('backToTop');
+        let scrollTimeout;
+
+        function handleScroll() {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            
+            scrollTimeout = setTimeout(() => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            }, 100);
+        }
+
+        window.addEventListener('scroll', handleScroll);
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const voucherCode = urlParams.get('voucherCode');
+        const couponInput = document.querySelector('.js-coupon-input');
+        
+        if (voucherCode && couponInput) {
+            couponInput.value = voucherCode;
+            // Hiệu ứng focus để người dùng chú ý
+            couponInput.focus();
+            couponInput.classList.add('border-primary');
+            
+            // Tự động cuộn tới phần tóm tắt đơn hàng nếu trên mobile
+            if (window.innerWidth < 992) {
+                document.querySelector('.summary-card').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // 4. CHECK OUT OF STOCK ITEMS AND DISABLE CHECKOUT
+        function checkOutOfStockItems() {
+            const cartItems = document.querySelectorAll('.js-cart-item-row');
+            let hasOutOfStock = false;
+            
+            cartItems.forEach(item => {
+                const stockLabel = item.querySelector('.stock-label');
+                if (stockLabel) {
+                    const stockText = stockLabel.textContent.toLowerCase();
+                    if (stockText.includes('hết hàng')) {
+                        hasOutOfStock = true;
+                    }
+                }
+            });
+            
+            const checkoutBtn = document.querySelector('.js-checkout-btn');
+            const checkoutLink = document.querySelector('.js-checkout-link');
+            const outOfStockWarning = document.querySelector('.js-out-of-stock-warning');
+            
+            if (hasOutOfStock) {
+                if (checkoutBtn) checkoutBtn.disabled = true;
+                if (checkoutLink) {
+                    checkoutLink.style.pointerEvents = 'none';
+                    checkoutLink.style.cursor = 'not-allowed';
+                }
+                if (outOfStockWarning) outOfStockWarning.classList.remove('d-none');
+            } else {
+                if (checkoutBtn) checkoutBtn.disabled = false;
+                if (checkoutLink) {
+                    checkoutLink.style.pointerEvents = 'auto';
+                    checkoutLink.style.cursor = 'pointer';
+                }
+                if (outOfStockWarning) outOfStockWarning.classList.add('d-none');
+            }
+        }
+        
+        // Run check on page load
+        checkOutOfStockItems();
+    });
 </script>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- Back to Top Button -->
+<button class="back-to-top" id="backToTop" aria-label="Về đầu trang">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
 </body>
 </html>
