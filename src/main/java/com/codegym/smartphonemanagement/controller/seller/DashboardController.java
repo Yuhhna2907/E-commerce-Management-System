@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.seller;
 
+import com.codegym.smartphonemanagement.service.dashboard.DTO.DashboardDTO;
 import com.codegym.smartphonemanagement.service.dashboard.seller.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -15,8 +16,9 @@ public class DashboardController {
 
     @GetMapping
     public String index(Model model) {
-        model.addAttribute("stats", dashboardService.getDashboardStats());
-        model.addAttribute("pageTitle", "dashboard"); // Để sáng nút Sidebar
+        DashboardDTO stats = dashboardService.getDashboardStats();
+        model.addAttribute("stats", stats);
+        model.addAttribute("pageTitle", "dashboard");
         return "admin/dashboard/index";
     }
 }

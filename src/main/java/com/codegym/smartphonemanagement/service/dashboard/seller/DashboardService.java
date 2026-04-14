@@ -2,15 +2,14 @@ package com.codegym.smartphonemanagement.service.dashboard.seller;
 
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.repository.user.OrderRepository;
+import com.codegym.smartphonemanagement.service.dashboard.DTO.DashboardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,27 +17,53 @@ public class DashboardService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
-    public Map<String, Object> getDashboardStats() {
-        Map<String, Object> stats = new HashMap<>();
+    public DashboardDTO getDashboardStats() {
+        // 1. Lấy dữ liệu các con số tổng quát (Stat Cards)
+        BigDecimal totalRevenue = orderRepository.calculateTotalRevenue(); // Doanh thu tổng (nhóm dùng)
+        BigDecimal actualRevenue = orderRepository.calculateActualRevenue(); // Doanh thu thực (Duy dùng)
+        long completedOrders = orderRepository.countCompletedOrders();
+        long shippingOrders = orderRepository.countShippingOrders(); // Đơn đang giao
+        long totalProducts = productRepository.countByActiveTrue();
+        long lowStockCount = productRepository.countByActiveTrueAndStockLessThan(5);
 
-        // 1. Các con số tổng quát
-        BigDecimal revenue = orderRepository.calculateTotalRevenue();
-        stats.put("totalRevenue", revenue != null ? revenue : BigDecimal.ZERO);
-        stats.put("totalOrders", orderRepository.countCompletedOrders());
-        stats.put("totalProducts", productRepository.countByActiveTrue());
-        stats.put("lowStockCount", productRepository.countByActiveTrueAndStockLessThan(5));
+        // 2. Lấy dữ liệu biểu đồ so sánh doanh thu 7 ngày
+        List<Object[]> revenueComparisonData = orderRepository.getRevenueComparisonLast7Days();
 
-        // 2. Dữ liệu biểu đồ doanh thu 7 ngày
-        List<Object[]> revenueData = orderRepository.getRevenueLast7Days();
-        // Dùng .stream().map(...).toList() (Java 16+) hoặc .collect(Collectors.toList())
-        stats.put("revenueLabels", revenueData.stream().map(row -> row[0].toString()).toList());
-        stats.put("revenueValues", revenueData.stream().map(row -> row[1]).toList());
+        List<String> labels = new ArrayList<>();
+        List<BigDecimal> actualValues = new ArrayList<>();
+        List<BigDecimal> assumedValues = new ArrayList<>();
 
-        // 3. Dữ liệu Top 5 sản phẩm bán chạy (Cần PageRequest từ Spring Data Domain)
+        for (Object[] row : revenueComparisonData) {
+            labels.add(row[0].toString()); // Ngày
+            actualValues.add(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO); // Thực tế
+            assumedValues.add(row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO); // Giả định
+        }
+
+        // 3. Lấy dữ liệu Top 5 sản phẩm bán chạy
         List<Object[]> topProducts = orderRepository.getTopSellingProducts(PageRequest.of(0, 5));
-        stats.put("topProductNames", topProducts.stream().map(row -> row[0]).toList());
-        stats.put("topProductSales", topProducts.stream().map(row -> row[1]).toList());
 
-        return stats;
+        // 4. Đóng gói vào DashboardDTO
+        return DashboardDTO.builder()
+                .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
+                .actualRevenue(actualRevenue != null ? actualRevenue : BigDecimal.ZERO)
+                .totalOrders(completedOrders)
+                .shippingOrders(shippingOrders)
+                .totalProducts(totalProducts)
+                .lowStockCount(lowStockCount)
+
+                // Dữ liệu biểu đồ doanh thu
+                .revenueLabels(labels)
+                .actualRevenueValues(actualValues)
+                .assumedRevenueValues(assumedValues)
+
+                // Giữ lại cái này để tránh lỗi nếu các bạn khác trong nhóm đang gọi
+                .revenueValues(assumedValues)
+
+                // Dữ liệu biểu đồ Top sản phẩm
+                .topProductNames(topProducts.stream()
+                        .map(row -> row[0].toString()).toList())
+                .topProductSales(topProducts.stream()
+                        .map(row -> ((Number) row[1]).longValue()).toList())
+                .build();
     }
 }

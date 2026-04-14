@@ -2,163 +2,278 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Chi tiết đơn hàng #<span th:text="${order.id}"></span> - Admin</title>
+    <title th:text="'Chi tiết đơn hàng #' + ${order.id} + ' - SmartZone'">Chi tiết đơn hàng - SmartZone</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .header-red { background-color: #d70018; position: sticky; top: 0; z-index: 1000; }
-        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
-        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
-        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1d1d1f;
+            --sz-light: #f5f5f7;
+            --sz-white: #ffffff;
+        }
 
-        .detail-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 24px; }
-        .detail-card h5 { font-weight: 800; margin-bottom: 20px; }
+        body {
+            background-color: var(--sz-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--sz-dark);
+        }
 
-        .badge-status { padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; }
-        .badge-pending { background: rgba(245,158,11,0.15); color: #d97706; }
-        .badge-confirmed { background: rgba(13,110,253,0.12); color: #0d6efd; }
-        .badge-shipping { background: rgba(139,92,246,0.12); color: #7c3aed; }
-        .badge-delivered { background: rgba(16,185,129,0.12); color: #059669; }
-        .badge-cancelled { background: rgba(239,68,68,0.12); color: #dc2626; }
-        .badge-refund_requested { background: rgba(249,115,22,0.12); color: #c2410c; }
-        .badge-refunded { background: rgba(239,68,68,0.15); color: #be123c; }
-        .badge-partial_refunded { background: rgba(249,115,22,0.15); color: #9a3412; }
+        /* Header Trắng hiện đại */
+        .header-sz {
+            background-color: var(--sz-white);
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+        }
 
-        .timeline-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; margin-top: 6px; flex-shrink: 0; }
-        .timeline-time { font-size: 0.78rem; color: #94a3b8; font-family: monospace; }
+        /* Sidebar thiết kế dạng thẻ nổi */
+        .sidebar-container {
+            min-height: calc(100vh - 100px);
+            background: var(--sz-white);
+            border-radius: 16px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5e5;
+        }
 
-        .product-row { display: flex; align-items: center; gap: 14px; padding: 14px; background: #f8fafc; border-radius: 12px; margin-bottom: 10px; }
-        .product-row img { width: 50px; height: 50px; object-fit: contain; border-radius: 10px; background: #fff; padding: 3px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .sidebar-link {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #6e6e73;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #fff9e6;
+            color: var(--sz-orange);
+        }
+
+        /* Detail Cards */
+        .detail-card {
+            background: var(--sz-white);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5e5;
+            margin-bottom: 24px;
+        }
+
+        .detail-card h5 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            color: var(--sz-dark);
+        }
+
+        /* Status Badges */
+        .badge-status {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        .badge-pending { background: #fff7ed; color: #c2410c; }
+        .badge-confirmed { background: #eff6ff; color: #1d4ed8; }
+        .badge-shipping { background: #f5f3ff; color: #6d28d9; }
+        .badge-delivered { background: #ecfdf5; color: #047857; }
+        .badge-cancelled { background: #fef2f2; color: #b91c1c; }
+
+        /* Product Row */
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border: 1px solid #f0f0f0;
+        }
+        .product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 10px;
+            padding: 5px;
+            margin-right: 15px;
+        }
+
+        /* Timeline */
+        .timeline-box { position: relative; padding-left: 30px; }
+        .timeline-box::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: #e5e5e5;
+        }
+        .timeline-point {
+            position: absolute;
+            left: 5px;
+            width: 12px;
+            height: 12px;
+            background: var(--sz-orange);
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* Buttons */
+        .btn-sz-action {
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" th:href="@{/admin/products}"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
-        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+<nav class="navbar navbar-expand-lg header-sz py-3">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center fw-bold text-dark" th:href="@{/admin/products}">
+            <div class="bg-warning rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                <i class="bi bi-phone-fill text-white"></i>
+            </div>
+            SmartZone <span class="text-warning ms-1">Admin</span>
+        </a>
+        <div class="text-dark fw-bold">Xin chào, <span class="text-warning">Admin Duy</span></div>
     </div>
 </nav>
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
-            <h6 class="text-muted text-uppercase fw-bold small mb-3">Danh mục quản lý</h6>
-            <a th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-            <a th:href="@{/admin/products}"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
-            <a th:href="@{/admin/categories}"><i class="bi bi-tags me-2"></i> Danh mục</a>
-            <a th:href="@{/admin/orders}" class="active"><i class="bi bi-cart-check me-2"></i> Đơn hàng</a>
-            <a th:href="@{/admin/orders/refunds}"><i class="bi bi-arrow-return-left me-2"></i> Hoàn trả</a>
-            <a th:href="@{/admin/coupons}"><i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi</a>
-            <hr>
-            <a th:href="@{/admin/products}" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Thoát</a>
+    <div class="row px-2">
+        <div class="col-md-2 p-3">
+            <div class="sidebar-container p-3">
+                <p class="text-muted small fw-bold px-3 mb-3 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Quản lý</p>
+                <a th:href="@{/admin/dashboard}" class="sidebar-link mb-2"><i class="bi bi-grid-1x2-fill me-3"></i> Tổng quan</a>
+                <a th:href="@{/admin/products}" class="sidebar-link mb-2"><i class="bi bi-phone-vibrate-fill me-3"></i> Sản phẩm</a>
+                <a th:href="@{/admin/categories}" class="sidebar-link mb-2"><i class="bi bi-stack me-3"></i> Danh mục</a>
+                <a th:href="@{/admin/orders}" class="sidebar-link mb-2 active"><i class="bi bi-cart-check-fill me-3"></i> Đơn hàng</a>
+                <a th:href="@{/admin/coupons}" class="sidebar-link mb-2"><i class="bi bi-ticket-perforated-fill me-3"></i> Khuyến mãi</a>
+                <hr class="my-4 opacity-25">
+                <a th:href="@{/admin/products}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-left me-3"></i> Thoát</a>
+            </div>
         </div>
 
         <div class="col-md-10 p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 class="fw-bold mb-1">Đơn hàng #<span th:text="${order.id}"></span></h3>
-                    <p class="text-muted mb-0">Ngày tạo: <span th:text="${#temporals.format(order.createdAt, 'HH:mm - dd/MM/yyyy')}"></span></p>
+                    <h2 class="fw-bold text-dark mb-1">Chi tiết đơn hàng <span class="text-warning" th:text="'#' + ${order.id}"></span></h2>
+                    <p class="text-muted small mb-0">Ngày tạo: <span th:text="${#temporals.format(order.createdAt, 'HH:mm - dd/MM/yyyy')}"></span></p>
                 </div>
-                <span class="badge-status" th:classappend="'badge-' + ${order.status.toLowerCase()}" th:text="${order.statusDisplay}"></span>
+                <div class="d-flex gap-2">
+                    <span class="badge-status d-flex align-items-center" th:classappend="'badge-' + ${order.status.toLowerCase()}">
+                        <i class="bi bi-info-circle me-2"></i> <span th:text="${order.statusDisplay}"></span>
+                    </span>
+                    <a th:href="@{/admin/orders}" class="btn btn-white border rounded-3"><i class="bi bi-arrow-left"></i> Quay lại</a>
+                </div>
             </div>
 
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-lg-8">
-                    <!-- Sản phẩm -->
                     <div class="detail-card">
-                        <h5><i class="bi bi-bag-check me-2"></i>Sản phẩm</h5>
-                        <div th:each="item : ${order.items}" class="product-row">
-                            <img th:src="${item.imageUrl != null ? item.imageUrl : 'https://cdn-icons-png.flaticon.com/512/186/186239.png'}">
+                        <h5><i class="bi bi-bag-check-fill me-2 text-warning"></i>Sản phẩm trong đơn</h5>
+                        <div th:each="item : ${order.items}" class="product-item">
+                            <img class="product-img border" th:src="${item.imageUrl != null ? item.imageUrl : 'https://cdn-icons-png.flaticon.com/512/186/186239.png'}">
                             <div class="flex-grow-1">
-                                <div class="fw-bold" th:text="${item.productName}"></div>
+                                <div class="fw-bold text-dark" th:text="${item.productName}"></div>
                                 <div class="small text-muted" th:text="${item.variantName}"></div>
-                                <div class="small">SL: <strong th:text="${item.quantity}"></strong></div>
+                                <div class="mt-1"><span class="badge bg-light text-dark border">Số lượng: [[${item.quantity}]]</span></div>
                             </div>
                             <div class="text-end">
-                                <div class="fw-bold" th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')} + '₫'"></div>
-                                <div th:if="${item.allocatedDiscount != null && item.allocatedDiscount > 0}" class="small text-warning fw-bold">
-                                    Voucher: -<span th:text="${#numbers.formatDecimal(item.allocatedDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫
+                                <div class="fw-bold text-dark fs-5" th:text="${#numbers.formatDecimal(item.subTotal, 0, 'COMMA', 0, 'POINT')} + '₫'"></div>
+                                <div th:if="${item.allocatedDiscount != null && item.allocatedDiscount > 0}" class="small text-danger fw-bold">
+                                    Giảm voucher: -<span th:text="${#numbers.formatDecimal(item.allocatedDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between pt-3 mt-3 border-top border-2">
-                            <span class="fw-bold fs-5">Tổng cộng</span>
-                            <span class="fw-bold fs-5 text-danger" style="font-family: monospace;"
-                                  th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
-                        </div>
-                        <div th:if="${order.totalDiscount != null && order.totalDiscount > 0}" class="d-flex justify-content-between">
-                            <span class="text-muted">Giảm giá Voucher</span>
-                            <span class="text-warning fw-bold">-<span th:text="${#numbers.formatDecimal(order.totalDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫</span>
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Tổng tiền hàng:</span>
+                                <span class="fw-bold" th:text="${#numbers.formatDecimal(order.totalPrice + (order.totalDiscount ?: 0), 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                            </div>
+                            <div th:if="${order.totalDiscount != null && order.totalDiscount > 0}" class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Giảm giá Voucher:</span>
+                                <span class="text-danger fw-bold">-<span th:text="${#numbers.formatDecimal(order.totalDiscount, 0, 'COMMA', 0, 'POINT')}"></span>₫</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <span class="fw-bold fs-4">Thực thu:</span>
+                                <span class="fw-bold fs-4 text-warning" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Timeline -->
                     <div class="detail-card" th:if="${order.timeline != null && !order.timeline.isEmpty()}">
-                        <h5><i class="bi bi-clock-history me-2"></i>Lịch sử trạng thái</h5>
-                        <div th:each="entry : ${order.timeline}" class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="flex-grow-1">
-                                <div class="fw-bold small" th:text="${entry.reason}"></div>
-                                <div class="timeline-time" th:text="${#temporals.format(entry.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
+                        <h5><i class="bi bi-clock-history me-2 text-primary"></i>Lịch sử trạng thái</h5>
+                        <div class="timeline-box">
+                            <div th:each="entry : ${order.timeline}" class="mb-4 position-relative">
+                                <div class="timeline-point"></div>
+                                <div class="ms-2">
+                                    <div class="fw-bold text-dark" th:text="${entry.reason}"></div>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i> <span th:text="${#temporals.format(entry.createdAt, 'HH:mm - dd/MM/yyyy')}"></span>
+                                        <span class="mx-2">|</span>
+                                        <i class="bi bi-person me-1"></i> <span th:text="${entry.updatedBy}"></span>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="badge bg-light text-dark fw-bold small" th:text="${entry.updatedBy}"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-lg-4">
-                    <!-- Thông tin khách -->
                     <div class="detail-card">
-                        <h5><i class="bi bi-person me-2"></i>Khách hàng</h5>
-                        <div class="mb-2"><span class="text-muted small">Người nhận:</span><br><strong th:text="${order.customerName}"></strong></div>
-                        <div class="mb-2"><span class="text-muted small">SĐT:</span><br><strong th:text="${order.receiverPhone}"></strong></div>
-                        <div class="mb-2"><span class="text-muted small">Địa chỉ:</span><br><strong th:text="${order.shippingAddress}"></strong></div>
-                        <div th:if="${order.note != null}"><span class="text-muted small">Ghi chú:</span><br><strong th:text="${order.note}"></strong></div>
-                        <div class="mt-2"><span class="text-muted small">Thanh toán:</span><br><strong th:text="${order.paymentMethodDisplay}"></strong></div>
-                    </div>
-
-                    <!-- Hành động -->
-                    <div class="detail-card">
-                        <h5><i class="bi bi-lightning me-2"></i>Hành động</h5>
-                        <div class="d-grid gap-2">
-                            <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/{id}/confirm(id=${order.id})}" method="post">
-                                <button class="btn btn-success w-100"><i class="bi bi-check-circle me-1"></i> Xác nhận đơn</button>
-                            </form>
-                            <form th:if="${order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/ship(id=${order.id})}" method="post">
-                                <button class="btn btn-primary w-100"><i class="bi bi-truck me-1"></i> Bắt đầu giao</button>
-                            </form>
-                            <form th:if="${order.status == 'SHIPPING'}" th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post">
-                                <button class="btn btn-success w-100"><i class="bi bi-house-check me-1"></i> Xác nhận đã giao</button>
-                            </form>
-                            <form th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post">
-                                <button class="btn btn-outline-danger w-100" onclick="return confirm('Hủy đơn hàng này?')">
-                                    <i class="bi bi-x-circle me-1"></i> Hủy đơn
-                                </button>
-                            </form>
-                            <a th:href="@{/admin/orders}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left me-1"></i> Quay lại
-                            </a>
+                        <h5><i class="bi bi-person-vcard me-2 text-info"></i>Khách hàng</h5>
+                        <div class="mb-3">
+                            <label class="small text-muted text-uppercase fw-bold">Người nhận</label>
+                            <div class="fw-bold fs-5" th:text="${order.customerName}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted text-uppercase fw-bold">Số điện thoại</label>
+                            <div class="text-dark"><i class="bi bi-telephone me-2"></i><span th:text="${order.receiverPhone}"></span></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted text-uppercase fw-bold">Địa chỉ giao hàng</label>
+                            <div class="text-dark"><i class="bi bi-geo-alt me-2"></i><span th:text="${order.shippingAddress}"></span></div>
+                        </div>
+                        <div class="p-3 bg-light rounded-3 mt-3">
+                            <label class="small text-muted text-uppercase fw-bold">Phương thức thanh toán</label>
+                            <div class="fw-bold text-dark mt-1" th:text="${order.paymentMethodDisplay}"></div>
                         </div>
                     </div>
 
-                    <!-- Refund Info -->
-                    <div th:if="${order.activeRefund != null}" class="detail-card border-warning" style="border: 2px solid #f59e0b;">
-                        <h5><i class="bi bi-arrow-return-left me-2 text-warning"></i>Yêu cầu hoàn trả</h5>
-                        <div class="mb-2"><strong>Lý do:</strong> <span th:text="${order.activeRefund.reason}"></span></div>
-                        <div class="mb-2"><strong>Số tiền:</strong> <span class="text-danger fw-bold" style="font-family: monospace;" th:text="${#numbers.formatDecimal(order.activeRefund.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span></div>
-                        <div class="mb-3"><strong>Trạng thái:</strong> <span th:text="${order.activeRefund.status}"></span></div>
-
-                        <div th:if="${order.activeRefund.status == 'PENDING'}" class="d-grid gap-2">
-                            <form th:action="@{/admin/orders/refunds/{id}/approve(id=${order.activeRefund.id})}" method="post">
-                                <input type="text" name="adminNote" class="form-control mb-2" placeholder="Ghi chú Admin (tùy chọn)...">
-                                <button class="btn btn-success w-100"><i class="bi bi-check-lg me-1"></i> Duyệt hoàn trả</button>
+                    <div class="detail-card">
+                        <h5><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Xử lý đơn hàng</h5>
+                        <div class="d-grid gap-3">
+                            <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/{id}/confirm(id=${order.id})}" method="post">
+                                <button class="btn btn-success btn-sz-action w-100 shadow-sm"><i class="bi bi-check2-circle me-2"></i>Xác nhận đơn hàng</button>
                             </form>
-                            <form th:action="@{/admin/orders/refunds/{id}/reject(id=${order.activeRefund.id})}" method="post">
-                                <input type="text" name="adminNote" class="form-control mb-2" placeholder="Lý do từ chối...">
-                                <button class="btn btn-outline-danger w-100"><i class="bi bi-x-lg me-1"></i> Từ chối</button>
+
+                            <form th:if="${order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/ship(id=${order.id})}" method="post">
+                                <button class="btn btn-primary btn-sz-action w-100 shadow-sm"><i class="bi bi-truck me-2"></i>Giao hàng ngay</button>
+                            </form>
+
+                            <form th:if="${order.status == 'SHIPPING'}" th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post">
+                                <button class="btn btn-warning btn-sz-action w-100 text-white shadow-sm"><i class="bi bi-house-check me-2"></i>Đã giao thành công</button>
+                            </form>
+
+                            <form th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post">
+                                <button class="btn btn-outline-danger btn-sz-action w-100" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">
+                                    <i class="bi bi-slash-circle me-2"></i>Hủy đơn hàng
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -168,8 +283,8 @@
     </div>
 </div>
 
-<footer class="text-center p-3 mt-4 shadow-sm" style="background: #212529; color: white;">
-    <small>© 2026 Smartphone Store | Admin Dashboard System</small>
+<footer class="text-center p-4 mt-5 bg-white border-top">
+    <small class="text-muted">© 2026 SmartZone Admin System - Managed by Vũ Ngọc Duy</small>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
