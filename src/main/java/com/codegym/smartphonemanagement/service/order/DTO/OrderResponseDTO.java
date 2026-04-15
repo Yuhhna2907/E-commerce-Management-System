@@ -27,4 +27,8 @@ public class OrderResponseDTO {
     // Cho user biết có thể hủy / refund không
     private boolean canCancel;
     private boolean canRefund;
+    // Thông tin người mua
+    private Long userId;
+    private String buyerUsername;
+    private String buyerFullName;
 }

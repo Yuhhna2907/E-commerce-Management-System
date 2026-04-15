@@ -382,6 +382,10 @@ public class OrderService implements IOrderService {
                 .activeRefund(activeRefund)
                 .canCancel(canCancel)
                 .canRefund(canRefund)
+                // Thông tin người mua
+                .userId(order.getUser() != null ? order.getUser().getId() : null)
+                .buyerUsername(order.getUser() != null ? order.getUser().getUsername() : "")
+                .buyerFullName(order.getUser() != null ? order.getUser().getFullName() : "")
                 .build();
     }
 
