@@ -1,7 +1,9 @@
 package com.codegym.smartphonemanagement.repository.user;
 
 import com.codegym.smartphonemanagement.model.UserAddress;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +18,13 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, Long> 
 
     Optional<UserAddress> findByUserIdAndIsDefaultTrue(Long userId);
 
-    Optional<UserAddress> findByIdAndUserId(Long id, Long userId);
+    // FIX #9: Method với pessimistic lock để tránh race condition khi delete address
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM UserAddress u WHERE u.id = :id AND u.user.id = :userId")
+    Optional<UserAddress> findByIdAndUserId(
+            @Param("id") Long id,
+            @Param("userId") Long userId
+    );
 
     @Transactional
     @Modifying

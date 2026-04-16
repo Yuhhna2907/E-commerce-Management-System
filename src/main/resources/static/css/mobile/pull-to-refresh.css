@@ -1,0 +1,263 @@
+/**
+ * Pull-to-Refresh CSS
+ * 
+ * Provides gesture-based refresh functionality for mobile product lists.
+ * Features:
+ * - Glassmorphism indicator styling
+ * - Smooth pull animation with transform transitions
+ * - Spinner rotation animation
+ * - Mobile-only (< 768px viewport)
+ * 
+ * Requirements: 2.7, 6.1, 6.8
+ */
+
+/* ===== Pull-to-Refresh Container ===== */
+.pull-to-refresh {
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+}
+
+/* ===== Pull-to-Refresh Indicator ===== */
+.pull-to-refresh__indicator {
+    position: absolute;
+    top: -80px;
+    left: 0;
+    right: 0;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: var(--z-pull-indicator, 100);
+    
+    /* Glassmorphism styling */
+    background: var(--glass-bg-secondary, linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%));
+    backdrop-filter: var(--glass-blur-medium, blur(12px) saturate(1.1));
+    -webkit-backdrop-filter: var(--glass-blur-medium, blur(12px) saturate(1.1));
+    border-bottom: var(--glass-border-light, 1px solid rgba(255, 255, 255, 0.5));
+    box-shadow: var(--glass-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 12px -2px rgba(15, 23, 42, 0.08));
+    
+    /* Smooth transform transition */
+    transition: transform var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+    transform: translateY(0);
+    
+    /* GPU acceleration */
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* ===== Pull States ===== */
+
+/* Pulling state - indicator follows finger */
+.pull-to-refresh--pulling .pull-to-refresh__indicator {
+    transition: none; /* Disable transition during active pull for immediate feedback */
+}
+
+/* Ready state - threshold reached */
+.pull-to-refresh--ready .pull-to-refresh__indicator {
+    transform: translateY(80px);
+}
+
+/* Refreshing state - indicator visible and animating */
+.pull-to-refresh--refreshing .pull-to-refresh__indicator {
+    transform: translateY(80px);
+    transition: transform var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* ===== Spinner ===== */
+.pull-to-refresh__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(0, 123, 255, 0.15);
+    border-top-color: var(--color-primary, #007bff);
+    border-radius: 50%;
+    
+    /* GPU-accelerated rotation */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Spinner rotation animation - only active during refresh */
+.pull-to-refresh--refreshing .pull-to-refresh__spinner {
+    animation: pullRefreshSpin 0.8s linear infinite;
+}
+
+@keyframes pullRefreshSpin {
+    0% {
+        transform: rotate(0deg) translateZ(0);
+    }
+    100% {
+        transform: rotate(360deg) translateZ(0);
+    }
+}
+
+/* ===== Indicator Text ===== */
+.pull-to-refresh__text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-secondary, #666);
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Text changes based on state */
+.pull-to-refresh--ready .pull-to-refresh__text::after {
+    content: 'Release to refresh';
+}
+
+.pull-to-refresh--refreshing .pull-to-refresh__text::after {
+    content: 'Refreshing...';
+}
+
+.pull-to-refresh__text::after {
+    content: 'Pull to refresh';
+}
+
+/* ===== Content Area ===== */
+.pull-to-refresh__content {
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    
+    /* Smooth transition when content shifts */
+    transition: transform var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* ===== Accessibility Alternative - Refresh Button ===== */
+.pull-to-refresh__button {
+    display: none; /* Hidden by default, shown via JS for mobile only */
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    width: var(--touch-target-min, 48px);
+    height: var(--touch-target-min, 48px);
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    z-index: calc(var(--z-pull-indicator, 100) + 1);
+    
+    /* Glassmorphism styling - Requirement 8.1 */
+    background: var(--glass-bg-primary, linear-gradient(155deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.62) 100%));
+    backdrop-filter: var(--glass-blur-strong, blur(22px) saturate(1.15));
+    -webkit-backdrop-filter: var(--glass-blur-strong, blur(22px) saturate(1.15));
+    border: var(--glass-border, 1px solid rgba(255, 255, 255, 0.65));
+    box-shadow: var(--glass-shadow-md, 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 28px -6px rgba(15, 23, 42, 0.1));
+    
+    color: var(--color-primary, #007bff);
+    font-size: 20px;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.2s cubic-bezier(0.4, 0, 0.2, 1));
+    
+    /* Ensure button is above other content */
+    align-items: center;
+    justify-content: center;
+}
+
+.pull-to-refresh__button:hover {
+    transform: scale(1.05);
+    box-shadow: var(--glass-shadow-lg, 0 2px 4px rgba(15, 23, 42, 0.06), 0 12px 32px -4px rgba(15, 23, 42, 0.12));
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 100%);
+}
+
+.pull-to-refresh__button:active {
+    transform: scale(0.95);
+}
+
+.pull-to-refresh__button:focus-visible {
+    outline: 2px solid var(--color-primary, #007bff);
+    outline-offset: 2px;
+}
+
+.pull-to-refresh__button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Rotate button icon during refresh */
+.pull-to-refresh__button.refreshing i,
+.pull-to-refresh--refreshing .pull-to-refresh__button i {
+    animation: pullRefreshSpin 0.8s linear infinite;
+}
+
+/* ===== Mobile-Only Styles ===== */
+@media (max-width: 767px) {
+    /* Enable pull-to-refresh only on mobile */
+    .pull-to-refresh {
+        touch-action: pan-y; /* Allow vertical panning for pull gesture */
+    }
+    
+    /* Prevent overscroll bounce on iOS during pull */
+    .pull-to-refresh--pulling {
+        overscroll-behavior-y: contain;
+    }
+}
+
+/* ===== Desktop - Disable Pull-to-Refresh ===== */
+@media (min-width: 768px) {
+    .pull-to-refresh__indicator {
+        display: none !important;
+    }
+    
+    .pull-to-refresh__button {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    .pull-to-refresh {
+        overflow: visible;
+    }
+}
+
+/* ===== Reduced Motion Support ===== */
+@media (prefers-reduced-motion: reduce) {
+    .pull-to-refresh__indicator,
+    .pull-to-refresh__content {
+        transition: none !important;
+    }
+    
+    .pull-to-refresh__spinner {
+        animation: none !important;
+        border-top-color: transparent;
+        border-right-color: var(--color-primary, #007bff);
+    }
+}
+
+/* ===== Loading State Overlay ===== */
+.pull-to-refresh--refreshing::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: calc(var(--z-pull-indicator, 100) - 1);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast, 0.2s cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.pull-to-refresh--refreshing::before {
+    opacity: 1;
+}
+
+/* ===== Error State ===== */
+.pull-to-refresh--error .pull-to-refresh__indicator {
+    background: linear-gradient(155deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border-bottom-color: rgba(239, 68, 68, 0.3);
+}
+
+.pull-to-refresh--error .pull-to-refresh__text {
+    color: var(--color-danger, #ef4444);
+}
+
+.pull-to-refresh--error .pull-to-refresh__spinner {
+    border-top-color: var(--color-danger, #ef4444);
+    animation: none;
+}

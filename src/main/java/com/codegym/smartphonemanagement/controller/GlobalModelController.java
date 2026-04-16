@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.dto.UserProfileDTO;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
+import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
 import com.codegym.smartphonemanagement.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class GlobalModelController {
     private final ICouponService couponService;
     private final UserRepository userRepository;
     private final IUserProfileService userProfileService;
+    private final ILoyaltyPointService loyaltyPointService;
 
     @ModelAttribute("GlobalVouchers")
     public List<CouponResponseDTO> globalVouchers() {
@@ -56,6 +58,15 @@ public class GlobalModelController {
             return userProfileService.getProfile(SecurityUtil.getCurrentUserId(userRepository));
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    @ModelAttribute("loyaltyPoints")
+    public Integer loyaltyPoints() {
+        try {
+            return loyaltyPointService.getAccountInfo(MOCK_USER_ID).getTotalPoints();
+        } catch (Exception e) {
+            return 0;
         }
     }
 }

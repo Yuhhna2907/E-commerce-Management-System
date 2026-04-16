@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết Điểm - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; }
+        .header-red { background-color: #d70018; position: sticky; top: 0; z-index: 1000; }
+        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
+        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
+
+        .stat-card {
+            background: #fff; border-radius: 16px; padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06); text-align: center;
+        }
+        .stat-num { font-size: 2rem; font-weight: 800; font-family: monospace; color: #d97706; }
+        .stat-label { font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .tx-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-radius: 10px;
+            border-bottom: 1px solid #f1f5f9; transition: background 0.2s;
+        }
+        .tx-row:hover { background: #fafafa; }
+        .tx-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+        .tx-icon.earned         { background: rgba(16,185,129,0.1); color: #059669; }
+        .tx-icon.redeemed       { background: rgba(245,158,11,0.1); color: #d97706; }
+        .tx-icon.refund_deducted{ background: rgba(239,68,68,0.1); color: #dc2626; }
+        .tx-icon.admin_adjust   { background: rgba(99,102,241,0.1); color: #4f46e5; }
+        .tx-pts { font-family: monospace; font-weight: 800; }
+        .tx-pts.pos { color: #059669; }
+        .tx-pts.neg { color: #dc2626; }
+
+        .adjust-form { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" th:href="@{/admin/products}"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
+        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
+            <h6 class="text-muted text-uppercase fw-bold small mb-3">Danh mục quản lý</h6>
+            <a th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+            <a th:href="@{/admin/products}"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
+            <a th:href="@{/admin/categories}"><i class="bi bi-tags me-2"></i> Danh mục</a>
+            <a th:href="@{/admin/orders}"><i class="bi bi-cart-check me-2"></i> Đơn hàng</a>
+            <a th:href="@{/admin/orders/refunds}"><i class="bi bi-arrow-return-left me-2"></i> Hoàn trả</a>
+            <a th:href="@{/admin/coupons}"><i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi</a>
+            <a th:href="@{/admin/loyalty}" class="active"><i class="bi bi-star-fill me-2"></i> Điểm tích lũy</a>
+        </div>
+
+        <!-- Main -->
+        <div class="col-md-10 p-4">
+
+            <a th:href="@{/admin/loyalty}" class="btn btn-outline-secondary btn-sm mb-3 rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i> Danh sách
+            </a>
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible rounded-3 shadow-sm mb-3">
+                <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible rounded-3 shadow-sm mb-3">
+                <i class="bi bi-x-circle-fill me-2"></i><span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Stats row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card border-start border-warning border-4">
+                        <div class="stat-num" th:text="${account.totalPoints}">0</div>
+                        <div class="stat-label">Điểm hiện có</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card border-start border-primary border-4">
+                        <div class="stat-num" th:text="${account.lifetimePoints}">0</div>
+                        <div class="stat-label">Lifetime points</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card border-start border-success border-4">
+                        <div class="stat-num" th:text="${#numbers.formatDecimal(account.estimatedValue, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</div>
+                        <div class="stat-label">Giá trị quy đổi</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Adjust Form -->
+            <div class="adjust-form">
+                <h5 class="fw-bold mb-3"><i class="bi bi-sliders me-2 text-primary"></i>Điều chỉnh điểm thủ công</h5>
+                <form th:action="@{/admin/loyalty/{id}/adjust(id=${targetUserId})}" method="post" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">Số điểm (+ cộng / - trừ)</label>
+                        <input type="number" name="delta" class="form-control rounded-pill" placeholder="VD: 100 hoặc -50" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Lý do</label>
+                        <input type="text" name="reason" class="form-control rounded-pill" placeholder="VD: Bồi thường lỗi hệ thống, Quà tặng sinh nhật...">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
+                            <i class="bi bi-save me-2"></i>Lưu điều chỉnh
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="bg-white rounded-4 p-4 shadow-sm">
+                <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-secondary"></i>Lịch sử giao dịch</h5>
+
+                <div th:if="${transactions.isEmpty()}" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-4 d-block mb-3"></i>Chưa có giao dịch nào.
+                </div>
+
+                <div th:each="tx : ${transactions.content}" class="tx-row">
+                    <div class="tx-icon" th:classappend="${tx.type.toLowerCase()}">
+                        <i class="bi" th:classappend="${tx.typeIcon}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold small" th:text="${tx.description}">Mô tả</div>
+                        <div class="text-muted" style="font-size:0.75rem; font-family:monospace"
+                             th:text="${#temporals.format(tx.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
+                    </div>
+                    <a th:if="${tx.orderId != null}"
+                       th:href="@{/admin/orders/detail/{id}(id=${tx.orderId})}"
+                       class="btn btn-outline-secondary btn-sm rounded-pill small me-2">
+                        <i class="bi bi-eye me-1"></i>Đơn #<span th:text="${tx.orderId}"></span>
+                    </a>
+                    <div class="tx-pts" th:classappend="${tx.points >= 0 ? 'pos' : 'neg'}">
+                        <span th:text="${tx.points >= 0 ? '+' : ''}"></span><span th:text="${tx.points}"></span> pts
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="d-flex gap-2 flex-wrap justify-content-center mt-4">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/admin/loyalty/{id}(id=${targetUserId}, page=${currentPage - 1})}"
+                       class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/admin/loyalty/{id}(id=${targetUserId}, page=${i})}"
+                           class="btn btn-sm rounded-pill"
+                           th:classappend="${i == currentPage ? 'btn-warning' : 'btn-outline-secondary'}"
+                           th:text="${i + 1}">1</a>
+                    </th:block>
+                    <a th:if="${currentPage < totalPages - 1}"
+                       th:href="@{/admin/loyalty/{id}(id=${targetUserId}, page=${currentPage + 1})}"
+                       class="btn btn-outline-secondary btn-sm rounded-pill">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center p-3 mt-4 shadow-sm" style="background:#212529; color:white;">
+    <small>© 2026 Smartphone Store | Admin Dashboard System</small>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

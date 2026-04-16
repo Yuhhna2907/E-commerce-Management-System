@@ -492,6 +492,16 @@
                     <i class="bi bi-heart fs-4"></i>
                 </a>
 
+                <!-- Sản phẩm đã lưu (Saved for Later) -->
+                <a th:href="@{/user/saved-items}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   title="Sản phẩm đã lưu"
+                   aria-label="Sản phẩm đã lưu">
+                    <i class="bi bi-bookmark fs-4"></i>
+                </a>
+
                 <!-- So sánh sản phẩm -->
                 <a th:href="@{/user/compare(ids=1,2,3)}"
                    class="icon-action-btn nav-interactive-glow position-relative"
@@ -515,7 +525,22 @@
                           th:title="|${headerPendingOrdersCount} đơn đang xử lý|"></span>
                 </a>
 
-                <!-- Thông báo (Real-time) -->
+                <!-- 🌟 Loyalty Points Badge -->
+                <a th:href="@{/user/loyalty}"
+                   class="icon-action-btn nav-interactive-glow position-relative loyalty-btn"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   th:title="|${loyaltyPoints != null ? loyaltyPoints : 0} điểm tích lũy — Nhấn để xem ưu đãi|"
+                   aria-label="Điểm tích lũy"
+                   style="width:auto; padding: 6px 14px; gap:6px; border-radius:50px;
+                          background: linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));
+                          border:1.5px solid rgba(245,158,11,0.3);">
+                    <i class="bi bi-star-fill" style="color:#f59e0b; font-size:1rem;"></i>
+                    <span class="fw-bold" style="font-size:0.85rem; color:#b45309; white-space:nowrap;"
+                          th:text="${(loyaltyPoints != null ? loyaltyPoints : 0) + ' pts'}">0 pts</span>
+                </a>
+
+
                 <div class="nav-item dropdown position-relative">
                     <a href="#" class="icon-action-btn nav-interactive-glow position-relative"
                        id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
@@ -1298,6 +1323,19 @@
             color: #f59e0b;
             box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
             transform: scale(1.1);
+        }
+        
+        /* Step 4 (Hoàn tất) - màu xanh lá cây khi active */
+        .stepper-step:last-child.active .stepper-icon,
+        .stepper-step:last-child.completed .stepper-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+            color: #fff;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .stepper-step:last-child.active .stepper-icon {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
         }
         
         .stepper-label {
