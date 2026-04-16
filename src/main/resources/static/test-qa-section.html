@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Q&A Section - No Security</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Q&A Section CSS -->
+    <link rel="stylesheet" href="/css/qa-section.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 2rem 0;
+        }
+        .test-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-info {
+            background: #e7f3ff;
+            border-left: 4px solid #0d6efd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .test-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Test Header -->
+        <div class="test-header">
+            <h1>🧪 Test Q&A Section (No Security Mode)</h1>
+            <p class="lead">Testing Q&A component với hardcoded user ID = 1L</p>
+            
+            <div class="test-info">
+                <h5><i class="bi bi-info-circle"></i> Thông Tin Test</h5>
+                <ul class="mb-0">
+                    <li><strong>Product ID:</strong> 1 (có thể thay đổi trong code)</li>
+                    <li><strong>User ID:</strong> 1L (hardcoded trong backend)</li>
+                    <li><strong>User Role:</strong> SELLER (hardcoded trong frontend)</li>
+                    <li><strong>Authentication:</strong> Giả lập = true</li>
+                </ul>
+            </div>
+            
+            <div class="test-warning">
+                <h5><i class="bi bi-exclamation-triangle"></i> Yêu Cầu</h5>
+                <ul class="mb-0">
+                    <li>Database phải có user với ID = 1</li>
+                    <li>Database phải có product với ID = 1</li>
+                    <li>Backend server phải đang chạy</li>
+                </ul>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-primary" onclick="testAPI()">
+                    <i class="bi bi-play-circle"></i> Test API Connection
+                </button>
+                <button class="btn btn-secondary" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i> Reload Page
+                </button>
+            </div>
+        </div>
+        
+        <!-- Q&A Section Container -->
+        <div id="qa-section-container"></div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Q&A Section JS -->
+    <script src="/js/QASection.js"></script>
+    
+    <script>
+        // Test API connection
+        async function testAPI() {
+            const productId = 1;
+            const url = `/api/products/${productId}/questions?sortBy=recent&page=0&size=10`;
+            
+            try {
+                console.log('Testing API:', url);
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ API hoạt động!\n\nTìm thấy ${data.totalElements} câu hỏi`);
+                    console.log('API Response:', data);
+                } else {
+                    alert(`❌ API trả về lỗi:\n${data.message}`);
+                    console.error('API Error:', data);
+                }
+            } catch (error) {
+                alert(`❌ Không thể kết nối API:\n${error.message}\n\nKiểm tra:\n- Backend server có chạy không?\n- Port có đúng không?`);
+                console.error('Connection Error:', error);
+            }
+        }
+        
+        // Initialize Q&A Section
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Q&A Section...');
+            
+            const container = document.getElementById('qa-section-container');
+            const productId = 1; // Thay đổi product ID ở đây nếu cần
+            
+            // HARDCODED VALUES (No Security Mode)
+            const config = {
+                pageSize: 10,
+                sortBy: 'recent',
+                isAuthenticated: true,        // Giả lập đã đăng nhập
+                currentUserRole: 'SELLER',    // Giả lập role = SELLER (có thể trả lời)
+                csrfToken: null               // Không cần CSRF token
+            };
+            
+            console.log('Config:', config);
+            
+            try {
+                const qaSection = new QASection(container, productId, config);
+                console.log('✅ Q&A Section initialized successfully');
+                
+                // Log để debug
+                window.qaSection = qaSection; // Expose to console for debugging
+            } catch (error) {
+                console.error('❌ Error initializing Q&A Section:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle"></i> Lỗi Khởi Tạo</h5>
+                        <p>${error.message}</p>
+                        <p>Kiểm tra console để xem chi tiết lỗi.</p>
+                    </div>
+                `;
+            }
+        });
+        
+        // Debug helpers
+        console.log('=== Q&A Section Test Page ===');
+        console.log('Available commands:');
+        console.log('- testAPI() : Test API connection');
+        console.log('- qaSection : Access Q&A component instance');
+        console.log('- location.reload() : Reload page');
+    </script>
+</body>
+</html>

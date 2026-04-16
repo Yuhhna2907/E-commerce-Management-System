@@ -33,29 +33,52 @@ public class UserWishlistController {
     @GetMapping("/user/wishlist")
     public String showWishlistPage(Model model) {
         try {
+            System.out.println("=== DEBUG: Loading wishlist for user " + USER_ID + " ===");
+            
             List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
+            System.out.println("Raw wishlist products count: " + (wishlistProducts != null ? wishlistProducts.size() : "null"));
+            
+            if (wishlistProducts == null) {
+                System.out.println("WARNING: wishlistProducts is null!");
+                wishlistProducts = List.of();
+            }
             
             // Filter out null products and convert to DTO
             List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
-                    .filter(p -> p != null && p.getId() != null)
+                    .filter(p -> {
+                        if (p == null) {
+                            System.out.println("WARNING: Found null product in wishlist");
+                            return false;
+                        }
+                        if (p.getId() == null) {
+                            System.out.println("WARNING: Found product with null ID: " + p);
+                            return false;
+                        }
+                        return true;
+                    })
                     .map(p -> {
                         try {
-                            return userProductService.getProductById(p.getId());
+                            System.out.println("Converting product: " + p.getId() + " - " + p.getName());
+                            ProductResponseDTO dto = userProductService.getProductById(p.getId());
+                            System.out.println("Converted successfully: " + dto.getName());
+                            return dto;
                         } catch (Exception e) {
                             System.err.println("Error converting product " + p.getId() + ": " + e.getMessage());
+                            e.printStackTrace();
                             return null;
                         }
                     })
                     .filter(dto -> dto != null)
                     .collect(Collectors.toList());
             
+            System.out.println("Final wishlist items count: " + wishlistItems.size());
             model.addAttribute("wishlistItems", wishlistItems);
-            System.out.println("Wishlist size: " + wishlistItems.size());
             
         } catch (Exception e) {
-            System.err.println("Error loading wishlist: " + e.getMessage());
+            System.err.println("ERROR loading wishlist: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("wishlistItems", List.of());
+            model.addAttribute("errorMessage", "Không thể tải danh sách yêu thích: " + e.getMessage());
         }
         
         // Add breadcrumb navigation

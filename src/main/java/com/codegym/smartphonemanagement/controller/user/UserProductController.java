@@ -7,6 +7,9 @@ import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewResponseDTO;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
 import com.codegym.smartphonemanagement.service.profile.IRecentlyViewedService;
+import com.codegym.smartphonemanagement.service.wishlist.IWishlistService;
+import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
+import com.codegym.smartphonemanagement.model.Product;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,6 +33,8 @@ public class UserProductController {
     private final IUserProductService userProductService;
     private final DiscountService discountService;
     private final IRecentlyViewedService recentlyViewedService;
+    private final IWishlistService wishlistService;
+    private final RecommendationService recommendationService;
 
     private static final Long USER_ID = 1L; // Thay bằng Security context sau
 
@@ -67,6 +73,7 @@ public class UserProductController {
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalElements", productPage.getTotalElements()); // Add total count for results badge
 
         // Giữ lại filter để không mất khi phân trang
         model.addAttribute("keyword", keyword);
@@ -84,6 +91,17 @@ public class UserProductController {
         model.addAttribute("selectedOs", osList);
         model.addAttribute("inStockOnly", inStockOnly);
         model.addAttribute("sort", sort);
+
+        // Add wishlist product IDs for heart icon highlighting
+        try {
+            List<Long> wishlistProductIds = wishlistService.getWishlistProductsByUserId(USER_ID)
+                    .stream()
+                    .map(p -> p.getId())
+                    .collect(Collectors.toList());
+            model.addAttribute("wishlistProductIds", wishlistProductIds);
+        } catch (Exception e) {
+            model.addAttribute("wishlistProductIds", List.of());
+        }
 
         // Add breadcrumb navigation
         List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
@@ -133,6 +151,21 @@ public class UserProductController {
         List<ProductResponseDTO> recentProducts = recentlyViewedService.getRecentProducts(USER_ID, 10)
                 .stream().filter(p -> !p.getId().equals(id)).toList();
         model.addAttribute("recentProducts", recentProducts);
+
+        // === Recommendations: Load server-side ===
+        try {
+            List<Product> recommendations = recommendationService.getRecommendations(id);
+            boolean hasRecommendations = !recommendations.isEmpty();
+            
+            model.addAttribute("recommendations", recommendations);
+            model.addAttribute("hasRecommendations", hasRecommendations);
+            model.addAttribute("recommendationsCount", recommendations.size());
+        } catch (Exception e) {
+            // Fail-safe: không ảnh hưởng trang nếu recommendations lỗi
+            model.addAttribute("recommendations", new ArrayList<>());
+            model.addAttribute("hasRecommendations", false);
+            model.addAttribute("recommendationsCount", 0);
+        }
 
         // Add breadcrumb navigation
         List<BreadcrumbItem> breadcrumbs = new ArrayList<>();

@@ -6,16 +6,25 @@ import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
+import com.codegym.smartphonemanagement.exception.InsufficientStockException;
+import com.codegym.smartphonemanagement.exception.InvalidOrderStatusException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codegym.smartphonemanagement.service.NotificationService;
+import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
+import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
@@ -31,6 +40,8 @@ public class OrderService implements IOrderService {
     private final ICartService cartService;
     private final ICouponService couponService;
     private final NotificationService notificationService;
+    private final RecommendationService recommendationService;
+    private final ILoyaltyPointService loyaltyPointService;
 
     // Giả lập (thay bằng Security context sau)
     private static final Long MOCK_USER_ID = 1L;
@@ -65,11 +76,11 @@ public class OrderService implements IOrderService {
     @Transactional
     public OrderResponseDTO createOrder(Long userId, OrderRequestDTO orderDTO) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại!"));
-        if (cart.getItems().isEmpty()) throw new RuntimeException("Giỏ hàng trống!");
+                .orElseThrow(() -> new EntityNotFoundException("Giỏ hàng không tồn tại!"));
+        if (cart.getItems().isEmpty()) throw new BadRequestException("Giỏ hàng trống!");
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại!"));
 
         String fullAddress = String.format("%s, %s, %s, %s",
                 orderDTO.getAddressDetail(),
@@ -81,13 +92,21 @@ public class OrderService implements IOrderService {
                 .map(item -> item.getPriceAtTime().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Tính phí giao hàng (30k cho HN/HCM/ĐN, 50k cho tỉnh khác)
+        BigDecimal shippingFee = BigDecimal.valueOf(50000);
+        String lowerProv = orderDTO.getProvince() != null ? orderDTO.getProvince().toLowerCase() : "";
+        if (lowerProv.contains("hà nội") || lowerProv.contains("hồ chí minh") || lowerProv.contains("đà nẵng")) {
+            shippingFee = BigDecimal.valueOf(30000);
+        }
+
         Order order = Order.builder()
                 .user(user)
                 .receiverName(orderDTO.getCustomerName())
                 .receiverPhone(orderDTO.getReceiverPhone())
                 .shippingAddress(fullAddress)
                 .note(orderDTO.getNote())
-                .totalPrice(total)
+                .totalPrice(total.add(shippingFee)) // Cập nhật có phí vận chuyển
+                .shippingFee(shippingFee)
                 .status(OrderStatus.PENDING)
                 .paymentMethod(orderDTO.getPaymentMethod())
                 .couponCode(orderDTO.getCouponCode())
@@ -99,7 +118,7 @@ public class OrderService implements IOrderService {
         List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
             ProductVariant variant = cartItem.getProductVariant();
             if (variant.getStockQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
+                throw new InsufficientStockException("Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
             }
             variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
             productVariantRepository.save(variant);
@@ -120,9 +139,11 @@ public class OrderService implements IOrderService {
         couponService.applyDiscountToOrder(savedOrder);
         orderItemRepository.saveAll(orderItems); // Save allocated discounts
 
-        // Cập nhật totalPrice = original - discount
+        // Cập nhật totalPrice = original + shippingFee - discount
         if (savedOrder.getTotalDiscount() != null && savedOrder.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            savedOrder.setTotalPrice(total.subtract(savedOrder.getTotalDiscount()));
+            BigDecimal finalPrice = total.add(savedOrder.getShippingFee()).subtract(savedOrder.getTotalDiscount());
+            if (finalPrice.compareTo(BigDecimal.ZERO) < 0) finalPrice = BigDecimal.ZERO;
+            savedOrder.setTotalPrice(finalPrice);
             orderRepository.save(savedOrder);
         }
 
@@ -141,13 +162,13 @@ public class OrderService implements IOrderService {
     @Transactional
     public void cancelOrder(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại!"));
 
         if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
+            throw new UnauthorizedAccessException("Bạn không có quyền thao tác đơn hàng này.");
         }
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Chỉ có thể hủy đơn khi đang ở trạng thái Chờ xác nhận.");
+            throw new InvalidOrderStatusException("Chỉ có thể hủy đơn khi đang ở trạng thái Chờ xác nhận.");
         }
 
         OrderStatus oldStatus = order.getStatus();
@@ -167,7 +188,7 @@ public class OrderService implements IOrderService {
     @Transactional
     public void updateOrderStatus(Long orderId, OrderStatus newStatus, String reason) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại!"));
 
         OrderStatus oldStatus = order.getStatus();
         validateTransition(oldStatus, newStatus);
@@ -188,6 +209,46 @@ public class OrderService implements IOrderService {
         String msg = String.format("Đơn hàng #%d của bạn đã chuyển sang trạng thái: %s", 
              order.getId(), STATUS_DISPLAY.getOrDefault(newStatus, newStatus.name()));
         notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
+
+        // Update Recommendations Real-time
+        if (newStatus == OrderStatus.DELIVERED && order.getItems() != null) {
+            order.getItems().forEach(item -> {
+                try {
+                    recommendationService.buildRecommendationsForProduct(item.getProduct().getId());
+                    log.info("Successfully triggered real-time recommendation build for product: {}", item.getProduct().getId());
+                } catch (Exception e) {
+                    log.error("Failed to build real-time recommendation for product: {}", item.getProduct().getId(), e);
+                }
+            });
+        }
+
+        // ── LOYALTY POINTS ──
+        if (newStatus == OrderStatus.DELIVERED) {
+            try {
+                loyaltyPointService.earnPoints(order.getUser().getId(), order);
+                int earned = order.getPointsEarned() != null ? order.getPointsEarned() : 0;
+                if (earned > 0) {
+                    String pointMsg = String.format(
+                            "🌟 Bạn vừa tích được %d điểm từ đơn hàng #%d! Dùng điểm để đổi ưu đãi tại trang Điểm Tích Lũy.",
+                            earned, order.getId());
+                    notificationService.sendNotification(
+                            order.getUser(), pointMsg,
+                            NotificationType.ORDER_STATUS_CHANGED,
+                            "/user/loyalty");
+                }
+                orderRepository.save(order); // Lưu pointsEarned vào DB
+            } catch (Exception e) {
+                log.error("Failed to earn loyalty points for order #{}", order.getId(), e);
+            }
+        }
+
+        if (newStatus == OrderStatus.REFUNDED || newStatus == OrderStatus.PARTIAL_REFUNDED) {
+            try {
+                loyaltyPointService.deductPoints(order.getUser().getId(), order);
+            } catch (Exception e) {
+                log.error("Failed to deduct loyalty points for order #{}", order.getId(), e);
+            }
+        }
     }
 
     // Backward compat — old signature
@@ -214,9 +275,9 @@ public class OrderService implements IOrderService {
     @Override
     public OrderResponseDTO getOrderDetail(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại!"));
         if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền xem đơn hàng này.");
+            throw new UnauthorizedAccessException("Bạn không có quyền xem đơn hàng này.");
         }
         return mapToResponseDTO(order);
     }
@@ -224,7 +285,7 @@ public class OrderService implements IOrderService {
     @Override
     public OrderResponseDTO getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đơn hàng!"));
         return mapToResponseDTO(order);
     }
 
@@ -242,13 +303,13 @@ public class OrderService implements IOrderService {
     @Transactional
     public void reorderOrderToCart(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đơn hàng!"));
         if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
+            throw new UnauthorizedAccessException("Bạn không có quyền thao tác đơn hàng này.");
         }
         List<OrderItem> items = order.getItems();
         if (items == null || items.isEmpty()) {
-            throw new RuntimeException("Đơn hàng không có sản phẩm.");
+            throw new BadRequestException("Đơn hàng không có sản phẩm.");
         }
         for (OrderItem oi : items) {
             CartItemRequestDTO req = new CartItemRequestDTO();
@@ -272,7 +333,7 @@ public class OrderService implements IOrderService {
     private void validateTransition(OrderStatus from, OrderStatus to) {
         Set<OrderStatus> allowed = VALID_TRANSITIONS.get(from);
         if (allowed == null || !allowed.contains(to)) {
-            throw new RuntimeException(
+            throw new InvalidOrderStatusException(
                     String.format("Không thể chuyển trạng thái từ %s sang %s", from, to));
         }
     }
@@ -363,10 +424,14 @@ public class OrderService implements IOrderService {
 
         String statusName = order.getStatus() != null ? order.getStatus().name() : "PENDING";
 
+        // Calculate estimated delivery date (3-5 business days from order creation)
+        LocalDateTime estimatedDelivery = calculateEstimatedDeliveryDate(order.getCreatedAt(), 5);
+
         return OrderResponseDTO.builder()
                 .id(order.getId())
                 .totalPrice(order.getTotalPrice())
                 .totalDiscount(order.getTotalDiscount())
+                .shippingFee(order.getShippingFee())
                 .couponCode(order.getCouponCode())
                 .status(statusName)
                 .statusDisplay(STATUS_DISPLAY.getOrDefault(order.getStatus(), statusName))
@@ -377,12 +442,47 @@ public class OrderService implements IOrderService {
                 .note(order.getNote())
                 .paymentMethodDisplay(order.getPaymentMethod() != null ?
                         order.getPaymentMethod().getDisplayValue() : "Chưa xác định")
+                .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : "PENDING")
+                .paymentStatusDisplay(getPaymentStatusDisplay(order.getPaymentStatus()))
                 .items(itemDTOs)
                 .timeline(timeline)
                 .activeRefund(activeRefund)
                 .canCancel(canCancel)
                 .canRefund(canRefund)
+                .estimatedDeliveryDate(estimatedDelivery)
                 .build();
+    }
+
+    private String getPaymentStatusDisplay(com.codegym.smartphonemanagement.model.PaymentStatus status) {
+        if (status == null) return "Chờ thanh toán";
+        switch (status) {
+            case COMPLETED: return "Đã thanh toán";
+            case FAILED: return "Thanh toán thất bại";
+            case REFUNDED: return "Đã hoàn tiền";
+            case PENDING:
+            default: return "Chờ thanh toán";
+        }
+    }
+
+    /**
+     * Calculate estimated delivery date by adding business days (skip weekends)
+     * @param startDate The order creation date
+     * @param businessDays Number of business days to add (e.g., 5 for 5 business days)
+     * @return Estimated delivery date
+     */
+    private LocalDateTime calculateEstimatedDeliveryDate(LocalDateTime startDate, int businessDays) {
+        LocalDateTime result = startDate;
+        int addedDays = 0;
+        
+        while (addedDays < businessDays) {
+            result = result.plusDays(1);
+            // Skip weekends (Saturday = 6, Sunday = 7)
+            if (result.getDayOfWeek().getValue() < 6) {
+                addedDays++;
+            }
+        }
+        
+        return result;
     }
 
     private RefundResponseDTO mapRefundToDTO(RefundRequest req) {

@@ -4,6 +4,8 @@ import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.model.UserAddress;
 import com.codegym.smartphonemanagement.model.dto.*;
 import com.codegym.smartphonemanagement.repository.user.*;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Override
     public UserProfileDTO getProfile(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
         // Stats
         long totalOrders = orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).size();
@@ -65,7 +67,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Transactional
     public void updateProfile(Long userId, ProfileUpdateRequestDTO dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
         if (dto.getFullName() != null) user.setFullName(dto.getFullName());
         if (dto.getEmail() != null) user.setEmail(dto.getEmail());
@@ -81,17 +83,19 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Transactional
     public void changePassword(Long userId, PasswordChangeRequestDTO dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
         // Vì chưa có Security (BCrypt), so sánh plain text tạm thời
         if (!dto.getCurrentPassword().equals(user.getPassword())) {
-            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+            throw new BadRequestException("Mật khẩu hiện tại không đúng");
         }
+        
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            throw new RuntimeException("Mật khẩu mới và xác nhận không khớp");
+            throw new BadRequestException("Mật khẩu mới và xác nhận không khớp");
         }
+        
         if (dto.getNewPassword().length() < 6) {
-            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự");
+            throw new BadRequestException("Mật khẩu mới phải có ít nhất 6 ký tự");
         }
 
         user.setPassword(dto.getNewPassword());
@@ -110,12 +114,12 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Transactional
     public UserAddressDTO addAddress(Long userId, UserAddressRequestDTO dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
         // GIỚI HẠN 5 ĐỊA CHỈ
         long count = userAddressRepository.findByUserIdOrderByIsDefaultDesc(userId).size();
         if (count >= 5) {
-            throw new RuntimeException("Bạn chỉ được lưu tối đa 5 địa chỉ. Hãy xóa bớt địa chỉ cũ nhé!");
+            throw new BadRequestException("Bạn chỉ được lưu tối đa 5 địa chỉ. Hãy xóa bớt địa chỉ cũ nhé!");
         }
 
         boolean shouldSetDefault = Boolean.TRUE.equals(dto.getIsDefault())
@@ -143,7 +147,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Transactional
     public void updateAddress(Long userId, Long addressId, UserAddressRequestDTO dto) {
         UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
+                .orElseThrow(() -> new EntityNotFoundException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
 
         address.setLabel(dto.getLabel() != null && !dto.getLabel().isBlank() ? dto.getLabel() : address.getLabel());
         address.setReceiverName(dto.getReceiverName());
@@ -166,7 +170,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Transactional
     public void setDefaultAddress(Long userId, Long addressId) {
         userAddressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
+                .orElseThrow(() -> new EntityNotFoundException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
 
         userAddressRepository.clearDefaultByUserId(userId);
 
@@ -178,12 +182,14 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Override
     @Transactional
     public void deleteAddress(Long userId, Long addressId) {
+        // FIX #9: Sử dụng pessimistic lock để tránh race condition
         UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Địa chỉ không tồn tại"));
 
         boolean wasDefault = Boolean.TRUE.equals(address.getIsDefault());
         userAddressRepository.delete(address);
 
+        // Nếu xóa địa chỉ mặc định, set địa chỉ đầu tiên còn lại làm mặc định
         if (wasDefault) {
             userAddressRepository.findByUserIdOrderByIsDefaultDesc(userId)
                     .stream().findFirst().ifPresent(first -> {

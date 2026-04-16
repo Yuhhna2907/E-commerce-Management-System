@@ -1,5 +1,7 @@
 package com.codegym.smartphonemanagement.service.product.user;
 
+import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.Review;
 import com.codegym.smartphonemanagement.model.User;
@@ -72,20 +74,20 @@ public class UserProductService implements IUserProductService {
     public ReviewResponseDTO reviewProduct(Long userId, ReviewRequestDTO request) {
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         boolean hasBought = orderItemRepository
                 .existsCompletedPurchase(userId, request.getProductId());
 
         if (!hasBought) {
-            throw new RuntimeException("Bạn chưa mua sản phẩm này");
+            throw new BadRequestException("Bạn chưa mua sản phẩm này");
         }
 
         if (reviewRepository.existsByUserIdAndProductId(userId, request.getProductId())) {
-            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
+            throw new BadRequestException("Bạn đã đánh giá sản phẩm này rồi");
         }
 
         // 5️⃣ Tạo review
@@ -101,7 +103,7 @@ public class UserProductService implements IUserProductService {
             reviewRepository.save(review);
             reviewRepository.flush(); // FIX #7: Force commit để query thấy review mới
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
+            throw new BadRequestException("Bạn đã đánh giá sản phẩm này rồi");
         }
 
         Double avg = reviewRepository.getAverageRating(product.getId());
@@ -124,6 +126,7 @@ public class UserProductService implements IUserProductService {
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())
+                .images(review.getImages())
                 .build();
     }
 
@@ -184,7 +187,7 @@ public class UserProductService implements IUserProductService {
 
     public ProductResponseDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
         return convertToDTO(product);
     }
@@ -201,6 +204,7 @@ public class UserProductService implements IUserProductService {
                         .rating(review.getRating())
                         .comment(review.getComment())
                         .createdAt(review.getCreatedAt())
+                        .images(review.getImages())
                         .build()
                 )
                 .toList();

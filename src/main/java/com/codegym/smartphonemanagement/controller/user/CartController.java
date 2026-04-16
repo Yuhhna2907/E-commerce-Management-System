@@ -5,11 +5,13 @@ import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.ProductVariant;
+import com.codegym.smartphonemanagement.model.dto.SavedForLaterDTO;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
+import com.codegym.smartphonemanagement.service.savedforlater.SavedForLaterService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -31,6 +33,7 @@ public class CartController {
     private final ICartService cartService;
     private final ProductRepository productRepository;
     private final DiscountService discountService;
+    private final SavedForLaterService savedForLaterService;
 
     // ⚠️ Demo: hardcode userId (sau này thay bằng Security)
     private final Long USER_ID = 1L;
@@ -168,12 +171,60 @@ public class CartController {
         return "redirect:/user/cart";
     }
     
-    // Save for Later - Move cart item to wishlist
+    // API endpoint to get cart totals for AJAX updates
+    @GetMapping("/api/totals")
+    @ResponseBody
+    public Map<String, Object> getCartTotals(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            CartResponseDTO cartResponse = cartService.getCart(USER_ID);
+            
+            // Calculate total after discount
+            java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
+            if (discountAmt == null) {
+                discountAmt = java.math.BigDecimal.ZERO;
+            }
+            
+            java.math.BigDecimal totalAfterDiscount = cartResponse.getTotalPrice().subtract(discountAmt);
+            if (totalAfterDiscount.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                totalAfterDiscount = java.math.BigDecimal.ZERO;
+            }
+            
+            response.put("success", true);
+            response.put("itemCount", cartResponse.getItems().size());
+            response.put("total", totalAfterDiscount);
+            response.put("rawTotal", cartResponse.getTotalPrice());
+            response.put("discountAmount", discountAmt);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            response.put("itemCount", 0);
+            response.put("total", java.math.BigDecimal.ZERO);
+        }
+        
+        return response;
+    }
+    
+    // Save for Later - Move cart item to saved_for_later table
     @PostMapping("/save-for-later")
     @ResponseBody
-    public com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse saveForLater(
-            @RequestParam Long cartItemId,
-            @RequestParam Long productId) {
-        return cartService.saveForLater(USER_ID, cartItemId, productId);
+    public Map<String, Object> saveForLater(@RequestParam Long cartItemId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            SavedForLaterDTO savedItem = savedForLaterService.saveForLater(USER_ID, cartItemId);
+            
+            response.put("success", true);
+            response.put("message", "Đã lưu sản phẩm để mua sau");
+            response.put("data", savedItem);
+            response.put("savedCount", savedForLaterService.countSavedItems(USER_ID));
+            response.put("cartItemCount", cartService.getCart(USER_ID).getItems().size());
+            
+            return response;
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return response;
+        }
     }
 }

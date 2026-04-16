@@ -6,6 +6,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/mobile/bottom-navigation.css}">
+    <link rel="stylesheet" th:href="@{/css/mobile/pull-to-refresh.css}">
 
     <style>
         :root {
@@ -33,12 +35,6 @@
             color: var(--text-main);
             letter-spacing: -0.01em;
             line-height: 1.6;
-        }
-
-        .navbar-custom {
-            background-color: #ffffff;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
         }
 
         /* Control Panel Header */
@@ -88,6 +84,132 @@
             box-shadow: 0 0 0 4px var(--primary-glow);
             border-color: #0d6efd;
             background: #fff;
+        }
+
+        /* Search Autocomplete Dropdown */
+        .search-autocomplete {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--radius-md);
+            margin-top: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .autocomplete-section {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .autocomplete-section:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-header {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(13, 110, 253, 0.08);
+        }
+
+        .autocomplete-icon {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .autocomplete-text {
+            flex: 1;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .autocomplete-category {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Filter Action Buttons */
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .btn-apply-filters {
+            flex: 1;
+            background: linear-gradient(135deg, #0d6efd, #0a58ca);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-apply-filters:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+        }
+
+        .btn-clear-filters {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear-filters:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Results Count Badge */
+        .results-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        .results-count i {
+            font-size: 1.1rem;
         }
 
         .search-icon-box {
@@ -1073,7 +1195,7 @@
 
             <div class="d-flex flex-column flex-md-row gap-3">
                 <!-- SEARCH -->
-                <form class="d-flex" method="get" action="/user/products" onsubmit="saveSearchHistory()">
+                <form class="d-flex position-relative" method="get" action="/user/products" onsubmit="saveSearchHistory()">
                     <div class="input-group search-group" style="width: 100%; min-width: 320px;">
                         <span class="input-group-text search-icon-box">
                             <i class="bi bi-search"></i>
@@ -1083,7 +1205,26 @@
                                name="keyword"
                                id="searchInput"
                                placeholder="Tìm siêu phẩm mới..."
-                               th:value="${keyword}">
+                               th:value="${keyword}"
+                               autocomplete="off">
+                    </div>
+                    
+                    <!-- Search Autocomplete Dropdown -->
+                    <div class="search-autocomplete" id="searchAutocomplete" style="display: none;">
+                        <div class="autocomplete-section">
+                            <div class="autocomplete-header">
+                                <i class="bi bi-clock-history me-2"></i>
+                                <span>Tìm kiếm gần đây</span>
+                            </div>
+                            <div id="searchHistoryList"></div>
+                        </div>
+                        <div class="autocomplete-section">
+                            <div class="autocomplete-header">
+                                <i class="bi bi-lightning-charge-fill me-2"></i>
+                                <span>Gợi ý sản phẩm</span>
+                            </div>
+                            <div id="searchSuggestionsList"></div>
+                        </div>
                     </div>
                 </form>
 
@@ -1108,8 +1249,40 @@
         </div>
     </div>
 
-    <!-- Product Grid -->
-    <div class="row g-5 align-items-stretch">
+    <!-- Pull-to-Refresh Wrapper -->
+    <div class="pull-to-refresh" id="productListRefresh">
+        <!-- Pull-to-Refresh Indicator -->
+        <div class="pull-to-refresh__indicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="pull-to-refresh__text">Kéo xuống để làm mới</span>
+        </div>
+        
+        <!-- Accessibility Alternative: Refresh Button (Requirement 8.1) -->
+        <!-- Hidden by default, shown by JavaScript only on mobile (< 768px) -->
+        <button class="pull-to-refresh__button" id="refreshButton" 
+                aria-label="Làm mới danh sách sản phẩm" 
+                title="Làm mới"
+                style="display: none;">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        
+        <!-- Pull-to-Refresh Content -->
+        <div class="pull-to-refresh__content">
+            <!-- Product Grid -->
+            <div class="row g-5 align-items-stretch">
+                <!-- Results Count Badge - Only show when filters are applied -->
+                <div class="col-12 mb-3" th:if="${products != null and !products.isEmpty() and (keyword != null and !keyword.isEmpty() or categoryId != null or brandId != null or minPrice != null or maxPrice != null or minRating != null)}">
+                    <div class="results-count">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <span>Tìm thấy <strong th:text="${totalElements}">0</strong> sản phẩm</span>
+                        <span th:if="${keyword != null and !keyword.isEmpty()}" class="ms-2">
+                            cho "<strong th:text="${keyword}"></strong>"
+                        </span>
+                    </div>
+                </div>
+        
         <div class="col-12 col-md-6 col-lg-4 col-xl-3 d-flex" th:each="product : ${products}">
             <div class="product-card w-100" th:attr="data-id=${product.id}">
                 
@@ -1121,7 +1294,10 @@
                     <div class="skeleton-item skeleton-buttons"></div>
                 </div>
                 
-                <button class="btn-wishlist shadow-sm" th:onclick="|toggleWishlist(event, ${product.id}, this)|" title="Thêm vào bộ sưu tập">
+                <button class="btn-wishlist shadow-sm" 
+                        th:classappend="${wishlistProductIds != null and wishlistProductIds.contains(product.id)} ? 'active' : ''"
+                        th:onclick="|toggleWishlist(event, ${product.id}, this)|" 
+                        title="Thêm vào bộ sưu tập">
                     <i class="bi bi-suit-heart"></i>
                 </button>
 
@@ -1200,6 +1376,9 @@
             </div>
         </div>
     </div>
+    
+        </div><!-- End pull-to-refresh__content -->
+    </div><!-- End pull-to-refresh -->
 
     <!-- Pagination -->
     <nav class="mt-5 pt-4" th:if="${totalPages > 1}">
@@ -1224,6 +1403,9 @@
 </div>
 
 <div th:replace="fragments/footer :: footer"></div>
+
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<div th:replace="~{fragments/bottom-nav :: bottom-nav}"></div>
 
 <!-- Toast Container cho thông báo Wishlist -->
 <div class="toast-container">
@@ -1632,12 +1814,12 @@
             </div>
 
             <!-- Nút Action -->
-            <div class="filter-action-footer d-flex flex-column align-items-center">
-                <a href="/user/products" class="btn text-danger fw-bold text-center w-100 mb-2 border-0" style="background: transparent;">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Làm mới bộ lọc
-                </a>
-                <button type="submit" class="btn btn-buy btn-shimmer btn-lg py-3 rounded-pill fw-bold text-uppercase fs-5 w-100" style="box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);">
-                    Lọc cấu hình ngay
+            <div class="filter-action-footer d-flex gap-2">
+                <button type="button" class="btn btn-outline-danger fw-bold flex-fill btn-clear-filters" onclick="clearAllFilters()">
+                    <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+                </button>
+                <button type="submit" class="btn btn-buy btn-shimmer fw-bold flex-fill btn-apply-filters">
+                    <i class="bi bi-check-circle me-1"></i> Áp dụng
                 </button>
             </div>
         </form>
@@ -1936,7 +2118,7 @@
             });
     }
 
-    // 3. SEARCH HISTORY
+    // 3. SEARCH HISTORY & AUTOCOMPLETE
     function saveSearchHistory() {
         const keyword = document.getElementById("searchInput").value.trim();
         if (!keyword) return;
@@ -1951,7 +2133,138 @@
         localStorage.setItem("searchHistory", JSON.stringify(history));
     }
 
+    // Search Autocomplete
+    function initSearchAutocomplete() {
+        const searchInput = document.getElementById('searchInput');
+        const autocompleteDiv = document.getElementById('searchAutocomplete');
+        const historyList = document.getElementById('searchHistoryList');
+        const suggestionsList = document.getElementById('searchSuggestionsList');
+        
+        let debounceTimer;
+        
+        // Show autocomplete on focus
+        searchInput.addEventListener('focus', function() {
+            updateAutocomplete(this.value);
+            if (historyList.children.length > 0 || suggestionsList.children.length > 0) {
+                autocompleteDiv.classList.add('show');
+            }
+        });
+        
+        // Hide autocomplete on blur (with delay for click events)
+        searchInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                autocompleteDiv.classList.remove('show');
+            }, 200);
+        });
+        
+        // Update autocomplete on input
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                updateAutocomplete(this.value);
+            }, 300);
+        });
+        
+        function updateAutocomplete(query) {
+            // Update search history
+            const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+            historyList.innerHTML = '';
+            
+            if (history.length > 0) {
+                history.forEach(term => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.innerHTML = `
+                        <i class="bi bi-clock-history autocomplete-icon"></i>
+                        <span class="autocomplete-text">${term}</span>
+                        <i class="bi bi-arrow-up-left autocomplete-icon"></i>
+                    `;
+                    item.addEventListener('click', () => {
+                        searchInput.value = term;
+                        searchInput.form.submit();
+                    });
+                    historyList.appendChild(item);
+                });
+                historyList.parentElement.style.display = 'block';
+            } else {
+                historyList.parentElement.style.display = 'none';
+            }
+            
+            // Update product suggestions (if query exists)
+            if (query && query.length >= 2) {
+                // Fetch product suggestions from server
+                fetch(`/user/products/api/search-suggestions?keyword=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(products => {
+                        suggestionsList.innerHTML = '';
+                        
+                        if (products && products.length > 0) {
+                            products.slice(0, 5).forEach(product => {
+                                const item = document.createElement('div');
+                                item.className = 'autocomplete-item';
+                                item.innerHTML = `
+                                    <i class="bi bi-phone autocomplete-icon"></i>
+                                    <span class="autocomplete-text">${product.name}</span>
+                                    <span class="autocomplete-category">${product.brand}</span>
+                                `;
+                                item.addEventListener('click', () => {
+                                    window.location.href = `/user/products/${product.id}`;
+                                });
+                                suggestionsList.appendChild(item);
+                            });
+                            suggestionsList.parentElement.style.display = 'block';
+                            autocompleteDiv.classList.add('show');
+                        } else {
+                            suggestionsList.parentElement.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching suggestions:', error);
+                        suggestionsList.parentElement.style.display = 'none';
+                    });
+            } else {
+                suggestionsList.parentElement.style.display = 'none';
+            }
+        }
+    }
+    
+    // Clear all filters
+    function clearAllFilters() {
+        // Reset all checkboxes
+        document.querySelectorAll('#filterForm input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Reset all number inputs
+        document.querySelectorAll('#filterForm input[type="number"]').forEach(input => {
+            input.value = '';
+        });
+        
+        // Reset sliders if they exist
+        if (document.getElementById('price-slider') && document.getElementById('price-slider').noUiSlider) {
+            document.getElementById('price-slider').noUiSlider.set([0, 100000000]);
+        }
+        if (document.getElementById('battery-slider') && document.getElementById('battery-slider').noUiSlider) {
+            document.getElementById('battery-slider').noUiSlider.set([1000, 10000]);
+        }
+        if (document.getElementById('screen-slider') && document.getElementById('screen-slider').noUiSlider) {
+            document.getElementById('screen-slider').noUiSlider.set([4.0, 10.0]);
+        }
+        if (document.getElementById('weight-slider') && document.getElementById('weight-slider').noUiSlider) {
+            document.getElementById('weight-slider').noUiSlider.set([100, 500]);
+        }
+        
+        // Show toast notification
+        showToast('Đã xóa tất cả bộ lọc', 'success');
+        
+        // Redirect to clean products page
+        window.location.href = '/user/products';
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
+        // Initialize search autocomplete
+        initSearchAutocomplete();
+        
         // Hide skeleton loaders after page load
         setTimeout(() => {
             document.querySelectorAll('.skeleton-loader').forEach(skeleton => {
@@ -2051,7 +2364,168 @@
         });
 
         initHeroBannerCountdown();
+        
+        // Initialize Pull-to-Refresh (Task 3.3 & 3.4)
+        initPullToRefresh();
     });
+
+    /**
+     * Initialize Pull-to-Refresh functionality
+     * Requirements: 2.5, 2.6, 2.10, 8.1
+     * 
+     * Integrates pull-to-refresh with product list page:
+     * - Connects to existing product API endpoint (/user/products/api/list)
+     * - Preserves current filter and search parameters (Requirement 2.10)
+     * - Provides error handling and toast notifications (Requirements 2.5, 2.6)
+     * - Provides accessible refresh button alternative (Requirement 8.1)
+     */
+    function initPullToRefresh() {
+        // Only initialize on mobile viewports
+        if (window.innerWidth >= 768) return;
+        
+        const container = document.getElementById('productListRefresh');
+        const refreshButton = document.getElementById('refreshButton');
+        
+        if (!container) {
+            console.warn('Pull-to-refresh container not found');
+            return;
+        }
+        
+        // Show refresh button ONLY on mobile (< 768px)
+        if (refreshButton && window.innerWidth < 768) {
+            refreshButton.style.display = 'flex';
+        }
+        
+        /**
+         * Refresh products function
+         * Fetches fresh product data from API while preserving filters
+         * Requirements: 2.5, 2.6, 2.10
+         */
+        async function refreshProducts() {
+            // Preserve current URL parameters (filters, search, sort) - Requirement 2.10
+            const currentUrl = new URL(window.location.href);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Show loading state
+            if (refreshButton) {
+                refreshButton.classList.add('refreshing');
+                refreshButton.disabled = true;
+            }
+            
+            try {
+                // Build API URL with current parameters
+                const apiUrl = new URL('/user/products/api/list', window.location.origin);
+                
+                // Transfer relevant parameters to API call
+                if (params.has('keyword')) {
+                    apiUrl.searchParams.set('keyword', params.get('keyword'));
+                }
+                if (params.has('page')) {
+                    apiUrl.searchParams.set('page', params.get('page'));
+                }
+                if (params.has('size')) {
+                    apiUrl.searchParams.set('size', params.get('size'));
+                }
+                
+                // Fetch fresh product data - Requirement 2.5
+                const response = await fetch(apiUrl.toString());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const products = await response.json();
+                
+                // Update product grid with fresh data
+                updateProductGrid(products);
+                
+                // Show success toast - Requirement 2.5
+                if (window.showToast) {
+                    window.showToast('Đã làm mới danh sách sản phẩm', 'success');
+                }
+                
+            } catch (error) {
+                console.error('Refresh failed:', error);
+                
+                // Show error toast - Requirement 2.6
+                if (window.showToast) {
+                    window.showToast('Không thể làm mới danh sách. Vui lòng thử lại.', 'error');
+                }
+                
+                // Fallback: reload page if API fails
+                // This ensures users can still refresh even if API has issues
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+            } finally {
+                // Reset button state
+                if (refreshButton) {
+                    refreshButton.classList.remove('refreshing');
+                    refreshButton.disabled = false;
+                }
+            }
+        }
+        
+        /**
+         * Update product grid with fresh data
+         * @param {Array} products - Array of product objects from API
+         */
+        function updateProductGrid(products) {
+            const productGrid = container.querySelector('.row.g-5');
+            
+            if (!productGrid) {
+                console.warn('Product grid not found, reloading page');
+                window.location.reload();
+                return;
+            }
+            
+            // If no products returned, show empty state or reload
+            if (!products || products.length === 0) {
+                // Keep existing products, just show toast
+                if (window.showToast) {
+                    window.showToast('Không có sản phẩm mới', 'info');
+                }
+                return;
+            }
+            
+            // For simplicity, reload the page to get full product cards with all features
+            // A full implementation would rebuild the product cards from the API data
+            // This ensures all features (wishlist, quick view, etc.) work correctly
+            window.location.reload();
+        }
+        
+        // Initialize PullToRefresh component (Task 3.3)
+        if (typeof PullToRefresh !== 'undefined') {
+            new PullToRefresh(container, refreshProducts);
+        } else {
+            console.warn('PullToRefresh class not found. Make sure PullToRefresh.js is loaded.');
+        }
+        
+        // Wire refresh button to same refresh logic - Requirement 8.1
+        if (refreshButton) {
+            refreshButton.addEventListener('click', async () => {
+                // Prevent multiple clicks
+                if (refreshButton.disabled) return;
+                
+                // Call the same refresh function
+                await refreshProducts();
+            });
+        }
+        
+        // Handle viewport resize - hide button on desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                if (refreshButton) {
+                    refreshButton.style.display = 'none';
+                }
+            } else {
+                if (refreshButton) {
+                    refreshButton.style.display = 'flex';
+                }
+            }
+        });
+    }
 
     function initHeroBannerCountdown() {
         const hero = document.querySelector('.cyber-banner-wrapper[data-hero-deal-end]');
@@ -2102,6 +2576,12 @@
 <button class="back-to-top" id="backToTop" aria-label="Về đầu trang">
     <i class="bi bi-arrow-up"></i>
 </button>
+
+<!-- Mobile Bottom Navigation JavaScript -->
+<script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
+<!-- Pull-to-Refresh JavaScript (Task 3.3) -->
+<script th:src="@{/js/mobile/PullToRefresh.js}"></script>
 
 </body>
 </html>
