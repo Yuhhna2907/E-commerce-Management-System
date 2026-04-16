@@ -1,12 +1,14 @@
 package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.order.RefundService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import com.codegym.smartphonemanagement.model.PaymentMethod;
 import com.codegym.smartphonemanagement.service.payment.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,17 +32,20 @@ public class UserOrderController {
     private final ICartService cartService;
     private final RefundService refundService;
     private final IUserProfileService userProfileService;
+    private final UserRepository userRepository;
     private final VNPayService vnPayService;
 
-    // Giả lập ID người dùng (Duy thay bằng Security context sau nhé)
-    private final Long USER_ID = 1L;
+    // Lấy userId từ SecurityContext
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     /**
      * Bước 1: Hiển thị trang điền thông tin thanh toán (Checkout)
      */
     @GetMapping("/checkout")
     public String showCheckoutPage(Model model, jakarta.servlet.http.HttpSession session) {
-        CartResponseDTO cart = cartService.getCart(USER_ID);
+        CartResponseDTO cart = cartService.getCart(getCurrentUserId());
 
         // Nếu giỏ hàng trống, không cho vào trang thanh toán
         if (cart == null || cart.getItems().isEmpty()) {
@@ -69,7 +74,7 @@ public class UserOrderController {
 
         model.addAttribute("cart", cart);
         model.addAttribute("orderRequest", requestDto);
-        model.addAttribute("savedAddresses", userProfileService.getAddresses(USER_ID));
+        model.addAttribute("savedAddresses", userProfileService.getAddresses(getCurrentUserId()));
         
         // Add breadcrumb navigation
         List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
@@ -106,7 +111,7 @@ public class UserOrderController {
         // 1. Kiểm tra nếu dính lỗi Validation (Trống tên, SĐT sai định dạng...)
         if (bindingResult.hasErrors()) {
             // Lấy lại giỏ hàng để hiển thị lại trang checkout nếu có lỗi
-            CartResponseDTO cart = cartService.getCartByUserId(USER_ID);
+            CartResponseDTO cart = cartService.getCartByUserId(getCurrentUserId());
             model.addAttribute("cart", cart);
             // Trả về thẳng view checkout (không redirect để giữ message lỗi)
             return "user/order/checkout";
@@ -114,7 +119,7 @@ public class UserOrderController {
 
         try {
 
-            OrderResponseDTO savedOrder = orderService.createOrder(USER_ID, orderDTO);
+            OrderResponseDTO savedOrder = orderService.createOrder(getCurrentUserId(), orderDTO);
 
             if (orderDTO.getPaymentMethod() == PaymentMethod.VNPAY) {
                 // Tạo URL thanh toán VNPAY và redirect
@@ -147,7 +152,7 @@ public class UserOrderController {
      */
     @GetMapping("/history")
     public String showOrderHistory(Model model) {
-        List<OrderResponseDTO> history = orderService.getOrderHistory(USER_ID);
+        List<OrderResponseDTO> history = orderService.getOrderHistory(getCurrentUserId());
         model.addAttribute("orders", history);
         return "user/order/history";
     }
@@ -157,7 +162,7 @@ public class UserOrderController {
      */
     @GetMapping("/detail/{id}")
     public String showOrderDetail(@PathVariable Long id, Model model) {
-        OrderResponseDTO order = orderService.getOrderDetail(USER_ID, id);
+        OrderResponseDTO order = orderService.getOrderDetail(getCurrentUserId(), id);
         model.addAttribute("order", order);
         return "user/order/detail";
     }
@@ -168,7 +173,7 @@ public class UserOrderController {
     @PostMapping("/{id}/cancel")
     public String cancelOrder(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            orderService.cancelOrder(USER_ID, id);
+            orderService.cancelOrder(getCurrentUserId(), id);
             redirectAttributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng thành công. Kho hàng và voucher đã được hoàn lại.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -181,7 +186,7 @@ public class UserOrderController {
      */
     @GetMapping("/{id}/refund")
     public String showRefundForm(@PathVariable Long id, Model model) {
-        OrderResponseDTO order = orderService.getOrderDetail(USER_ID, id);
+        OrderResponseDTO order = orderService.getOrderDetail(getCurrentUserId(), id);
         if (!order.isCanRefund()) {
             return "redirect:/user/order/detail/" + id;
         }
@@ -199,7 +204,7 @@ public class UserOrderController {
                                RedirectAttributes redirectAttributes) {
         try {
             refundDTO.setOrderId(id);
-            refundService.createRefundRequest(USER_ID, refundDTO);
+            refundService.createRefundRequest(getCurrentUserId(), refundDTO);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Yêu cầu hoàn trả đã được gửi. Vui lòng chờ Admin duyệt.");
         } catch (Exception e) {
@@ -212,7 +217,7 @@ public class UserOrderController {
     @PostMapping("/reorder/{orderId}")
     public String reorder(@PathVariable Long orderId, RedirectAttributes redirectAttributes) {
         try {
-            orderService.reorderOrderToCart(USER_ID, orderId);
+            orderService.reorderOrderToCart(getCurrentUserId(), orderId);
             redirectAttributes.addFlashAttribute("successMessage", "Đã thêm sản phẩm từ đơn hàng vào giỏ.");
             return "redirect:/user/cart";
         } catch (Exception e) {

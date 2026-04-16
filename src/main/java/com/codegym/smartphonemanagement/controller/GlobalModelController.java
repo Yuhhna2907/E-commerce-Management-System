@@ -7,6 +7,7 @@ import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
 import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,8 +23,6 @@ public class GlobalModelController {
     private final UserRepository userRepository;
     private final IUserProfileService userProfileService;
     private final ILoyaltyPointService loyaltyPointService;
-
-    private static final Long MOCK_USER_ID = 1L; // thay bằng Security principal sau
 
     @ModelAttribute("GlobalVouchers")
     public List<CouponResponseDTO> globalVouchers() {
@@ -43,20 +42,20 @@ public class GlobalModelController {
 
     @ModelAttribute("SavedVoucherCodes")
     public List<String> savedVoucherCodes() {
-        // Hardcode mock user ID for now
-        User user = userRepository.findById(MOCK_USER_ID).orElse(null);
-        if (user == null) {
+        try {
+            User user = SecurityUtil.getCurrentUser(userRepository);
+            return couponService.getUserWallet(user).stream()
+                    .map(com.codegym.smartphonemanagement.model.Coupon::getCode)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
             return List.of();
         }
-        return couponService.getUserWallet(user).stream()
-                .map(com.codegym.smartphonemanagement.model.Coupon::getCode)
-                .collect(Collectors.toList());
     }
 
     @ModelAttribute("currentUser")
     public UserProfileDTO currentUser() {
         try {
-            return userProfileService.getProfile(MOCK_USER_ID);
+            return userProfileService.getProfile(SecurityUtil.getCurrentUserId(userRepository));
         } catch (Exception e) {
             return null;
         }

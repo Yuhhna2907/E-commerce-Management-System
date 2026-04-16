@@ -9,6 +9,7 @@ import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewResponseDTO;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
 import com.codegym.smartphonemanagement.service.profile.IRecentlyViewedService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import com.codegym.smartphonemanagement.service.wishlist.IWishlistService;
 import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
 import com.codegym.smartphonemanagement.model.Product;
@@ -40,7 +41,9 @@ public class UserProductController {
     private final RecommendationService recommendationService;
     private final UserRepository userRepository;
 
-    private static final Long USER_ID = 1L; // Thay bằng Security context sau
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     // ...existing code...
 
@@ -165,11 +168,11 @@ public class UserProductController {
 
         // === Recently Viewed: Track + Display ===
         try {
-            recentlyViewedService.trackView(USER_ID, id);
+            recentlyViewedService.trackView(getCurrentUserId(), id);
         } catch (Exception ignored) { /* fail-safe: không ảnh hưởng trang */ }
 
         // Lấy sản phẩm đã xem gần đây (trừ sản phẩm hiện tại)
-        List<ProductResponseDTO> recentProducts = recentlyViewedService.getRecentProducts(USER_ID, 10)
+        List<ProductResponseDTO> recentProducts = recentlyViewedService.getRecentProducts(getCurrentUserId(), 10)
                 .stream().filter(p -> !p.getId().equals(id)).toList();
         model.addAttribute("recentProducts", recentProducts);
 
@@ -214,7 +217,7 @@ public class UserProductController {
     @ResponseBody
     public ResponseEntity<ReviewResponseDTO> createReview(
             @RequestBody @Valid ReviewRequestDTO request) {
-        Long userId = 1L;
+        Long userId = getCurrentUserId();
 
         ReviewResponseDTO response =
                 userProductService.reviewProduct(userId,request);

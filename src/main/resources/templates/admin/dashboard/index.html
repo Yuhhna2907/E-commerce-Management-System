@@ -5,214 +5,122 @@
     <title>Tổng quan hệ thống - SmartZone Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/admin-common.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --sz-orange: #fbbd05;
-            --sz-dark: #1d1d1f;
-            --sz-light: #f5f5f7;
-            --sz-white: #ffffff;
-        }
-
-        body {
-            background-color: var(--sz-light);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--sz-dark);
-        }
-
-        /* Header */
-        .header-sz {
-            background-color: var(--sz-white);
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
-            top: 0;
-            z-index: 1050;
-        }
-
-        /* Sidebar */
-        .sidebar-container {
-            min-height: calc(100vh - 100px);
-            background: var(--sz-white);
-            border-radius: 16px;
-            margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
-        }
-
-        .sidebar-link {
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #6e6e73;
-            border-radius: 12px;
-            margin-bottom: 4px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .sidebar-link:hover, .sidebar-link.active {
-            background-color: #fff9e6;
-            color: var(--sz-orange);
-        }
-
-        /* Stat Cards */
-        .card-stat {
-            border: none;
-            border-radius: 20px;
-            padding: 20px;
-            transition: transform 0.3s ease;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            height: 100%;
-        }
-        .card-stat:hover { transform: translateY(-5px); }
-        .card-stat i {
-            position: absolute;
-            right: -10px;
-            bottom: -10px;
-            font-size: 4rem;
-            opacity: 0.2;
-        }
-
-        .bg-gradient-blue { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
-        .bg-gradient-green { background: linear-gradient(135deg, #198754, #146c43); }
-        .bg-gradient-orange { background: linear-gradient(135deg, #fbbd05, #e5ac04); }
-        .bg-gradient-purple { background: linear-gradient(135deg, #6f42c1, #59359a); }
-        .bg-gradient-cyan { background: linear-gradient(135deg, #0dcaf0, #0aa2c0); }
-
-        .chart-card {
-            background: white;
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid #e5e5e5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            height: 100%;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 320px;
-            width: 100%;
-        }
-    </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg header-sz py-3">
+<nav class="navbar navbar-expand-lg header-sz">
     <div class="container-fluid px-4">
         <a class="navbar-brand d-flex align-items-center fw-bold text-dark" th:href="@{/admin/dashboard}">
-            <div class="bg-warning rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+            <div class="bg-warning rounded-3 p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                 <i class="bi bi-phone-fill text-white"></i>
             </div>
-            SmartZone <span class="text-warning ms-1">Admin</span>
+            SmartZone <span class="text-warning ms-2" style="font-weight: 700;">Admin</span>
         </a>
-        <div class="ms-auto d-flex align-items-center gap-3">
-            <div class="text-dark fw-bold">Xin chào, <span class="text-warning" th:text="${#authentication.principal.username ?: 'Admin'}"></span></div>
+        <div class="ms-auto d-flex align-items-center gap-4">
+            <div class="user-greeting">
+                Xin chào, <span class="username" th:text="${#authentication.principal.username ?: 'Admin'}"></span>
+            </div>
             <form th:action="@{/logout}" method="post" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
-                    <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                <button type="submit" class="btn btn-sm" style="background-color: var(--sz-orange); color: white; font-weight: 600; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                    <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
                 </button>
             </form>
         </div>
     </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="row px-2">
-        <div class="col-md-2 p-3">
-            <div class="sidebar-container p-3">
-                <p class="text-muted small fw-bold px-3 mb-3 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Quản lý</p>
-                <a th:href="@{/admin/dashboard}" class="sidebar-link mb-2 active">
-                    <i class="bi bi-grid-1x2-fill me-3"></i> Tổng quan
-                </a>
-                <a th:href="@{/admin/products}" class="sidebar-link mb-2">
-                    <i class="bi bi-phone-vibrate-fill me-3"></i> Sản phẩm
-                </a>
-                <a th:href="@{/admin/categories}" class="sidebar-link mb-2">
-                    <i class="bi bi-stack me-3"></i> Danh mục
-                </a>
-                <a th:href="@{/admin/orders}" class="sidebar-link mb-2">
-                    <i class="bi bi-cart-check-fill me-3"></i> Đơn hàng
-                </a>
-                <a th:href="@{/admin/coupons}" class="sidebar-link mb-2">
-                    <i class="bi bi-ticket-perforated-fill me-3"></i> Khuyến mãi
-                </a>
-                <hr class="my-4 opacity-25">
-                <form th:action="@{/logout}" method="post" class="d-block">
-                    <button type="submit" class="sidebar-link text-danger w-100 text-start border-0 bg-transparent" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
-                        <i class="bi bi-box-arrow-right me-3"></i> Đăng xuất
-                    </button>
-                </form>
+<div class="main-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar-container">
+        <p class="sidebar-title">Quản lý</p>
+        <a th:href="@{/admin/dashboard}" class="sidebar-link active">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Tổng quan</span>
+        </a>
+        <a th:href="@{/admin/products}" class="sidebar-link">
+            <i class="bi bi-phone-vibrate-fill"></i>
+            <span>Sản phẩm</span>
+        </a>
+        <a th:href="@{/admin/categories}" class="sidebar-link">
+            <i class="bi bi-stack"></i>
+            <span>Danh mục</span>
+        </a>
+        <a th:href="@{/admin/orders}" class="sidebar-link">
+            <i class="bi bi-cart-check-fill"></i>
+            <span>Đơn hàng</span>
+        </a>
+        <a th:href="@{/admin/coupons}" class="sidebar-link">
+            <i class="bi bi-ticket-perforated-fill"></i>
+            <span>Khuyến mãi</span>
+        </a>
+        <hr class="sidebar-divider">
+        <form th:action="@{/logout}" method="post" class="d-block">
+            <button type="submit" class="sidebar-link btn-logout btn" onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <div class="page-header">
+            <h2>Báo cáo hệ thống</h2>
+            <p>Phân tích doanh thu và vận đơn thời gian thực</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="card-stat bg-gradient-green">
+                <div class="stat-label">Doanh thu thực</div>
+                <div class="stat-value" th:text="${#numbers.formatDecimal(stats.actualRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></div>
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="card-stat bg-gradient-blue">
+                <div class="stat-label">Doanh thu giả định</div>
+                <div class="stat-value" th:text="${#numbers.formatDecimal(stats.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></div>
+                <i class="bi bi-calculator"></i>
+            </div>
+            <div class="card-stat bg-gradient-cyan">
+                <div class="stat-label">Đang giao</div>
+                <div class="stat-value" th:text="${stats.shippingOrders}"></div>
+                <i class="bi bi-truck"></i>
+            </div>
+            <div class="card-stat bg-gradient-purple">
+                <div class="stat-label">Sản phẩm</div>
+                <div class="stat-value" th:text="${stats.totalProducts}"></div>
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="card-stat bg-gradient-orange">
+                <div class="stat-label">Sắp hết hàng</div>
+                <div class="stat-value" th:text="${stats.lowStockCount}"></div>
+                <i class="bi bi-exclamation-triangle"></i>
             </div>
         </div>
 
-        <div class="col-md-10 p-4">
-            <div class="mb-4">
-                <h2 class="fw-bold text-dark mb-1">Báo cáo hệ thống</h2>
-                <p class="text-muted small">Phân tích doanh thu và vận đơn thời gian thực</p>
-            </div>
-
-            <div class="row g-3 mb-4">
-                <div class="col">
-                    <div class="card card-stat bg-gradient-green shadow">
-                        <div class="small opacity-75">Doanh thu thực</div>
-                        <h4 class="fw-bold mb-0 mt-1" th:text="${#numbers.formatDecimal(stats.actualRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></h4>
-                        <i class="bi bi-cash-stack"></i>
+        <!-- Charts Section -->
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Doanh thu 7 ngày (Thực tế vs Giả định)</h6>
+                        <div class="chart-legend">
+                            <span><i class="bi bi-circle-fill" style="color: #198754; font-size: 0.6rem;"></i> Thực tế</span>
+                            <span><i class="bi bi-circle-fill" style="color: var(--sz-orange); font-size: 0.6rem;"></i> Giả định</span>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    <div class="card card-stat bg-gradient-blue shadow">
-                        <div class="small opacity-75">Doanh thu giả định</div>
-                        <h4 class="fw-bold mb-0 mt-1" th:text="${#numbers.formatDecimal(stats.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></h4>
-                        <i class="bi bi-calculator"></i>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-stat bg-gradient-cyan shadow">
-                        <div class="small opacity-75">Đang giao</div>
-                        <h4 class="fw-bold mb-0 mt-1" th:text="${stats.shippingOrders}"></h4>
-                        <i class="bi bi-truck"></i>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-stat bg-gradient-purple shadow">
-                        <div class="small opacity-75">Sản phẩm</div>
-                        <h4 class="fw-bold mb-0 mt-1" th:text="${stats.totalProducts}"></h4>
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-stat bg-gradient-orange shadow">
-                        <div class="small opacity-75">Sắp hết hàng</div>
-                        <h4 class="fw-bold mb-0 mt-1" th:text="${stats.lowStockCount}"></h4>
-                        <i class="bi bi-exclamation-triangle"></i>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
-
-            <div class="row g-4">
-                <div class="col-md-8">
-                    <div class="chart-card">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h6 class="fw-bold text-secondary text-uppercase mb-0" style="font-size: 0.8rem;">Doanh thu 7 ngày (Thực tế vs Giả định)</h6>
-                            <div class="small">
-                                <span class="me-3"><i class="bi bi-circle-fill text-success small me-1"></i> Thực tế</span>
-                                <span><i class="bi bi-circle-fill text-warning small me-1"></i> Giả định</span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="chart-card">
-                        <h6 class="fw-bold mb-4 text-secondary text-uppercase" style="font-size: 0.8rem;">Top 5 sản phẩm bán chạy</h6>
-                        <div class="chart-container">
-                            <canvas id="topProductsChart"></canvas>
-                        </div>
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <h6>Top 5 sản phẩm bán chạy</h6>
+                    <div class="chart-container">
+                        <canvas id="topProductsChart"></canvas>
                     </div>
                 </div>
             </div>
