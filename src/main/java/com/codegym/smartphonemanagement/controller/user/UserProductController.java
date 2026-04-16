@@ -118,7 +118,7 @@ public class UserProductController {
 
         // Add wishlist product IDs for heart icon highlighting
         try {
-            List<Long> wishlistProductIds = wishlistService.getWishlistProductsByUserId(USER_ID)
+            List<Long> wishlistProductIds = wishlistService.getWishlistProductsByUserId(getCurrentUserId())
                     .stream()
                     .map(p -> p.getId())
                     .collect(Collectors.toList());
