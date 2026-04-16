@@ -23,6 +23,9 @@ public class ProductVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long variantId;
 
+    @Version
+    private Long version; // Optimistic locking để tránh race condition khi update stock
+
     @NotBlank(message = "SKU không được trống")
     @Column(unique = true, nullable = false)
     private String sku;   // Mã định danh riêng cho biến thể

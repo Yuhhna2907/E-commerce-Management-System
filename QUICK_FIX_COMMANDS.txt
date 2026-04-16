@@ -1,0 +1,27 @@
+# QUICK FIX - CHẠY NGAY ĐỂ FIX IPAD RECOMMENDATIONS
+
+## 1. Restart Application (QUAN TRỌNG!)
+# Stop app hiện tại (Ctrl+C trong terminal)
+# Chạy lại:
+./gradlew bootRun
+
+## 2. Tìm iPad ID (chạy trong MySQL):
+SELECT id, name FROM products WHERE LOWER(name) LIKE '%ipad%';
+
+## 3. Rebuild Recommendations (thay 123 bằng iPad ID thực):
+curl -X POST "http://localhost:8080/api/products/123/recommendations/rebuild"
+
+## 4. Check kết quả:
+curl "http://localhost:8080/api/products/123/recommendations"
+
+## 5. Test trên web:
+http://localhost:8080/user/products/123
+
+## VÍ DỤ HOÀN CHỈNH (nếu iPad ID = 15):
+curl -X POST "http://localhost:8080/api/products/15/recommendations/rebuild"
+curl "http://localhost:8080/api/products/15/recommendations"
+
+## QUAN TRỌNG:
+- PHẢI restart app trước khi rebuild
+- Threshold mới = 2 (thay vì 3)
+- Chỉ cần 2 co-purchases để có recommendations

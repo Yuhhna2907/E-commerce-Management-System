@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.dto.UserProfileDTO;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
+import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,6 +21,7 @@ public class GlobalModelController {
     private final ICouponService couponService;
     private final UserRepository userRepository;
     private final IUserProfileService userProfileService;
+    private final ILoyaltyPointService loyaltyPointService;
 
     private static final Long MOCK_USER_ID = 1L; // thay bằng Security principal sau
 
@@ -57,6 +59,15 @@ public class GlobalModelController {
             return userProfileService.getProfile(MOCK_USER_ID);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    @ModelAttribute("loyaltyPoints")
+    public Integer loyaltyPoints() {
+        try {
+            return loyaltyPointService.getAccountInfo(MOCK_USER_ID).getTotalPoints();
+        } catch (Exception e) {
+            return 0;
         }
     }
 }

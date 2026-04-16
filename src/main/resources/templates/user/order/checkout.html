@@ -1017,6 +1017,24 @@
                                 </div>
                             </label>
 
+                            <!-- VNPAY (NEW) -->
+                            <label class="payment-tile">
+                                <input class="payment-radio d-none" type="radio" th:field="*{paymentMethod}"
+                                       value="VNPAY">
+                                <div class="tile-content d-flex align-items-center">
+                                    <span class="pm-selected-pill">Đã chọn</span>
+                                    <!-- Use a branded blue/red badge or logo placeholder for VNPAY -->
+                                    <div class="tile-icon" style="background:#f0f8ff; color:#0c4a9f; font-weight:800; font-size: 0.6rem; letter-spacing:0.05em; border: 1px solid #d4e6f1;">
+                                        VN<br>PAY
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-bold fs-6">Thanh toán Online (VNPAY Sandbox)</h6>
+                                        <p class="mb-0 text-muted small">Quẹt thẻ VISA/ATM ảo, thao tác an toàn 100%.</p>
+                                    </div>
+                                    <div class="check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                                </div>
+                            </label>
+
                         </div>
                     </div>
                 </div>
@@ -1093,7 +1111,7 @@
 
                             <div class="summary-row">
                                 <span>Phí giao hàng</span>
-                                <span class="fw-bold text-success">Miễn phí toàn quốc</span>
+                                <span id="shippingFeeText" class="fw-bold text-success">Tính sau khi chọn địa chỉ</span>
                             </div>
 
                             <div class="summary-row" id="discountRow" th:if="${discountAmt != null}">
@@ -1109,7 +1127,8 @@
                                 <div class="total-label-col">TỔNG CỘNG</div>
                                 <div class="text-end">
                                     <div class="total-highlight-wrap">
-                                        <span class="total-amount"
+                                        <span class="total-amount" id="totalAmountText"
+                                              th:data-cart-total="${cart.totalPrice}" th:data-discount="${discountAmt != null ? discountAmt : 0}"
                                               th:text="${#numbers.formatDecimal(totalAfterDiscount, 0, 'COMMA', 0, 'POINT')}">0</span>
                                         <span class="total-currency">₫</span>
                                     </div>
@@ -1173,6 +1192,35 @@
         document.querySelector("#" + select).innerHTML = row;
     }
 
+    // Tính toán phí vận chuyển
+    function fetchShippingFee(provinceName) {
+        fetch('/user/order/api/shipping-fee?province=' + encodeURIComponent(provinceName))
+            .then(response => response.text())
+            .then(data => {
+                const fee = parseFloat(data) || 0;
+                const feeText = document.getElementById('shippingFeeText');
+                if (fee > 0) {
+                    feeText.textContent = new Intl.NumberFormat('vi-VN').format(fee) + ' ₫';
+                    feeText.classList.remove('text-success');
+                    feeText.style.color = '#0d6efd'; // Primary blue
+                } else {
+                    feeText.textContent = 'Miễn phí';
+                    feeText.style.color = '';
+                    feeText.classList.add('text-success');
+                }
+                
+                const totalTextEl = document.getElementById('totalAmountText');
+                if (totalTextEl) {
+                    const cartTotal = parseFloat(totalTextEl.getAttribute('data-cart-total')) || 0;
+                    const discount = parseFloat(totalTextEl.getAttribute('data-discount')) || 0;
+                    let finalTotal = cartTotal + fee - discount;
+                    if (finalTotal < 0) finalTotal = 0;
+                    totalTextEl.textContent = new Intl.NumberFormat('vi-VN').format(finalTotal);
+                }
+            })
+            .catch(err => console.error("Lỗi tính cước phi:", err));
+    }
+
     // 1. Fetch Provinces
     fetch(host + "?depth=1")
         .then(response => response.json())
@@ -1193,6 +1241,10 @@
                         document.querySelector("#ward").innerHTML = '<option value="" selected disabled hidden>Chọn phường / xã</option>';
                         document.querySelector("#ward").disabled = true;
                     });
+                
+                // Gọi API tính phí
+                let provName = this.options[this.selectedIndex].text;
+                fetchShippingFee(provName);
             } else {
                 document.querySelector("#district").innerHTML = '<option value="" selected disabled hidden>Chọn quận / huyện</option>';
                 document.querySelector("#district").disabled = true;
@@ -1361,6 +1413,9 @@
         set('province', opt.dataset.province);
         setTimeout(() => set('district', opt.dataset.district), 600);
         setTimeout(() => set('ward', opt.dataset.ward), 1200);
+        
+        // Gọi update phí giao hàng
+        setTimeout(() => fetchShippingFee(opt.dataset.province), 100);
     }
 </script>
 

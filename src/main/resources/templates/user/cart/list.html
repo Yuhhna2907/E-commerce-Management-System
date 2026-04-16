@@ -610,6 +610,44 @@
                 right: 20px;
             }
         }
+        
+        /* Saved for Later Section */
+        #savedForLaterSection {
+            margin-top: 48px;
+            padding-top: 48px;
+            border-top: 2px dashed rgba(0,0,0,0.1);
+        }
+
+        #savedForLaterSection h3 {
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        #savedForLaterSection .bento-card {
+            background: rgba(245, 158, 11, 0.05);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        #savedForLaterSection .bento-card:hover {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        
+        #savedForLaterSection .btn-move-to-cart {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        #savedForLaterSection .btn-move-to-cart:hover {
+            background: var(--accent-gradient-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -710,8 +748,9 @@
                                                 th:attr="data-cart-item-id=${item.id},
                                                          data-product-id=${item.productId},
                                                          data-product-name=${item.productName}"
-                                                title="Lưu vào danh sách yêu thích">
-                                            <i class="bi bi-heart"></i>
+                                                onclick="saveForLater(this)"
+                                                title="Lưu để mua sau">
+                                            <i class="bi bi-bookmark"></i>
                                         </button>
                                         
                                         <!-- Remove Button -->
@@ -757,6 +796,20 @@
                     </div>
                 </div>
 
+            </div>
+            
+            <!-- Saved for Later Section -->
+            <div class="mt-5" id="savedForLaterSection" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h3 class="fw-bold mb-0">
+                        <i class="bi bi-bookmark-fill me-2 text-warning"></i>
+                        Đã Lưu Để Mua Sau (<span id="savedCount">0</span>)
+                    </h3>
+                </div>
+                
+                <div id="savedItemsList">
+                    <!-- Saved items will be loaded here via JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -977,6 +1030,58 @@
         }, 3000);
     }
 
+    // ===== CONFIRM TOAST (thay confirm() trình duyệt) =====
+    function showConfirmToast(message, icon = 'question-circle', accentColor = '#f59e0b', onConfirm) {
+        // Đóng bất kỳ confirm toast nào đang mở
+        document.querySelectorAll('.confirm-toast-popup').forEach(el => el.remove());
+
+        const popup = document.createElement('div');
+        popup.className = 'confirm-toast-popup';
+        popup.style.cssText = `
+            position: fixed; bottom: 30px; right: 30px; z-index: 10000;
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
+            padding: 20px 24px; min-width: 280px; max-width: 340px;
+            transform: translateX(380px); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+            font-family: 'Outfit', sans-serif;
+        `;
+
+        popup.innerHTML = `
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                <div style="width:40px;height:40px;border-radius:50%;background:${accentColor}22;
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="bi bi-${icon}" style="color:${accentColor};font-size:1.2rem;"></i>
+                </div>
+                <span style="font-weight:600;font-size:0.95rem;color:#0f172a;line-height:1.4;">${message}</span>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button class="ct-cancel" style="flex:1;padding:9px;border-radius:10px;border:1px solid #e2e8f0;
+                    background:#f8fafc;font-weight:600;font-size:0.88rem;cursor:pointer;color:#64748b;
+                    transition:all 0.2s;">Hủy</button>
+                <button class="ct-confirm" style="flex:1.2;padding:9px;border-radius:10px;border:none;
+                    background:${accentColor};color:#fff;font-weight:700;font-size:0.88rem;cursor:pointer;
+                    box-shadow:0 4px 12px ${accentColor} 55;transition:all 0.2s;">Xác nhận</button>
+            </div>
+        `;
+
+        document.body.appendChild(popup);
+        setTimeout(() => popup.style.transform = 'translateX(0)', 10);
+
+        const close = () => {
+            popup.style.transform = 'translateX(380px)';
+            setTimeout(() => popup.remove(), 400);
+        };
+
+        popup.querySelector('.ct-cancel').addEventListener('click', close);
+        popup.querySelector('.ct-confirm').addEventListener('click', () => {
+            close();
+            if (typeof onConfirm === 'function') onConfirm();
+        });
+
+        // Auto close sau 8 giây
+        setTimeout(close, 8000);
+    }
+
     // 1. DELETE MODAL LOGIC
     const deleteModal = document.getElementById('confirmDeleteModal');
     if (deleteModal) {
@@ -1156,6 +1261,164 @@
         
         // Run check on page load
         checkOutOfStockItems();
+    });
+    
+    // ===== SAVED FOR LATER FUNCTIONS =====
+    
+    // Load saved items on page load
+    function loadSavedItems() {
+        fetch('/user/saved-items')
+            .then(response => response.json())
+            .then(items => {
+                if (items.length > 0) {
+                    document.getElementById('savedForLaterSection').style.display = 'block';
+                    document.getElementById('savedCount').textContent = items.length;
+                    
+                    const html = items.map(item => `
+                        <div class="bento-card" data-saved-item-id="${item.id}">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <div class="product-img-wrapper ps-2">
+                                        <img src="${item.productImage || 'https://via.placeholder.com/150'}" 
+                                             alt="${item.productName}"
+                                             style="width: 100px; height: 100px; object-fit: contain;">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <a href="/user/products/${item.productId}" 
+                                               class="product-title d-block mb-1">
+                                                ${item.productName}
+                                            </a>
+                                            <div class="product-specs mb-2">
+                                                ${item.color || ''} ${item.color && item.storage ? '|' : ''} ${item.storage || ''}${item.ram ? ' | ' + item.ram : ''}
+                                            </div>
+                                            <span class="price-new">
+                                                ${new Intl.NumberFormat('vi-VN').format(item.discountPrice)} ₫
+                                            </span>
+                                            ${item.stock > 0 ? 
+                                                `<span class="badge bg-success ms-2">Còn hàng</span>` : 
+                                                `<span class="badge bg-danger ms-2">Hết hàng</span>`
+                                            }
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-move-to-cart" 
+                                                    onclick="moveToCart(${item.id}, '${item.productName}')"
+                                                    ${item.stock <= 0 ? 'disabled' : ''}>
+                                                <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
+                                            </button>
+                                            <button class="btn-remove" 
+                                                    onclick="removeSavedItem(${item.id})"
+                                                    title="Xóa">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('savedItemsList').innerHTML = html;
+                } else {
+                    document.getElementById('savedForLaterSection').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading saved items:', error);
+            });
+    }
+    
+    // Move saved item to cart
+    function moveToCart(savedItemId, productName) {
+        showConfirmToast(
+            `Thêm “${productName}” vào giỏ hàng?`,
+            'cart-plus',
+            '#0d6efd',
+            () => {
+                fetch(`/user/saved/cart/move?savedItemId=${savedItemId}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        showToast(data.message || (data.success ? 'Đã thêm vào giỏ hàng' : 'Không thể thêm'), data.success ? 'success' : 'error');
+                        if (data.success) setTimeout(() => window.location.reload(), 600);
+                    })
+                    .catch(() => showToast('Có lỗi xảy ra', 'error'));
+            }
+        );
+    }
+    
+    // Remove saved item
+    function removeSavedItem(savedItemId) {
+        showConfirmToast(
+            'Xóa khỏi danh sách lưu?',
+            'trash3-fill',
+            '#ef4444',
+            () => {
+                fetch(`/user/saved/items/${savedItemId}`, { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(data => {
+                        showToast(data.message || (data.success ? 'Đã xóa' : 'Không thể xóa'), data.success ? 'success' : 'error');
+                        if (data.success) {
+                            const el = document.querySelector(`[data-saved-item-id="${savedItemId}"]`);
+                            if (el) {
+                                el.style.transition = 'all 0.4s ease';
+                                el.style.opacity = '0';
+                                el.style.transform = 'translateX(-20px)';
+                                setTimeout(() => {
+                                    el.remove();
+                                    document.getElementById('savedCount').textContent = data.savedCount;
+                                    if (data.savedCount === 0) document.getElementById('savedForLaterSection').style.display = 'none';
+                                }, 400);
+                            }
+                        }
+                    })
+                    .catch(() => showToast('Có lỗi xảy ra', 'error'));
+            }
+        );
+    }
+    
+    // Save for later function (called from button onclick)
+    function saveForLater(button) {
+        const cartItemId = button.getAttribute('data-cart-item-id');
+        const productName = button.getAttribute('data-product-name');
+        
+        showConfirmToast(
+            `Lưu “${productName}” để mua sau?`,
+            'bookmark-fill',
+            '#f59e0b',
+            () => {
+                button.disabled = true;
+                const icon = button.innerHTML;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                
+                fetch(`/user/saved/cart/save?cartItemId=${cartItemId}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        showToast(data.message || (data.success ? 'Đã lưu' : 'Không thể lưu'), data.success ? 'success' : 'error');
+                        if (data.success) {
+                            const card = button.closest('.bento-card');
+                            card.style.transition = 'all 0.4s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(20px)';
+                            setTimeout(() => window.location.reload(), 400);
+                        } else {
+                            button.disabled = false;
+                            button.innerHTML = icon;
+                        }
+                    })
+                    .catch(() => {
+                        showToast('Có lỗi xảy ra', 'error');
+                        button.disabled = false;
+                        button.innerHTML = icon;
+                    });
+            }
+        );
+    }
+    
+    // Load saved items on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSavedItems();
     });
 </script>
 

@@ -7,6 +7,9 @@ import com.codegym.smartphonemanagement.service.order.RefundService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
+import com.codegym.smartphonemanagement.model.PaymentMethod;
+import com.codegym.smartphonemanagement.service.payment.VNPayService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -27,6 +30,7 @@ public class UserOrderController {
     private final ICartService cartService;
     private final RefundService refundService;
     private final IUserProfileService userProfileService;
+    private final VNPayService vnPayService;
 
     // Giả lập ID người dùng (Duy thay bằng Security context sau nhé)
     private final Long USER_ID = 1L;
@@ -96,6 +100,7 @@ public class UserOrderController {
     public String placeOrder(@Valid @ModelAttribute("orderRequest") OrderRequestDTO orderDTO,
                              BindingResult bindingResult,
                              RedirectAttributes redirectAttributes,
+                             HttpServletRequest request,
                              Model model) {
 
         // 1. Kiểm tra nếu dính lỗi Validation (Trống tên, SĐT sai định dạng...)
@@ -111,10 +116,18 @@ public class UserOrderController {
 
             OrderResponseDTO savedOrder = orderService.createOrder(USER_ID, orderDTO);
 
+            if (orderDTO.getPaymentMethod() == PaymentMethod.VNPAY) {
+                // Tạo URL thanh toán VNPAY và redirect
+                String ipAddress = com.codegym.smartphonemanagement.config.payment.VNPAYConfig.getIpAddress(request);
+                String paymentUrl = vnPayService.createPaymentUrl(savedOrder.getId(), savedOrder.getTotalPrice(), ipAddress);
+                return "redirect:" + paymentUrl;
+            }
+
             return "redirect:/user/order/success/" + savedOrder.getId();
         } catch (Exception e) {
             // Lỗi nghiệp vụ (ví dụ: đang thanh toán thì món đó bị người khác mua mất)
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/user/cart";
         }
     }
@@ -206,5 +219,21 @@ public class UserOrderController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/user/order/history";
         }
+    }
+
+    /**
+     * API tĩnh lấy phí giao hàng theo Tỉnh/thành phục vụ Frontend (Ajax)
+     */
+    @GetMapping("/api/shipping-fee")
+    @ResponseBody
+    public java.math.BigDecimal calculateShippingFee(@RequestParam(value = "province", required = false) String province) {
+        if (province == null || province.trim().isEmpty()) {
+            return java.math.BigDecimal.valueOf(50000);
+        }
+        String lowerProv = province.toLowerCase();
+        if (lowerProv.contains("hà nội") || lowerProv.contains("hồ chí minh") || lowerProv.contains("hcm") || lowerProv.contains("đà nẵng")) {
+            return java.math.BigDecimal.valueOf(30000);
+        }
+        return java.math.BigDecimal.valueOf(50000);
     }
 }

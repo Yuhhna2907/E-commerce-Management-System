@@ -2,8 +2,10 @@ package com.codegym.smartphonemanagement.service.coupon;
 
 import com.codegym.smartphonemanagement.model.*;
 import com.codegym.smartphonemanagement.repository.CouponRepository;
-import com.codegym.smartphonemanagement.repository.UserWalletRepository;
+import com.codegym.smartphonemanagement.repository.user.UserWalletRepository;
 import com.codegym.smartphonemanagement.repository.user.OrderRepository;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +45,10 @@ public class CouponServiceImpl implements ICouponService {
     @Transactional
     public void saveToWallet(User user, String code) {
         Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Mã giảm giá không tồn tại"));
 
         if (userWalletRepository.existsByUserIdAndCouponId(user.getId(), coupon.getId())) {
-            throw new RuntimeException("Bạn đã lưu mã này rồi");
+            throw new BadRequestException("Bạn đã lưu mã này rồi");
         }
 
         UserWallet wallet = UserWallet.builder()
@@ -191,7 +193,7 @@ public class CouponServiceImpl implements ICouponService {
             } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
                 // Retry once if optimistic locking fails
                 Coupon refreshedCoupon = couponRepository.findByCode(order.getCouponCode())
-                        .orElseThrow(() -> new RuntimeException("Coupon không tồn tại"));
+                        .orElseThrow(() -> new EntityNotFoundException("Coupon không tồn tại"));
                 incrementCouponUsage(refreshedCoupon);
             }
         }
@@ -200,7 +202,7 @@ public class CouponServiceImpl implements ICouponService {
     private void incrementCouponUsage(Coupon coupon) {
         // Double-check usage limit before incrementing
         if (coupon.getMaxUsageGlobal() != null && coupon.getCurrentUsageGlobal() >= coupon.getMaxUsageGlobal()) {
-            throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng");
+            throw new BadRequestException("Mã giảm giá đã hết lượt sử dụng");
         }
         coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() + 1);
         couponRepository.save(coupon);

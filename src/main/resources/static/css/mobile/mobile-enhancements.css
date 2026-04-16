@@ -1,0 +1,242 @@
+/**
+ * Mobile Enhancements - Base CSS
+ * 
+ * This file provides the foundation for mobile-first enhancements including:
+ * - Bottom navigation bar
+ * - Pull-to-refresh functionality
+ * - Swipe-to-delete gestures
+ * - Touch target standards
+ * 
+ * Design System: Glassmorphism with backdrop-filter blur effects
+ * Breakpoint: Mobile < 768px
+ * 
+ * Requirements: 9.5, 9.6, 10.6
+ */
+
+/* ===== CSS Variables - Glassmorphism Design System ===== */
+:root {
+    /* Glassmorphism Colors */
+    --glass-bg-primary: linear-gradient(155deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.62) 100%);
+    --glass-bg-secondary: linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    --glass-bg-overlay: rgba(255, 255, 255, 0.8);
+    
+    /* Backdrop Filters */
+    --glass-blur-strong: blur(22px) saturate(1.15);
+    --glass-blur-medium: blur(12px) saturate(1.1);
+    --glass-blur-light: blur(10px);
+    
+    /* Borders */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.65);
+    --glass-border-light: 1px solid rgba(255, 255, 255, 0.5);
+    
+    /* Shadows */
+    --glass-shadow-sm: 
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        0 4px 12px -2px rgba(15, 23, 42, 0.08);
+    --glass-shadow-md: 
+        0 1px 2px rgba(15, 23, 42, 0.06),
+        0 10px 28px -6px rgba(15, 23, 42, 0.1),
+        0 28px 56px -18px rgba(15, 23, 42, 0.09);
+    --glass-shadow-lg: 
+        0 2px 4px rgba(15, 23, 42, 0.06),
+        0 12px 32px -4px rgba(15, 23, 42, 0.12),
+        0 24px 48px -12px rgba(15, 23, 42, 0.1);
+    
+    /* Border Radius */
+    --glass-radius-sm: 8px;
+    --glass-radius-md: 16px;
+    --glass-radius-lg: 32px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    /* Touch Target Standards */
+    --touch-target-min: 48px;
+    --touch-target-spacing: 8px;
+    
+    /* Mobile Breakpoint */
+    --mobile-breakpoint: 768px;
+    
+    /* Z-Index Layers */
+    --z-bottom-nav: 1000;
+    --z-pull-indicator: 100;
+    --z-swipe-delete: 10;
+    --z-modal: 2000;
+    
+    /* Colors */
+    --color-primary: #007bff;
+    --color-primary-hover: #0056b3;
+    --color-danger: #ef4444;
+    --color-danger-hover: #dc2626;
+    --color-success: #28a745;
+    --color-text-primary: #333;
+    --color-text-secondary: #666;
+    --color-text-muted: #999;
+    --color-border: #ddd;
+    --color-bg-light: #f8f9fa;
+}
+
+/* ===== Mobile-Only Base Styles ===== */
+@media (max-width: 767px) {
+    /* Ensure smooth scrolling for pull-to-refresh */
+    html {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    
+    /* Prevent text selection during gestures */
+    .gesture-active {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+    
+    /* GPU acceleration hint for animated elements */
+    .will-animate {
+        will-change: transform;
+    }
+    
+    /* Touch target enhancement class */
+    .touch-enhanced {
+        position: relative;
+        transition: var(--transition-fast);
+    }
+    
+    .touch-enhanced::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: var(--touch-target-min);
+        min-height: var(--touch-target-min);
+        pointer-events: none;
+    }
+}
+
+/* ===== Utility Classes ===== */
+
+/* Glassmorphism Panel */
+.glass-panel-mobile {
+    background: var(--glass-bg-primary);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border: var(--glass-border);
+    border-radius: var(--glass-radius-lg);
+    box-shadow: var(--glass-shadow-md);
+}
+
+/* Glassmorphism Card */
+.glass-card-mobile {
+    background: var(--glass-bg-secondary);
+    backdrop-filter: var(--glass-blur-medium);
+    -webkit-backdrop-filter: var(--glass-blur-medium);
+    border: var(--glass-border-light);
+    border-radius: var(--glass-radius-md);
+    box-shadow: var(--glass-shadow-sm);
+}
+
+/* Loading Spinner */
+.spinner-mobile {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(0, 123, 255, 0.2);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Fade In Animation */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Slide Up Animation */
+.slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== Accessibility ===== */
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus indicators for keyboard navigation */
+@media (max-width: 767px) {
+    *:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+    
+    button:focus-visible,
+    a:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+}
+
+/* ===== Performance Optimizations ===== */
+
+/* Use GPU-accelerated properties for animations */
+@media (max-width: 767px) {
+    .animate-transform {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===== Import Component Styles ===== */
+/* @import 'bottom-navigation.css'; */
+/* @import 'pull-to-refresh.css'; */
+@import 'swipe-to-delete.css';
+/* @import 'touch-targets.css'; */

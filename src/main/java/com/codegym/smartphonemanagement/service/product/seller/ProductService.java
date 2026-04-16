@@ -1,7 +1,7 @@
 package com.codegym.smartphonemanagement.service.product.seller;
 
 import com.codegym.smartphonemanagement.exception.BadRequestException;
-import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
 import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
@@ -44,7 +44,7 @@ public class ProductService implements IProductService {
         // 1️⃣ Kiểm tra category tồn tại
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Category không tồn tại"));
+                        new EntityNotFoundException("Category", request.getCategoryId()));
 
         // 2️⃣ Validate nghiệp vụ thêm (phòng trường hợp bypass validation)
         if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
@@ -116,12 +116,12 @@ public class ProductService implements IProductService {
         // 1️⃣ Kiểm tra product tồn tại
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         // 2️⃣ Kiểm tra category tồn tại
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Category không tồn tại"));
+                        new EntityNotFoundException("Category", request.getCategoryId()));
 
         if (!product.getActive()) {
             throw new BadRequestException("Không thể cập nhật sản phẩm đã bị xoá");
@@ -156,7 +156,7 @@ public class ProductService implements IProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         if (!product.getActive()) {
             throw new BadRequestException("Product đã bị xoá trước đó");
@@ -221,7 +221,7 @@ public class ProductService implements IProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         return mapToResponse(product);
     }
@@ -243,7 +243,7 @@ public class ProductService implements IProductService {
     @Transactional
     public boolean toggleStatus(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new EntityNotFoundException("Product", id));
 
         boolean newStatus = !product.getActive();
         productRepository.updateActiveStatus(id, newStatus);
