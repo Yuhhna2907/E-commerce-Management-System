@@ -5,13 +5,18 @@ import com.codegym.smartphonemanagement.exception.BadRequestException;
 import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.model.ProductVariant;
+import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -31,15 +36,18 @@ public class CartController {
     private final ICartService cartService;
     private final ProductRepository productRepository;
     private final DiscountService discountService;
+    private final UserRepository userRepository;
 
-    // ⚠️ Demo: hardcode userId (sau này thay bằng Security)
-    private final Long USER_ID = 1L;
+    // Lấy userId từ SecurityContext (đăng nhập)
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     // Hiển thị giỏ hàng
     @GetMapping
     public String viewCart(HttpSession session, Model model) {
 
-        CartResponseDTO cartResponse = cartService.getCart(USER_ID);
+        CartResponseDTO cartResponse = cartService.getCart(getCurrentUserId());
 
         String appliedCoupon = (String) session.getAttribute("APPLIED_COUPON");
         java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
@@ -110,7 +118,7 @@ public class CartController {
                 ProductVariant variant = variantOpt.get();
 
                 // Thực hiện thêm vào giỏ hàng
-                cartService.addToCart(USER_ID, request);
+                cartService.addToCart(getCurrentUserId(), request);
 
                 response.put("success", true);
                 response.put("message", "Thêm thành công!");
@@ -147,7 +155,7 @@ public class CartController {
     @PostMapping("/update")
     public String updateCart(@ModelAttribute CartItemRequestDTO request, RedirectAttributes redirectAttributes) {
         try {
-            cartService.updateQuantity(USER_ID, request);
+            cartService.updateQuantity(getCurrentUserId(), request);
         } catch (BadRequestException | ResourceNotFoundException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -157,14 +165,14 @@ public class CartController {
     // Xoá item
     @PostMapping("/remove/{cartItemId}")
     public String removeItem(@PathVariable Long cartItemId) {
-        cartService.removeItem(USER_ID, cartItemId);
+        cartService.removeItem(getCurrentUserId(), cartItemId);
         return "redirect:/user/cart";
     }
 
     // Clear cart
     @PostMapping("/clear")
     public String clearCart() {
-        cartService.clearCart(USER_ID);
+        cartService.clearCart(getCurrentUserId());
         return "redirect:/user/cart";
     }
     
@@ -174,6 +182,6 @@ public class CartController {
     public com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse saveForLater(
             @RequestParam Long cartItemId,
             @RequestParam Long productId) {
-        return cartService.saveForLater(USER_ID, cartItemId, productId);
+        return cartService.saveForLater(getCurrentUserId(), cartItemId, productId);
     }
 }

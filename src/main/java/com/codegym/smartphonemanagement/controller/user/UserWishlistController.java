@@ -2,10 +2,12 @@ package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
 import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.wishlist.IWishlistService;
 import com.codegym.smartphonemanagement.service.wishlist.DTO.WishlistRequestDTO;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +25,12 @@ public class UserWishlistController {
 
     private final IWishlistService wishlistService;
     private final IUserProductService userProductService;
+    private final UserRepository userRepository;
 
-
-    private final Long USER_ID = 1L;
+    // Lấy userId từ SecurityContext
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     /**
      * Giao diện Xem Bộ sưu tập (Wishlist Dashboard)
@@ -33,7 +38,7 @@ public class UserWishlistController {
     @GetMapping("/user/wishlist")
     public String showWishlistPage(Model model) {
         try {
-            List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
+            List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(getCurrentUserId());
             
             // Filter out null products and convert to DTO
             List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
@@ -83,7 +88,7 @@ public class UserWishlistController {
     public Map<String, Object> toggleWishlist(@RequestBody WishlistRequestDTO requestDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            boolean isAdded = wishlistService.toggleWishlist(USER_ID, requestDTO.getProductId());
+            boolean isAdded = wishlistService.toggleWishlist(getCurrentUserId(), requestDTO.getProductId());
             response.put("success", true);
             response.put("isAdded", isAdded);
             response.put("message", isAdded ? "Đã thêm vào bộ sưu tập" : "Đã xoá khỏi bộ sưu tập");
@@ -102,7 +107,7 @@ public class UserWishlistController {
     public Map<String, Object> removeWishlist(@RequestBody WishlistRequestDTO requestDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            wishlistService.removeWishlistItem(USER_ID, requestDTO.getProductId());
+            wishlistService.removeWishlistItem(getCurrentUserId(), requestDTO.getProductId());
             response.put("success", true);
             response.put("message", "Đã xoá khỏi bộ sưu tập");
         } catch (Exception e) {

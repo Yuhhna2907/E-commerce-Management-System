@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.model.dto.NotificationResponseDTO;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.NotificationService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,13 +22,10 @@ public class lUserNotificationController {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
 
-    // TODO: Replace with Security context
-    private static final Long MOCK_USER_ID = 1L;
-
     @GetMapping("/unread")
     @ResponseBody
     public ResponseEntity<List<NotificationResponseDTO>> getUnreadNotifications() {
-        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        User user = SecurityUtil.getCurrentUser(userRepository);
         List<NotificationResponseDTO> notifications = notificationService.getUnreadNotifications(user)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(notifications);
@@ -36,7 +34,7 @@ public class lUserNotificationController {
     @GetMapping("/all-json")
     @ResponseBody
     public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsJson() {
-        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        User user = SecurityUtil.getCurrentUser(userRepository);
         List<NotificationResponseDTO> notifications = notificationService.getAllNotifications(user)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(notifications);
@@ -52,7 +50,7 @@ public class lUserNotificationController {
     @PostMapping("/mark-all-read")
     @ResponseBody
     public ResponseEntity<Void> markAllAsRead() {
-        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        User user = SecurityUtil.getCurrentUser(userRepository);
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
     }
