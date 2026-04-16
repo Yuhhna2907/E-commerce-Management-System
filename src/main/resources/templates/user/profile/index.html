@@ -335,6 +335,17 @@
                         <i class="bi bi-clock-history"></i> Đã xem gần đây
                     </a>
                 </nav>
+
+                <!-- Logout Button -->
+                <div class="mt-4 pt-3 border-top border-light">
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2"
+                                onclick="return confirm('Bạn có chắc muốn đăng xuất?')">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Đăng xuất</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

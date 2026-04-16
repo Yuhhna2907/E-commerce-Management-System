@@ -1,6 +1,8 @@
 package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
+import com.codegym.smartphonemanagement.model.User;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ReviewRequestDTO;
@@ -14,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +38,11 @@ public class UserProductController {
     private final IRecentlyViewedService recentlyViewedService;
     private final IWishlistService wishlistService;
     private final RecommendationService recommendationService;
+    private final UserRepository userRepository;
 
     private static final Long USER_ID = 1L; // Thay bằng Security context sau
+
+    // ...existing code...
 
     @GetMapping
     public String listProducts(
@@ -57,8 +63,23 @@ public class UserProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "asc") String sort,
-            Model model
+            Model model,
+            Authentication authentication
     ) {
+        // Thêm thông tin user vào model
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() 
+                && !authentication.getPrincipal().equals("anonymousUser");
+        model.addAttribute("isAuthenticated", isAuthenticated);
+        
+        if (isAuthenticated) {
+            String username = authentication.getName();
+            User user = userRepository.findByUsername(username).orElse(null);
+            if (user != null) {
+                model.addAttribute("currentUser", user);
+                model.addAttribute("fullName", user.getFullName());
+                model.addAttribute("username", username);
+            }
+        }
 
         Page<ProductResponseDTO> productPage = userProductService.searchProducts(
                 keyword, brands, rams, storages, minPrice, maxPrice,

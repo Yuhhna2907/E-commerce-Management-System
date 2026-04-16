@@ -32,4 +32,8 @@ public class OrderResponseDTO {
     private boolean canRefund;
     // Ngày giao hàng dự kiến (3-5 ngày làm việc)
     private LocalDateTime estimatedDeliveryDate;
+    // Thông tin người mua
+    private Long userId;
+    private String buyerUsername;
+    private String buyerFullName;
 }

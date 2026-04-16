@@ -72,7 +72,7 @@ public class ProductController {
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("productRequestDTO", new ProductRequestDTO());
 
-        model.addAttribute("pageTitle", "order");
+        model.addAttribute("pageTitle", "product");
 
         return "admin/product/list";
     }

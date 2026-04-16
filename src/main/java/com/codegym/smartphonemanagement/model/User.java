@@ -55,6 +55,8 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    private boolean enabled = true;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

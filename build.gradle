@@ -44,6 +44,11 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+    // Thư viện chính của Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Thư viện để sử dụng các thẻ của Security trong Thymeleaf (như ẩn/hiện nút Logout)
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 tasks.named('test') {

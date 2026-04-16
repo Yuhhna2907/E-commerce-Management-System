@@ -1363,7 +1363,7 @@
                         <button type="button"
                                 class="btn w-100 btn-buy btn-shimmer d-flex align-items-center justify-content-center m-0"
                                 th:disabled="${product.stock <= 0}"
-                                th:onclick="|window.location.href='/user/products/' + ${product.id}|">
+                                th:onclick="|addToCart(${product.id}, this)|">
                             <span th:if="${product.stock > 0}">
                                 <i class="bi bi-bag-heart-fill me-2 fs-5"></i> SỞ HỮU NGAY
                             </span>
@@ -1878,21 +1878,90 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
+    // Set authentication status from backend
+    const isUserAuthenticated = /*[[${isAuthenticated}]]*/ false;
+
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+        return isUserAuthenticated;
+    }
+
+    // Helper: Redirect to login page, optionally with return URL
+    function redirectToLogin(returnUrl) {
+        let url = '/login';
+        if (returnUrl) {
+            url += '?redirect=' + encodeURIComponent(returnUrl);
+        }
+        window.location.href = url;
+    }
+
+    // Show login required modal
+    function showLoginRequired() {
+        const loginRequiredHtml = `
+            <div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content glass-modal">
+                        <div class="modal-header bg-warning text-dark border-0">
+                            <h4 class="modal-title fw-bold mb-0">
+                                <i class="bi bi-info-circle-fill me-2"></i> Cần đăng nhập
+                            </h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-5 text-center">
+                            <i class="bi bi-lock-fill text-warning" style="font-size: 3rem;"></i>
+                            <p class="mt-4 text-dark fw-medium">
+                                Để sử dụng tính năng này, vui lòng <strong>đăng nhập</strong> vào tài khoản của bạn.
+                            </p>
+                            <p class="text-muted small">
+                                Hoặc <a href="/register" class="text-primary fw-bold text-decoration-none">tạo tài khoản mới</a> nếu bạn chưa có.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0 pb-4 px-5 gap-3 flex-nowrap">
+                            <button type="button" class="btn btn-light btn-shimmer w-50 py-2 rounded-pill fw-bold border" data-bs-dismiss="modal">
+                                Đóng
+                            </button>
+                            <button type="button" class="btn w-50 btn-buy btn-shimmer py-2 rounded-pill fw-bold text-decoration-none" onclick="redirectToLogin('/user/products')">
+                                Đăng nhập <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove old modal if exists
+        const oldModal = document.getElementById('loginRequiredModal');
+        if (oldModal) oldModal.remove();
+
+        // Add new modal to body
+        document.body.insertAdjacentHTML('beforeend', loginRequiredHtml);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+        modal.show();
+    }
+
     // 1. ADD CART
     function addToCart(productId, btnElement) {
+        // Check if user is authenticated
+        if (!isAuthenticated()) {
+            showLoginRequired();
+            return;
+        }
+
         // Find the button element if not passed
         if (!btnElement) {
             btnElement = event.target.closest('.btn-buy');
         }
-        
+
         // Save original button content
         const originalContent = btnElement.innerHTML;
-        
+
         // Disable button and show loading state
         btnElement.disabled = true;
         btnElement.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang thêm...';
-        
+
         fetch('/user/cart/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1903,7 +1972,7 @@
                 // Re-enable button and restore original content
                 btnElement.disabled = false;
                 btnElement.innerHTML = originalContent;
-                
+
                 if (data.success) {
                     document.getElementById("modalProductName").innerText = data.productName;
 
@@ -1936,11 +2005,11 @@
             })
             .catch(error => {
                 console.error("Lỗi:", error);
-                
+
                 // Re-enable button and restore original content on error
                 btnElement.disabled = false;
                 btnElement.innerHTML = originalContent;
-                
+
                 alert("Uy tín, không thể kết nối server lúc này!");
             });
     }
@@ -1958,6 +2027,12 @@
     function toggleWishlist(event, productId, btn) {
         event.stopPropagation(); // Ngăn nhấp nháy thẻ cha
         
+        // Check authentication
+        if (!isAuthenticated()) {
+            showLoginRequired();
+            return;
+        }
+
         // Gọi AJAX ảo để chờ Backend có thật
         fetch('/api/user/wishlist/toggle', {
             method: 'POST',
@@ -2585,3 +2660,8 @@
 
 </body>
 </html>
+
+
+
+
+

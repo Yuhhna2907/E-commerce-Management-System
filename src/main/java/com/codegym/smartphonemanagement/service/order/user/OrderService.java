@@ -450,6 +450,10 @@ public class OrderService implements IOrderService {
                 .canCancel(canCancel)
                 .canRefund(canRefund)
                 .estimatedDeliveryDate(estimatedDelivery)
+                // Thông tin người mua
+                .userId(order.getUser() != null ? order.getUser().getId() : null)
+                .buyerUsername(order.getUser() != null ? order.getUser().getUsername() : "")
+                .buyerFullName(order.getUser() != null ? order.getUser().getFullName() : "")
                 .build();
     }
 
