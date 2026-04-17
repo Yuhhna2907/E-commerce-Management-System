@@ -64,7 +64,7 @@ public class GlobalModelController {
     @ModelAttribute("loyaltyPoints")
     public Integer loyaltyPoints() {
         try {
-            return loyaltyPointService.getAccountInfo(MOCK_USER_ID).getTotalPoints();
+            return loyaltyPointService.getAccountInfo(SecurityUtil.getCurrentUserId(userRepository)).getTotalPoints();
         } catch (Exception e) {
             return 0;
         }

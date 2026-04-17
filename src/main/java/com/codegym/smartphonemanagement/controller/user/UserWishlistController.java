@@ -39,18 +39,18 @@ public class UserWishlistController {
     public String showWishlistPage(Model model) {
         try {
             List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(getCurrentUserId());
-            System.out.println("=== DEBUG: Loading wishlist for user " + USER_ID + " ===");
+            System.out.println("=== DEBUG: Loading wishlist for user " + getCurrentUserId() + " ===");
             
-            List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
-            System.out.println("Raw wishlist products count: " + (wishlistProducts != null ? wishlistProducts.size() : "null"));
+            List<Product> rawWishlistProducts = wishlistService.getWishlistProductsByUserId(getCurrentUserId());
+            System.out.println("Raw wishlist products count: " + (rawWishlistProducts != null ? rawWishlistProducts.size() : "null"));
             
-            if (wishlistProducts == null) {
-                System.out.println("WARNING: wishlistProducts is null!");
-                wishlistProducts = List.of();
+            if (rawWishlistProducts == null) {
+                System.out.println("WARNING: rawWishlistProducts is null!");
+                rawWishlistProducts = List.of();
             }
             
             // Filter out null products and convert to DTO
-            List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
+            List<ProductResponseDTO> wishlistItems = rawWishlistProducts.stream()
                     .filter(p -> {
                         if (p == null) {
                             System.out.println("WARNING: Found null product in wishlist");

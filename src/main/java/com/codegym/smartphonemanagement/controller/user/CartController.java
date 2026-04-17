@@ -185,7 +185,7 @@ public class CartController {
     public Map<String, Object> getCartTotals(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
-            CartResponseDTO cartResponse = cartService.getCart(USER_ID);
+            CartResponseDTO cartResponse = cartService.getCart(getCurrentUserId());
             
             // Calculate total after discount
             java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
@@ -221,13 +221,13 @@ public class CartController {
     public Map<String, Object> saveForLater(@RequestParam Long cartItemId) {
         Map<String, Object> response = new HashMap<>();
         try {
-            SavedForLaterDTO savedItem = savedForLaterService.saveForLater(USER_ID, cartItemId);
+            SavedForLaterDTO savedItem = savedForLaterService.saveForLater(getCurrentUserId(), cartItemId);
             
             response.put("success", true);
             response.put("message", "Đã lưu sản phẩm để mua sau");
             response.put("data", savedItem);
-            response.put("savedCount", savedForLaterService.countSavedItems(USER_ID));
-            response.put("cartItemCount", cartService.getCart(USER_ID).getItems().size());
+            response.put("savedCount", savedForLaterService.countSavedItems(getCurrentUserId()));
+            response.put("cartItemCount", cartService.getCart(getCurrentUserId()).getItems().size());
             
             return response;
         } catch (Exception e) {
