@@ -30,6 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // 1. Tổng số sản phẩm đang hoạt động
     long countByActiveTrue();
+    long countByActiveFalse();
 
     // 2. Đếm sản phẩm sắp hết hàng (stock < 5 và active = true)
     long countByActiveTrueAndStockLessThan(Integer threshold);

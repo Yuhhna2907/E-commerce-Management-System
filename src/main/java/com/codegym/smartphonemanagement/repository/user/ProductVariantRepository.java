@@ -4,6 +4,7 @@ import com.codegym.smartphonemanagement.model.ProductVariant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
 
@@ -12,6 +13,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     // Lấy biến thể theo SKU
     ProductVariant findBySku(String sku);
+
+    // Lấy biến thể theo SKU (Optional)
+    Optional<ProductVariant> findOptionalBySku(String sku);
 
     // Lấy tất cả biến thể theo màu
     List<ProductVariant> findByColor(String color);

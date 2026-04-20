@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class RecommendationService {
     
     private final ProductRecommendationRepository recommendationRepository;
@@ -52,9 +51,11 @@ public class RecommendationService {
     @Cacheable(value = "productRecommendations", key = "#productId")
     @Transactional(readOnly = true)
     public List<Product> getRecommendations(Long productId) {
+        validateProductId(productId);
+        
         log.info("Getting recommendations for product ID: {}", productId);
         
-        // Lấy danh sách recommendations từ database
+        // Lấy danh sách recommendations từ database (với JOIN FETCH để avoid N+1)
         List<ProductRecommendation> recommendations = recommendationRepository
                 .findValidRecommendationsByProductId(productId, MIN_FREQUENCY, MIN_CO_PURCHASE_COUNT);
         
@@ -111,7 +112,10 @@ public class RecommendationService {
      * @param productId ID của sản phẩm cần build recommendations
      */
     @CacheEvict(value = "productRecommendations", key = "#productId")
+    @Transactional
     public void buildRecommendationsForProduct(Long productId) {
+        validateProductId(productId);
+        
         log.info("Building recommendations for product ID: {}", productId);
         
         // Kiểm tra sản phẩm có tồn tại không
@@ -146,7 +150,25 @@ public class RecommendationService {
         log.debug("Deleted old recommendations for product ID: {}", productId);
         
         // Tạo recommendations mới
-        List<ProductRecommendation> newRecommendations = new ArrayList<>();
+        List<ProductRecommendation> newRecommendations = buildRecommendationList(
+                product, coPurchaseCounts, totalOrders);
+        
+        // Lưu vào database
+        if (!newRecommendations.isEmpty()) {
+            recommendationRepository.saveAll(newRecommendations);
+            log.info("Saved {} recommendations for product ID: {}", newRecommendations.size(), productId);
+        } else {
+            log.info("No valid recommendations to save for product ID: {}", productId);
+        }
+    }
+    
+    /**
+     * Build danh sách recommendations từ co-purchase data
+     */
+    private List<ProductRecommendation> buildRecommendationList(
+            Product product, Map<Long, Integer> coPurchaseCounts, int totalOrders) {
+        
+        List<ProductRecommendation> recommendations = new ArrayList<>();
         
         for (Map.Entry<Long, Integer> entry : coPurchaseCounts.entrySet()) {
             Long recommendedProductId = entry.getKey();
@@ -182,23 +204,18 @@ public class RecommendationService {
                     .coPurchaseFrequency(frequency)
                     .build();
             
-            newRecommendations.add(recommendation);
+            recommendations.add(recommendation);
             
             log.debug("Created recommendation: Product {} -> Product {} (count: {}, frequency: {}%)",
-                    productId, recommendedProductId, coPurchaseCount, frequency.multiply(BigDecimal.valueOf(100)));
+                    product.getId(), recommendedProductId, coPurchaseCount, 
+                    frequency.multiply(BigDecimal.valueOf(100)));
         }
         
         // Sắp xếp theo frequency giảm dần (Yêu cầu 6.4)
-        newRecommendations.sort((r1, r2) -> 
+        recommendations.sort((r1, r2) -> 
                 r2.getCoPurchaseFrequency().compareTo(r1.getCoPurchaseFrequency()));
         
-        // Lưu vào database
-        if (!newRecommendations.isEmpty()) {
-            recommendationRepository.saveAll(newRecommendations);
-            log.info("Saved {} recommendations for product ID: {}", newRecommendations.size(), productId);
-        } else {
-            log.info("No valid recommendations to save for product ID: {}", productId);
-        }
+        return recommendations;
     }
     
     /**
@@ -209,6 +226,7 @@ public class RecommendationService {
      */
     @Transactional(readOnly = true)
     public boolean hasRecommendations(Long productId) {
+        validateProductId(productId);
         return recommendationRepository.hasValidRecommendations(productId);
     }
     
@@ -220,6 +238,7 @@ public class RecommendationService {
      */
     @Transactional(readOnly = true)
     public long countRecommendations(Long productId) {
+        validateProductId(productId);
         return recommendationRepository.countValidRecommendations(productId);
     }
     
@@ -260,61 +279,35 @@ public class RecommendationService {
         log.info("========================================");
         
         long startTime = System.currentTimeMillis();
-        int successCount = 0;
-        int failureCount = 0;
-        int skippedCount = 0;
+        RebuildResult result = new RebuildResult();
         
         try {
-            // Lấy tất cả sản phẩm active
-            List<Product> activeProducts = productRepository.findAll().stream()
+            // Lấy IDs của tất cả sản phẩm active (chỉ load IDs, không load full entities)
+            List<Long> activeProductIds = productRepository.findAll().stream()
                     .filter(Product::getActive)
+                    .map(Product::getId)
                     .collect(Collectors.toList());
             
-            log.info("Found {} active products to process", activeProducts.size());
+            log.info("Found {} active products to process", activeProductIds.size());
             
-            if (activeProducts.isEmpty()) {
+            if (activeProductIds.isEmpty()) {
                 log.warn("No active products found, skipping recommendation rebuild");
                 return;
             }
             
             // Rebuild recommendations cho từng sản phẩm
-            for (Product product : activeProducts) {
+            for (Long productId : activeProductIds) {
                 try {
-                    log.debug("Processing product ID: {} - {}", product.getId(), product.getName());
-                    
-                    // Kiểm tra xem sản phẩm có đơn hàng không
-                    int totalOrders = orderItemRepository.countDistinctOrdersByProductId(product.getId());
-                    
-                    if (totalOrders == 0) {
-                        log.debug("Product ID {} has no orders, skipping", product.getId());
-                        skippedCount++;
-                        continue;
-                    }
-                    
-                    // Build recommendations
-                    buildRecommendationsForProduct(product.getId());
-                    successCount++;
-                    
-                    log.debug("Successfully rebuilt recommendations for product ID: {}", product.getId());
-                    
+                    processProductRecommendation(productId, result);
                 } catch (Exception e) {
-                    failureCount++;
+                    result.failureCount++;
                     log.error("Failed to rebuild recommendations for product ID: {} - Error: {}", 
-                            product.getId(), e.getMessage(), e);
+                            productId, e.getMessage(), e);
                     // Continue với sản phẩm tiếp theo thay vì dừng toàn bộ job
                 }
             }
             
-            long duration = System.currentTimeMillis() - startTime;
-            
-            log.info("========================================");
-            log.info("Recommendation rebuild job completed");
-            log.info("Total products processed: {}", activeProducts.size());
-            log.info("Success: {}", successCount);
-            log.info("Skipped (no orders): {}", skippedCount);
-            log.info("Failed: {}", failureCount);
-            log.info("Duration: {} ms ({} seconds)", duration, duration / 1000);
-            log.info("========================================");
+            logRebuildSummary(result, activeProductIds.size(), startTime);
             
         } catch (Exception e) {
             log.error("========================================");
@@ -322,6 +315,54 @@ public class RecommendationService {
             log.error("========================================");
             throw e; // Re-throw để Spring có thể log và handle
         }
+    }
+    
+    /**
+     * Process recommendation rebuild cho một sản phẩm
+     */
+    @Transactional
+    private void processProductRecommendation(Long productId, RebuildResult result) {
+        log.debug("Processing product ID: {}", productId);
+        
+        // Kiểm tra xem sản phẩm có đơn hàng không
+        int totalOrders = orderItemRepository.countDistinctOrdersByProductId(productId);
+        
+        if (totalOrders == 0) {
+            log.debug("Product ID {} has no orders, skipping", productId);
+            result.skippedCount++;
+            return;
+        }
+        
+        // Build recommendations
+        buildRecommendationsForProduct(productId);
+        result.successCount++;
+        
+        log.debug("Successfully rebuilt recommendations for product ID: {}", productId);
+    }
+    
+    /**
+     * Log rebuild summary
+     */
+    private void logRebuildSummary(RebuildResult result, int totalProducts, long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+        
+        log.info("========================================");
+        log.info("Recommendation rebuild job completed");
+        log.info("Total products processed: {}", totalProducts);
+        log.info("Success: {}", result.successCount);
+        log.info("Skipped (no orders): {}", result.skippedCount);
+        log.info("Failed: {}", result.failureCount);
+        log.info("Duration: {} ms ({} seconds)", duration, duration / 1000);
+        log.info("========================================");
+    }
+    
+    /**
+     * Helper class để track rebuild results
+     */
+    private static class RebuildResult {
+        int successCount = 0;
+        int failureCount = 0;
+        int skippedCount = 0;
     }
     
     /**
@@ -335,40 +376,42 @@ public class RecommendationService {
         log.info("Manual recommendation rebuild triggered");
         
         long startTime = System.currentTimeMillis();
-        int successCount = 0;
-        int failureCount = 0;
-        int skippedCount = 0;
+        RebuildResult result = new RebuildResult();
         
-        List<Product> activeProducts = productRepository.findAll().stream()
+        // Lấy IDs của tất cả sản phẩm active
+        List<Long> activeProductIds = productRepository.findAll().stream()
                 .filter(Product::getActive)
+                .map(Product::getId)
                 .collect(Collectors.toList());
         
-        for (Product product : activeProducts) {
+        for (Long productId : activeProductIds) {
             try {
-                int totalOrders = orderItemRepository.countDistinctOrdersByProductId(product.getId());
-                
-                if (totalOrders == 0) {
-                    skippedCount++;
-                    continue;
-                }
-                
-                buildRecommendationsForProduct(product.getId());
-                successCount++;
-                
+                processProductRecommendation(productId, result);
             } catch (Exception e) {
-                failureCount++;
-                log.error("Failed to rebuild recommendations for product ID: {}", product.getId(), e);
+                result.failureCount++;
+                log.error("Failed to rebuild recommendations for product ID: {}", productId, e);
             }
         }
         
         long duration = System.currentTimeMillis() - startTime;
         
         return Map.of(
-                "totalProducts", activeProducts.size(),
-                "success", successCount,
-                "skipped", skippedCount,
-                "failed", failureCount,
+                "totalProducts", activeProductIds.size(),
+                "success", result.successCount,
+                "skipped", result.skippedCount,
+                "failed", result.failureCount,
                 "durationMs", duration
         );
+    }
+    
+    // ==================== Validation Helper Methods ====================
+    
+    /**
+     * Validate product ID
+     */
+    private void validateProductId(Long productId) {
+        if (productId == null || productId <= 0) {
+            throw new IllegalArgumentException("Product ID không hợp lệ: " + productId);
+        }
     }
 }

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Relationship Management - SmartZone</title>
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255, 255, 255, 0.75);
+            --sz-glass-border: rgba(255, 255, 255, 0.4);
+            --sz-primary: #1A1C20;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6f9;
+            color: var(--sz-primary);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 80% 20%, rgba(13, 110, 253, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* --- LAYOUT CHUNG --- */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px 40px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* --- GLASSMORPHISM --- */
+        .glass-panel {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        }
+
+        /* --- BENTO STATS --- */
+        .stat-card {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+        }
+        .stat-icon-bg {
+            position: absolute;
+            right: -10px;
+            bottom: -20px;
+            font-size: 8rem;
+            opacity: 0.05;
+            transform: rotate(-15deg);
+        }
+
+        /* --- DATA TABLE --- */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0 15px;
+            width: 100%;
+        }
+        .custom-table thead th {
+            border: none;
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        .custom-table tbody tr {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .custom-table tbody tr:hover {
+            transform: scale(1.01);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 10;
+        }
+        .custom-table tbody td {
+            border: none;
+            padding: 15px 20px;
+            vertical-align: middle;
+        }
+        .custom-table tbody tr td:first-child { border-radius: 15px 0 0 15px; }
+        .custom-table tbody tr td:last-child { border-radius: 0 15px 15px 0; }
+
+        /* --- USER COMPONENT --- */
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .status-active { background: rgba(25, 135, 84, 0.1); color: #198754; }
+        .status-locked { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+
+        /* --- ANIMATION --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- Gọi Sidebar Fragment -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
+            <div>
+                <h2 class="fw-bolder mb-1" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.5px;">Quản lý Người dùng</h2>
+                <p class="text-muted mb-0">Hệ thống CRM & Quản trị Bảo mật Tài khoản</p>
+            </div>
+            <div>
+                <a href="/admin/dashboard" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm border">
+                    <i class="bi bi-grid-fill me-2 text-primary"></i> Về Master Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- THÔNG BÁO FLASH -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 fade-up delay-1" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 fade-up delay-1" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- MINI DASHBOARD MODULE -->
+        <div class="row g-4 mb-5">
+            <!-- Thẻ 1 -->
+            <div class="col-md-4 fade-up delay-1">
+                <div class="glass-panel stat-card h-100 border border-primary border-opacity-25" style="background: rgba(13,110,253,0.02)">
+                    <i class="bi bi-people-fill stat-icon-bg text-primary"></i>
+                    <h6 class="text-primary text-uppercase fw-bold mb-3 small">Cơ Sở Dữ Liệu</h6>
+                    <div class="d-flex align-items-end">
+                        <h1 class="display-5 fw-bolder mb-0 lh-1 me-3 text-dark" th:text="${stats.totalUsers}">0</h1>
+                        <span class="fs-6 fw-bold text-muted mb-1">Tài khoản</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Thẻ 2 -->
+            <div class="col-md-4 fade-up delay-2">
+                <div class="glass-panel stat-card h-100 border border-success border-opacity-25" style="background: rgba(25,135,84,0.02)">
+                    <i class="bi bi-person-plus-fill stat-icon-bg text-success"></i>
+                    <h6 class="text-success text-uppercase fw-bold mb-3 small">Tăng trưởng 30 ngày</h6>
+                    <div class="d-flex align-items-end">
+                        <h1 class="display-5 fw-bolder mb-0 lh-1 me-3 text-dark" th:text="${stats.newUsersThisMonth}">0</h1>
+                        <span class="fs-6 fw-bold text-muted mb-1">Tân binh</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Thẻ 3 -->
+            <div class="col-md-4 fade-up delay-3">
+                <div class="glass-panel stat-card h-100 bg-dark text-white border-0 shadow-lg position-relative overflow-hidden">
+                    <i class="bi bi-shield-lock-fill stat-icon-bg text-white opacity-25"></i>
+                    <h6 class="text-white-50 text-uppercase fw-bold mb-3 small">Danh sách Đen</h6>
+                    <div class="d-flex align-items-center">
+                        <h1 class="display-5 fw-bolder mb-0 lh-1 text-white me-3" th:text="${stats.bannedUsers}">0</h1>
+                        <span class="small text-white-50 lh-sm">Tài khoản bị cấm <br> do vi phạm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DATA TABLE -->
+        <div class="glass-panel p-4 fade-up delay-3">
+            <h5 class="fw-bold mb-4"><i class="bi bi-table me-2 text-primary"></i> Data Grid Khách Hàng</h5>
+            
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Định Danh Danh Tính</th>
+                            <th>Thông Tin Liên Lạc</th>
+                            <th>Ngày Gia Nhập</th>
+                            <th>Trạng Thái</th>
+                            <th class="text-end">Thiết Chế Bảo Mật</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="u : ${users}">
+                            <!-- Info -->
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar bg-primary shadow-sm me-3">
+                                        <span th:text="${#strings.substring(u.username, 0, 1).toUpperCase()}">A</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bolder fs-6 text-dark">ID: #[[${u.id}]] - [[${u.username}]]</div>
+                                        <div class="text-muted small" th:text="${u.fullName != null && !u.fullName.isEmpty() ? u.fullName : 'Bí danh: Không có'}">Tên</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- Contact -->
+                            <td>
+                                <div class="fw-bold text-dark"><i class="bi bi-envelope-at opacity-50 me-1"></i> [[${u.email}]]</div>
+                                <div class="small text-muted"><i class="bi bi-telephone opacity-50 me-1"></i> [[${u.phone != null ? u.phone : 'Chưa cập nhật'}]]</div>
+                            </td>
+                            <!-- Date -->
+                            <td>
+                                <div class="fw-bold" th:text="${#temporals.format(u.createdAt, 'dd/MM/yyyy')}">Date</div>
+                                <div class="small text-muted">Lịch sử gắn kết nền tảng</div>
+                            </td>
+                            <!-- Status -->
+                            <td>
+                                <span th:if="${!u.enabled || u.locked}" class="status-badge status-locked"><i class="bi bi-lock-fill me-1"></i> BANNED</span>
+                                <span th:if="${u.enabled && !u.locked}" class="status-badge status-active"><i class="bi bi-check-circle-fill me-1"></i> HOẠT ĐỘNG</span>
+                            </td>
+                            <!-- Action -->
+                            <td class="text-end">
+                                <th:block th:if="${!u.enabled || u.locked}">
+                                    <a th:href="@{'/admin/users/' + ${u.id}}" class="btn btn-sm btn-outline-info rounded-pill fw-bold px-3 py-2 me-1">
+                                        <i class="bi bi-person-vcard-fill me-1"></i> Hồ Sơ
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success rounded-pill fw-bold px-3 py-2" 
+                                            th:data-id="${u.id}" th:data-username="${u.username}" 
+                                            onclick="openToggleModal(this.getAttribute('data-id'), 'UNBAN', this.getAttribute('data-username'))">
+                                        <i class="bi bi-unlock-fill me-1"></i> Mở Khóa Đăng Nhập
+                                    </button>
+                                </th:block>
+                                <th:block th:unless="${!u.enabled || u.locked}">
+                                    <a th:href="@{'/admin/users/' + ${u.id}}" class="btn btn-sm btn-outline-info rounded-pill fw-bold px-3 py-2 me-1">
+                                        <i class="bi bi-person-vcard-fill me-1"></i> Hồ Sơ
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3 py-2" 
+                                            th:data-id="${u.id}" th:data-username="${u.username}" 
+                                            onclick="openToggleModal(this.getAttribute('data-id'), 'BAN', this.getAttribute('data-username'))">
+                                        <i class="bi bi-shield-lock-fill me-1"></i> Đình Chỉ Cấm Cửa
+                                    </button>
+                                </th:block>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(users)}">
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-1 d-block mb-3 opacity-25"></i>
+                                Không có người dùng nào.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= TOGGLE MODAL ================= -->
+<div class="modal fade" id="toggleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div id="modalHeader" class="modal-header bg-opacity-10 py-3 border-0">
+                <h5 id="modalTitle" class="modal-title fw-bold">Xác nhận</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="toggleForm" method="POST">
+                <div class="modal-body p-4">
+                    <p id="modalDesc" class="mb-2">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+                    <div class="alert alert-warning border-0 small mt-3 fw-medium">
+                        <i class="bi bi-info-circle-fill me-2"></i> Lệnh Cấm sẽ chặn quyền truy cập giỏ hàng, nhưng <strong>KHÔNG</strong> xóa Ví Điểm (Loyalty). Tài sản số của khách hàng sẽ được đóng băng nguyên trạng.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button id="modalSubmitBtn" type="submit" class="btn rounded-pill px-4 fw-bold shadow-sm">Thực thi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JS Core -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openToggleModal(id, actionType, username) {
+        document.getElementById('toggleForm').action = '/admin/users/' + id + '/toggle-lock';
+        
+        var title = document.getElementById('modalTitle');
+        var desc = document.getElementById('modalDesc');
+        var header = document.getElementById('modalHeader');
+        var submitBtn = document.getElementById('modalSubmitBtn');
+
+        if (actionType === 'BAN') {
+            title.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i> Xác nhận Cấm cửa';
+            title.className = "modal-title fw-bold text-danger";
+            header.className = "modal-header bg-danger bg-opacity-10 py-3 border-0";
+            desc.innerHTML = 'Ban tài khoản <strong>' + username + '</strong>. Bạn sẽ tước quyền đăng nhập và đóng băng giỏ hàng của user này ngay lập tức.';
+            submitBtn.className = "btn btn-danger rounded-pill px-4 fw-bold shadow-sm";
+            submitBtn.innerText = "Khóa Tài Khoản";
+        } else {
+            title.innerHTML = '<i class="bi bi-unlock-fill me-2"></i> Xác nhận Phục hồi';
+            title.className = "modal-title fw-bold text-success";
+            header.className = "modal-header bg-success bg-opacity-10 py-3 border-0";
+            desc.innerHTML = 'Phục hồi tài khoản <strong>' + username + '</strong>. Họ sẽ ngay lập tức được hệ thống chào đón trở lại.';
+            submitBtn.className = "btn btn-success rounded-pill px-4 fw-bold shadow-sm";
+            submitBtn.innerText = "Mở Khóa";
+        }
+
+        new bootstrap.Modal(document.getElementById('toggleModal')).show();
+    }
+</script>
+</body>
+</html>

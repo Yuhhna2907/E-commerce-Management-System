@@ -73,9 +73,16 @@ public class Order {
     @Column(name = "coupon_code", length = 50)
     private String couponCode;
 
+    @Column(name = "shipping_coupon_code", length = 50)
+    private String shippingCouponCode;
+
     @Column(name = "total_discount")
     @Builder.Default
     private BigDecimal totalDiscount = BigDecimal.ZERO;
+
+    @Column(name = "shipping_discount")
+    @Builder.Default
+    private BigDecimal shippingDiscount = BigDecimal.ZERO;
 
     @Column(name = "shipping_fee")
     @Builder.Default

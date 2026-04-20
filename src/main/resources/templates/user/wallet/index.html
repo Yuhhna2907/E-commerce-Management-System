@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ví SmartZone Xu | SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+        }
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+        }
+        .main-content { padding-top: 20px; padding-bottom: 80px; }
+
+        .wallet-card {
+            background: linear-gradient(135deg, #fbbd05 0%, #f59e0b 100%);
+            border-radius: 28px;
+            padding: 35px;
+            color: #1A1C20;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(251, 189, 5, 0.25);
+            margin-bottom: 30px;
+        }
+        .wallet-card::after {
+            content: ''; position: absolute; bottom: -20%; right: -10%;
+            width: 200px; height: 200px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; filter: blur(40px);
+        }
+
+        .action-chip {
+            background: white; border-radius: 20px; padding: 12px 24px;
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; font-size: 0.9rem;
+            color: var(--sz-dark); text-decoration: none;
+            transition: transform 0.2s; border: none;
+        }
+        .action-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+        .section-card {
+            background: white; border-radius: 24px; padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+        }
+
+        .tx-item {
+            display: flex; align-items: center; gap: 15px;
+            padding: 18px 0; border-bottom: 1px solid #f1f5f9;
+        }
+        .tx-item:last-child { border-bottom: none; }
+        .tx-icon {
+            width: 44px; height: 44px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+
+        .amount-in { color: #059669; font-weight: 800; }
+        .amount-out { color: #dc2626; font-weight: 800; }
+
+        .btn-withdraw {
+            background: #1A1C20; color: white; border-radius: 16px;
+            padding: 14px; font-weight: 700; border: none;
+            width: 100%; transition: all 0.3s;
+        }
+        .btn-withdraw:hover { background: #000; transform: translateY(-2px); }
+
+        .withdraw-request-item {
+            background: #f8fafc; border-radius: 16px; padding: 15px; 
+            margin-bottom: 15px; border-left: 4px solid var(--sz-orange);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header Holder -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container main-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Messages -->
+            <div th:if="${successMessage}" class="alert alert-success rounded-4 border-0 mb-4 shadow-sm" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-danger rounded-4 border-0 mb-4 shadow-sm" th:text="${errorMessage}"></div>
+
+            <!-- Wallet Hero -->
+            <div class="wallet-card">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <div class="small fw-bold text-uppercase opacity-75 mb-1" style="letter-spacing: 0.5px;">Số dư SmartZone Xu</div>
+                        <h1 class="display-3 fw-800 mb-0" th:text="${#numbers.formatDecimal(wallet.balance, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</h1>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <button class="action-chip" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                            <i class="bi bi-wallet2"></i> Rút tiền
+                        </button>
+                        <a th:href="@{/user/coupons}" class="action-chip">
+                            <i class="bi bi-ticket-perforated"></i> Đổi Voucher
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4 pt-3 border-top border-dark border-opacity-10">
+                    <div class="col-4">
+                        <div class="small opacity-75">Ví ID</div>
+                        <div class="fw-bold" th:text="${wallet.walletId}">#0</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small opacity-75">Sử dụng thanh toán</div>
+                        <div class="fw-bold">1 Xu = 1₫</div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="small opacity-75">Trạng thái</div>
+                        <div class="fw-bold text-success"><i class="bi bi-shield-check me-1"></i>Đã bảo mật</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Transactions -->
+                <div class="col-md-7">
+                    <div class="section-card">
+                        <h5 class="fw-800 mb-4"><i class="bi bi-receipt-cutoff me-2"></i> Lịch sử giao dịch</h5>
+                        
+                        <div th:if="${#lists.isEmpty(transactions.content)}" class="text-center py-5 opacity-50">
+                            <i class="bi bi-inbox display-4 mb-3 d-block"></i>
+                            <p>Bạn chưa có giao dịch nào.</p>
+                        </div>
+
+                        <div th:each="tx : ${transactions.content}" class="tx-item">
+                            <div class="tx-icon" th:classappend="${tx.type.name() == 'PAYMENT' || tx.type.name() == 'WITHDRAWAL' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'}">
+                                <i class="bi" th:classappend="${tx.type.name() == 'PAYMENT' ? 'bi-cart-check' : (tx.type.name() == 'WITHDRAWAL' ? 'bi-wallet2' : 'bi-plus-circle')}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold" th:text="${tx.description}">Mô tả</div>
+                                <div class="small text-muted" th:text="${#temporals.format(tx.createdAt, 'dd/MM/yyyy HH:mm')}">Hẹn</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="amount-val" th:classappend="${tx.type.name() == 'PAYMENT' || tx.type.name() == 'WITHDRAWAL' ? 'amount-out' : 'amount-in'}">
+                                    <span th:text="${tx.type.name() == 'PAYMENT' || tx.type.name() == 'WITHDRAWAL' ? '-' : '+'}"></span>
+                                    <span th:text="${#numbers.formatDecimal(tx.amount, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
+                                </div>
+                                <div style="font-size: 0.65rem; color: #94a3b8;">Số dư: <span th:text="${#numbers.formatDecimal(tx.balanceAfter, 0, 'COMMA', 0, 'POINT')}"></span>₫</div>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav th:if="${totalPages > 1}" class="mt-4">
+                            <ul class="pagination pagination-sm justify-content-center">
+                                <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/user/wallet(page=${currentPage - 1})}">Trước</a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/user/wallet(page=${i})}" th:text="${i + 1}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/user/wallet(page=${currentPage + 1})}">Sau</a>
+                                </li>
+                            </ul>
+                        </nav>Section-Card
+                    </div>
+                </div>
+
+                <!-- Withdraw Requests Status -->
+                <div class="col-md-5">
+                    <div class="section-card h-100">
+                        <h5 class="fw-800 mb-4"><i class="bi bi-clock-history me-2"></i> Lệnh rút tiền đang xử lý</h5>
+                        
+                        <div th:if="${#lists.isEmpty(myRequests)}" class="text-center py-5 opacity-40">
+                            <i class="bi bi-check2-all display-4 d-block mb-2"></i>
+                            <p class="small fw-bold">Hiện không có lệnh rút nào đang chờ.</p>
+                        </div>
+
+                        <div th:each="req : ${myRequests}" class="withdraw-request-item">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 0.7rem;">ĐANG CHỜ DUYỆT</span>
+                                <span class="fw-bold" th:text="${#numbers.formatDecimal(req.amount, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
+                            </div>
+                            <div class="small fw-medium text-dark" th:text="${req.bankName}">NH</div>
+                            <div class="small text-muted" th:text="${req.bankAccount} + ' - ' + ${req.bankHolder}">STK</div>
+                            <div class="small text-muted mt-2 opacity-75" style="font-size: 0.7rem;">Ngày yêu cầu: <span th:text="${#temporals.format(req.createdAt, 'dd/MM/yyyy HH:mm')}"></span></div>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-light rounded-4">
+                            <h6 class="fw-bold small mb-2"><i class="bi bi-info-circle me-2 text-warning"></i> Quy định rút tiền</h6>
+                            <ul class="small text-muted ps-3 mb-0" style="font-size: 0.75rem;">
+                                <li>Số tiền rút tối thiểu: 50.000₫</li>
+                                <li>Thời gian xử lý: 24h - 48h làm việc.</li>
+                                <li>Phí rút: Miễn phí (SmartZone hỗ trợ).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form th:action="@{/user/wallet/withdraw}" method="post" class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h4 class="modal-title fw-800">Yêu cầu rút tiền</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-secondary rounded-4 small mb-4">
+                    Vui lòng nhập chính xác thông tin ngân hàng để SmartZone thực hiện chuyển khoản cho bạn.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Số tiền muốn rút (₫)</label>
+                    <input type="number" name="amount" class="form-control form-control-lg rounded-4 border-light bg-light" placeholder="VD: 500000" min="50000" th:max="${wallet.balance}" required>
+                    <div class="form-text text-end">Số dư khả dụng: <span th:text="${#numbers.formatDecimal(wallet.balance, 0, 'COMMA', 0, 'POINT')}"></span>₫</div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-12 mb-3">
+                        <label class="form-label small fw-bold">Ngân hàng</label>
+                        <select name="bankName" class="form-select rounded-4 border-light bg-light" required>
+                            <option value="">-- Chọn ngân hàng --</option>
+                            <option value="Vietcombank">Vietcombank</option>
+                            <option value="TPBank">TPBank</option>
+                            <option value="Techcombank">Techcombank</option>
+                            <option value="MB Bank">MB Bank</option>
+                            <option value="Agribank">Agribank</option>
+                            <option value="Momo">Ví MoMo</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label small fw-bold">Số tài khoản</label>
+                        <input type="text" name="bankAccount" class="form-control rounded-4 border-light bg-light" placeholder="Nhập số tài khoản..." required>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label small fw-bold">Tên chủ tài khoản (Viết hoa không dấu)</label>
+                        <input type="text" name="bankHolder" class="form-control rounded-4 border-light bg-light" placeholder="VD: NGUYEN VAN A" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="submit" class="btn-withdraw">Xác nhận gửi yêu cầu</button>
+            </div>
+        </form>Section-Card
+    </div>
+</div>
+
+<!-- Footer Holder -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

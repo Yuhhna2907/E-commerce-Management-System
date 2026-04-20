@@ -18,6 +18,19 @@ public class DashboardDTO {
     private long totalProducts;
     private long lowStockCount;
 
+    // --- CÁC FIELD MỚI (MODULE 1.2) ---
+    private long totalStandardUsers;
+    private BigDecimal totalPendingRefundAmount;
+    private long totalLoyaltyPoints;
+    private long unansweredQuestions;
+    private long totalCoupons;
+    private java.math.BigDecimal totalWalletBalance;
+    private long pendingWithdrawalsCount;
+    
+    // --- DỮ LIỆU BIỂU ĐỒ TRÒN (Payment Distribution) ---
+    private List<String> paymentMethodLabels;
+    private List<Long> paymentMethodValues;
+
     // --- DỮ LIỆU BIỂU ĐỒ DOANH THU (Line Chart) ---
     private List<String> revenueLabels;       // Danh sách các ngày: "2026-04-08", "2026-04-09"...
     private List<BigDecimal> actualRevenueValues;  // Cột doanh thu THỰC (xanh lá)

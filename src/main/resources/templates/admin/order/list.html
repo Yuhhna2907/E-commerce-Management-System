@@ -2,352 +2,533 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý đơn hàng - SmartZone Admin</title>
+    <title>Trung Tâm Xử Lý Đơn Hàng - SmartZone Enterprise</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --sz-orange: #fbbd05;
-            --sz-dark: #1d1d1f;
-            --sz-light: #f5f5f7;
-            --sz-white: #ffffff;
+            --sz-dark: #1A1C20;
+            --sz-gray: #f2f2f7;
+            --sz-text-muted: #8E8E93;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            --glass-blur: blur(20px);
         }
 
         body {
-            background-color: var(--sz-light);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f0f2f5;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
             color: var(--sz-dark);
+            min-height: 100vh;
         }
 
-        /* Header Trắng tinh tế */
-        .header-sz {
-            background-color: var(--sz-white);
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
-            top: 0;
-            z-index: 1050;
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
         }
 
-        /* Sidebar thiết kế dạng lửng */
-        .sidebar-container {
-            min-height: calc(100vh - 100px);
-            background: var(--sz-white);
-            border-radius: 16px;
-            margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
-        }
-
-        .sidebar-link {
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #6e6e73;
-            border-radius: 12px;
-            margin-bottom: 4px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
-        .sidebar-link:hover, .sidebar-link.active {
-            background-color: #fff9e6;
-            color: var(--sz-orange);
-        }
-
-        /* Tinh chỉnh Badge Trạng thái Đơn hàng */
-        .badge-status {
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            border: 1px solid transparent;
-        }
-
-        .badge-pending { background: #fff8e1; color: #f57f17; border-color: #ffecb3; }
-        .badge-confirmed { background: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
-        .badge-shipping { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
-        .badge-delivered { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
-        .badge-cancelled { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
-
-        /* Card chứa Table */
-        .table-container {
-            background: var(--sz-white);
-            border-radius: 16px;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
         }
 
-        .status-filter-btn {
-            border: 1px solid #e5e5e5;
-            background: #fff;
-            padding: 8px 18px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #6e6e73;
-            transition: 0.3s;
-            text-decoration: none;
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
         }
-        .status-filter-btn:hover, .status-filter-btn.active {
-            background: var(--sz-orange);
-            color: #fff;
-            border-color: var(--sz-orange);
+
+        /* KPI Mini Card */
+        .kpi-mini { transition: all 0.3s; cursor: default; }
+        .kpi-mini:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.06) !important; }
+
+        /* Search Bar */
+        .search-bar {
+            border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 10px 16px;
+            font-size: 0.88rem; font-weight: 500; background: white; transition: all 0.2s; width: 260px;
+        }
+        .search-bar:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 3px rgba(251,189,5,0.15); outline: none; }
+
+        .date-input {
+            border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px 12px;
+            font-size: 0.82rem; font-weight: 600; background: white; transition: all 0.2s;
+        }
+        .date-input:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 3px rgba(251,189,5,0.15); outline: none; }
+
+        /* Filter Pills */
+        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-pill {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(0,0,0,0.06);
+            color: #6e6e73;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(5px);
+        }
+        .filter-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: var(--sz-dark); }
+        .filter-pill.active { background: var(--sz-dark); color: white; border-color: var(--sz-dark); box-shadow: 0 6px 20px rgba(26,28,32,0.2); }
+        .pill-count {
+            background: rgba(0,0,0,0.08); padding: 1px 7px; border-radius: 20px;
+            font-size: 0.68rem; font-weight: 700;
+        }
+        .filter-pill.active .pill-count { background: rgba(255,255,255,0.2); }
+
+        /* Table */
+        .order-table { border-collapse: separate; border-spacing: 0 8px; }
+        .order-table thead th {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--sz-text-muted); border: none; padding: 10px 16px;
+        }
+        .order-table tbody tr {
+            background: white; border-radius: 16px; transition: all 0.25s ease;
+        }
+        .order-table tbody tr:hover { transform: translateX(3px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+        .order-table tbody td { padding: 14px 16px; border: none; vertical-align: middle; }
+        .order-table tbody td:first-child { border-radius: 16px 0 0 16px; }
+        .order-table tbody td:last-child { border-radius: 0 16px 16px 0; }
+
+        /* Status Badges */
+        .badge-status {
+            padding: 5px 12px; border-radius: 10px; font-weight: 700;
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent;
+        }
+        .badge-pending { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+        .badge-confirmed { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+        .badge-shipping { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+        .badge-delivered { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .badge-cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+        .badge-refund_requested { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+        .badge-refunded { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+        .badge-partial_refunded { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+
+        /* Action Buttons */
+        .btn-action {
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 10px; border: 1px solid rgba(0,0,0,0.06);
+            background: white; color: #6e6e73;
+            transition: all 0.2s; cursor: pointer; font-size: 0.85rem;
+        }
+        .btn-action:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-action.confirm { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
+        .btn-action.ship { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+        .btn-action.deliver { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
+        .btn-action.cancel { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+
+        /* Spinning */
+        .btn-action.loading { pointer-events: none; opacity: 0.5; }
+        .btn-action.loading i { animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Pagination */
+        .page-link { border-radius: 10px !important; border: none; font-weight: 600; margin: 0 2px; transition: all 0.2s; }
+        .page-item.active .page-link { background: var(--sz-dark); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .page-link:hover { background: rgba(0,0,0,0.06); }
+
+        /* Animations */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast-glass {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.6); border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        /* Row fade effect for AJAX */
+        .row-updating { opacity: 0.4; pointer-events: none; transition: opacity 0.3s; }
+        .row-updated { animation: flashGreen 0.8s ease; }
+        @keyframes flashGreen {
+            0% { background: #ecfdf5; } 100% { background: white; }
         }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg header-sz py-3 shadow-sm">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center fw-bold text-dark" th:href="@{/admin/products}">
-            <div class="bg-warning rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                <i class="bi bi-phone-fill text-white"></i>
-            </div>
-            SmartZone <span class="text-warning ms-1">Admin</span>
-        </a>
-        <div class="dropdown">
-            <a class="text-dark text-decoration-none dropdown-toggle fw-bold" href="#" data-bs-toggle="dropdown">
-                <i class="bi bi-person-circle fs-5 me-1 text-secondary"></i> Admin Duy
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-3">
-                <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item py-2 text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid">
-    <div class="row px-2">
-        <div class="col-md-2 p-3">
-            <div class="sidebar-container p-3 border">
-                <p class="text-muted small fw-bold px-3 mb-3 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Quản lý cửa hàng</p>
-
-                <a th:href="@{/admin/dashboard}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
-                    <i class="bi bi-grid-1x2-fill me-3"></i> Tổng quan
-                </a>
-                <a th:href="@{/admin/products}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'product'} ? 'active' : ''">
-                    <i class="bi bi-phone-vibrate-fill me-3"></i> Sản phẩm
-                </a>
-                <a th:href="@{/admin/categories}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'category'} ? 'active' : ''">
-                    <i class="bi bi-stack me-3"></i> Danh mục
-                </a>
-                <a th:href="@{/admin/orders}" class="sidebar-link mb-2 active">
-                    <i class="bi bi-cart-check-fill me-3"></i> Đơn hàng
-                    <span th:if="${countPending != null && countPending > 0}" class="badge bg-danger ms-auto rounded-pill" th:text="${countPending}"></span>
-                </a>
-                <a th:href="@{/admin/orders/refunds}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'refund'} ? 'active' : ''">
-                    <i class="bi bi-arrow-return-left me-3"></i> Hoàn trả
-                </a>
-
-                <a th:href="@{/admin/coupons}" class="sidebar-link mb-2"
-                   th:classappend="${pageTitle == 'coupon'} ? 'active' : ''">
-                    <i class="bi bi-ticket-perforated-fill me-3"></i> Khuyến mãi
-                </a>
-
-                <hr class="my-4">
-                <a th:href="@{/admin/products}" class="sidebar-link text-danger">
-                    <i class="bi bi-box-arrow-left me-3"></i> Thoát
-                </a>
-            </div>
+<div class="container-fluid p-0">
+    <div class="row g-0 mx-3 my-3">
+        <!-- SIDEBAR -->
+        <div class="col-auto" style="width: 260px;">
+            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
         </div>
 
-        <div class="col-md-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- MAIN CONTENT -->
+        <div class="col ps-4 pe-2">
+            <!-- PAGE HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
                 <div>
-                    <h2 class="fw-bold text-dark mb-1">Quản lý đơn hàng</h2>
-                    <p class="text-muted small mb-0">Theo dõi trạng thái và xử lý đơn hàng khách hàng</p>
+                    <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">Trung Tâm Xử Lý Đơn Hàng</h2>
+                    <p class="text-muted mb-0 small fw-medium">Theo dõi, xác nhận và vận chuyển đơn hàng theo thời gian thực.</p>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-dark bg-opacity-10 text-dark rounded-pill px-3 py-2 fw-bold">
+                        <i class="bi bi-stack me-1"></i> <span th:text="${totalElements}">0</span> kết quả
+                    </span>
+                    <a href="/admin/dashboard" class="btn btn-light rounded-pill px-3 btn-sm fw-bold shadow-sm border">
+                        <i class="bi bi-grid-fill me-1 text-primary"></i> Dashboard
+                    </a>
+                    <!-- EXPORT CSV -->
+                    <a th:href="@{/admin/orders/export(status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                       class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold">
+                        <i class="bi bi-download me-1"></i> Xuất CSV
+                    </a>
                 </div>
             </div>
 
-            <div class="table-container shadow-sm border">
+            <!-- KPI ROW -->
+            <div class="row g-3 mb-4 fade-up delay-1">
+                <div class="col">
+                    <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
+                        <div class="p-2 rounded-3 bg-warning bg-opacity-10 text-warning me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                            <i class="bi bi-hourglass-split fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bolder fs-5 text-dark" th:text="${countPending}">0</div>
+                            <div class="text-muted small fw-bold" style="font-size:0.65rem">CHỜ DUYỆT</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
+                        <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                            <i class="bi bi-check-circle-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bolder fs-5 text-dark" th:text="${countConfirmed}">0</div>
+                            <div class="text-muted small fw-bold" style="font-size:0.65rem">ĐÃ XÁC NHẬN</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
+                        <div class="p-2 rounded-3 bg-info bg-opacity-10 text-info me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                            <i class="bi bi-truck fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bolder fs-5 text-dark" th:text="${countShipping}">0</div>
+                            <div class="text-muted small fw-bold" style="font-size:0.65rem">ĐANG GIAO</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
+                        <div class="p-2 rounded-3 bg-success bg-opacity-10 text-success me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                            <i class="bi bi-house-check-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bolder fs-5 text-dark" th:text="${countDelivered}">0</div>
+                            <div class="text-muted small fw-bold" style="font-size:0.65rem">HOÀN THÀNH</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
+                        <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-danger me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                            <i class="bi bi-x-octagon-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bolder fs-5 text-dark" th:text="${countCancelled}">0</div>
+                            <div class="text-muted small fw-bold" style="font-size:0.65rem">ĐÃ HỦY</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Status Filters -->
-            <div class="d-flex gap-2 flex-wrap mb-4">
-                <a th:href="@{/admin/orders}" class="status-filter-btn"
-                   th:classappend="${currentStatus == null} ? 'active'">Tất cả</a>
-                <a th:href="@{/admin/orders(status='PENDING')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
-                    <i class="bi bi-hourglass-split me-1"></i> Chờ xác nhận
+            <!-- SEARCH + DATE RANGE BAR -->
+            <div class="glass-panel p-3 mb-4 fade-up delay-2">
+                <form method="get" action="/admin/orders" class="d-flex align-items-center gap-3 flex-wrap">
+                    <input type="hidden" name="status" th:value="${currentStatus}" th:if="${currentStatus != null}">
+                    <div class="position-relative flex-grow-1" style="max-width: 280px;">
+                        <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" name="keyword" class="search-bar w-100 ps-5" placeholder="Tìm mã đơn, tên, SĐT..."
+                               th:value="${keyword}" autocomplete="off">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-range text-primary"></i>
+                        <input type="date" name="dateFrom" class="date-input" th:value="${dateFrom}">
+                        <span class="text-muted small">→</span>
+                        <input type="date" name="dateTo" class="date-input" th:value="${dateTo}">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm rounded-pill px-4 fw-bold">
+                        <i class="bi bi-funnel-fill me-1"></i> Lọc
+                    </button>
+                    <a href="/admin/orders" class="btn btn-light btn-sm rounded-pill px-3 fw-bold border">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </form>
+            </div>
+
+            <!-- FILTER PILLS with BADGE COUNTS -->
+            <div class="filter-pills mb-4 fade-up delay-2">
+                <a th:href="@{/admin/orders(keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus == null} ? 'active'">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Tất cả <span class="pill-count" th:text="${countAll}">0</span>
                 </a>
-                <a th:href="@{/admin/orders(status='CONFIRMED')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'CONFIRMED'} ? 'active'">
-                    <i class="bi bi-check-circle me-1"></i> Đã xác nhận
+                <a th:href="@{/admin/orders(status='PENDING', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
+                    <i class="bi bi-hourglass-split"></i> Chờ xác nhận <span class="pill-count" th:text="${countPending}">0</span>
                 </a>
-                <a th:href="@{/admin/orders(status='SHIPPING')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'SHIPPING'} ? 'active'">
-                    <i class="bi bi-truck me-1"></i> Đang giao
+                <a th:href="@{/admin/orders(status='CONFIRMED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'CONFIRMED'} ? 'active'">
+                    <i class="bi bi-check-circle"></i> Đã xác nhận <span class="pill-count" th:text="${countConfirmed}">0</span>
                 </a>
-                <a th:href="@{/admin/orders(status='DELIVERED')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'DELIVERED'} ? 'active'">
-                    <i class="bi bi-house-check me-1"></i> Đã giao
+                <a th:href="@{/admin/orders(status='SHIPPING', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'SHIPPING'} ? 'active'">
+                    <i class="bi bi-truck"></i> Đang giao <span class="pill-count" th:text="${countShipping}">0</span>
                 </a>
-                <a th:href="@{/admin/orders(status='CANCELLED')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'CANCELLED'} ? 'active'">
-                    <i class="bi bi-x-circle me-1"></i> Đã hủy
+                <a th:href="@{/admin/orders(status='DELIVERED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'DELIVERED'} ? 'active'">
+                    <i class="bi bi-house-check"></i> Đã giao <span class="pill-count" th:text="${countDelivered}">0</span>
                 </a>
-                <a th:href="@{/admin/orders(status='REFUND_REQUESTED')}" class="status-filter-btn"
-                   th:classappend="${currentStatus?.name() == 'REFUND_REQUESTED'} ? 'active'">
-                    <i class="bi bi-arrow-return-left me-1"></i> Yêu cầu hoàn
+                <a th:href="@{/admin/orders(status='CANCELLED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'CANCELLED'} ? 'active'">
+                    <i class="bi bi-x-circle"></i> Đã hủy <span class="pill-count" th:text="${countCancelled}">0</span>
+                </a>
+                <a th:href="@{/admin/orders(status='REFUND_REQUESTED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="filter-pill" th:classappend="${currentStatus?.name() == 'REFUND_REQUESTED'} ? 'active'">
+                    <i class="bi bi-arrow-return-left"></i> Yêu cầu hoàn <span class="pill-count" th:text="${countRefundRequested}">0</span>
                 </a>
             </div>
 
-            <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${message}"></span>
+            <!-- FLASH -->
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show glass-card border-success border-opacity-25 py-3 mb-4" role="alert" style="background: rgba(236, 253, 245, 0.9);">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i> <span class="fw-bold" th:text="${message}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-x-circle-fill me-2"></i> <span th:text="${error}"></span>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show glass-card border-danger border-opacity-25 py-3 mb-4" role="alert" style="background: rgba(254, 242, 242, 0.9);">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> <span class="fw-bold" th:text="${error}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
-            <div class="table-responsive bg-white shadow-sm rounded-3">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light text-center">
-                    <tr>
-                        <th>Mã ĐH</th>
-                        <th>Khách hàng</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày đặt</th>
-                        <th width="220">Thao tác</th>
-                    </tr>
+            <!-- ORDER TABLE -->
+            <div class="glass-card p-4 fade-up delay-3" id="orderTableContainer">
+                <table class="table order-table mb-0 w-100">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Khách Hàng</th>
+                            <th>Tổng Tiền</th>
+                            <th>Trạng Thái</th>
+                            <th>Ngày Đặt</th>
+                            <th class="text-center">Thao Tác</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="order : ${orders}" class="text-center">
-                        <td class="fw-bold" th:text="'#' + ${order.id}"></td>
-                        <td class="text-start">
-                            <div class="fw-bold" th:text="${order.customerName}"></div>
-                            <small class="text-muted"><i class="bi bi-telephone"></i> <span th:text="${order.receiverPhone}"></span></small>
-                        </td>
-                        <td class="text-danger fw-bold price-mono" style="font-family: monospace;">
-                            <span th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}"></span> ₫
-                        </td>
-                        <td>
-                            <span class="badge-status"
-                                  th:classappend="'badge-' + ${order.status.toLowerCase()}"
-                                  th:text="${order.statusDisplay}">Status</span>
-                        </td>
-                        <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td>
-                            <div class="d-flex gap-1 justify-content-center align-items-center">
-                                <!-- Xem chi tiết -->
-                                <a th:href="@{/admin/orders/detail/{id}(id=${order.id})}"
-                                   class="btn btn-sm btn-outline-info" title="Chi tiết">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-
-                                <!-- Action buttons dựa theo status -->
-                                <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/{id}/confirm(id=${order.id})}" method="post" class="d-inline">
-                                    <button class="btn btn-sm btn-success" onclick="return confirm('Xác nhận đơn hàng này?')">
-                                        <i class="bi bi-check-lg"></i> Duyệt
+                        <tr th:each="order : ${orders}" th:id="'row-' + ${order.id}">
+                            <td>
+                                <span class="fw-bolder text-primary" th:text="'#' + ${order.id}">#0</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 36px; height: 36px;">
+                                        <i class="bi bi-person-fill text-primary small"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark small" th:text="${order.customerName}">Name</div>
+                                        <div class="text-muted" style="font-size:0.72rem"><i class="bi bi-telephone-fill me-1"></i> <span th:text="${order.receiverPhone}">Phone</span></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bolder text-danger" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </td>
+                            <td>
+                                <span th:id="'badge-' + ${order.id}" class="badge-status" th:classappend="'badge-' + ${order.status.toLowerCase()}" th:text="${order.statusDisplay}">Status</span>
+                            </td>
+                            <td>
+                                <div class="small fw-medium text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy')}">01/01</span>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.68rem;" th:text="${#temporals.format(order.createdAt, 'HH:mm')}">00:00</div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex gap-1 justify-content-center" th:id="'actions-' + ${order.id}">
+                                    <!-- View -->
+                                    <a th:href="@{/admin/orders/detail/{id}(id=${order.id})}" class="btn-action" title="Xem chi tiết">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
+                                    <!-- Confirm (AJAX) -->
+                                    <button th:if="${order.status == 'PENDING'}" class="btn-action confirm"
+                                            th:data-id="${order.id}" data-action="confirm" title="Xác nhận" onclick="ajaxAction(this)">
+                                        <i class="bi bi-check-lg"></i>
                                     </button>
-                                </form>
-
-                                <form th:if="${order.status == 'CONFIRMED'}" th:action="@{/admin/orders/{id}/ship(id=${order.id})}" method="post" class="d-inline">
-                                    <button class="btn btn-sm btn-primary">
-                                        <i class="bi bi-truck"></i> Giao
+                                    <!-- Ship (AJAX) -->
+                                    <button th:if="${order.status == 'CONFIRMED'}" class="btn-action ship"
+                                            th:data-id="${order.id}" data-action="ship" title="Giao hàng" onclick="ajaxAction(this)">
+                                        <i class="bi bi-truck"></i>
                                     </button>
-                                </form>
-
-                                <form th:if="${order.status == 'SHIPPING'}" th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post" class="d-inline">
-                                    <button class="btn btn-sm btn-success">
-                                        <i class="bi bi-house-check"></i> Đã giao
+                                    <!-- Deliver (AJAX) -->
+                                    <button th:if="${order.status == 'SHIPPING'}" class="btn-action deliver"
+                                            th:data-id="${order.id}" data-action="deliver" title="Đã giao" onclick="ajaxAction(this)">
+                                        <i class="bi bi-house-check"></i>
                                     </button>
-                                </form>
-
-                                <form th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}"
-                                      th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post" class="d-inline">
-                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Hủy đơn hàng này?')">
+                                    <!-- Cancel (AJAX) -->
+                                    <button th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}" class="btn-action cancel"
+                                            th:data-id="${order.id}" data-action="cancel" title="Hủy đơn" onclick="ajaxAction(this)">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(orders)}">
-                        <td colspan="6" class="text-center p-4 text-muted">Không có đơn hàng nào.</td>
-                    </tr>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox display-4 d-block mb-3 opacity-25"></i>
+                                    <h6 class="fw-bold">Không có đơn hàng nào</h6>
+                                    <p class="small mb-0">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
+
+                <!-- PAGINATION -->
+                <nav th:if="${totalPages > 1}" class="mt-4">
+                    <ul class="pagination justify-content-center gap-1 mb-0">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:text="${i + 1}" th:href="@{/admin/orders(page=${i}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="text-center mt-2">
+                        <span class="small text-muted fw-medium">
+                            Trang <strong th:text="${currentPage + 1}">1</strong> / <strong th:text="${totalPages}">1</strong>
+                            — <span th:text="${totalElements}">0</span> đơn hàng
+                        </span>
+                    </div>
+                </nav>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Order Detail Modal (existing, enhanced) -->
-<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-receipt me-2"></i>Chi tiết đơn hàng #<span id="displayOrderId"></span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div id="customerInfo" class="row mb-4 p-3 bg-light rounded g-3"></div>
-                <h6 class="fw-bold mb-3"><i class="bi bi-box me-2"></i>Danh sách sản phẩm</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead class="table-light">
-                        <tr><th>Sản phẩm</th><th class="text-center">Đơn giá</th><th class="text-center">SL</th><th class="text-end">Thành tiền</th></tr>
-                        </thead>
-                        <tbody id="orderDetailBody"></tbody>
-                        <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold">TỔNG CỘNG:</td>
-                            <td id="totalOrderPrice" class="text-end text-danger fw-bold fs-5"></td>
-                        </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-            </div>
+<!-- TOAST -->
+<div class="toast-container">
+    <div id="actionToast" class="toast toast-glass border-0" role="alert">
+        <div class="toast-body fw-bold d-flex align-items-center gap-2 py-3 px-4">
+            <i id="toastIcon" class="bi bi-check-circle-fill text-success fs-5"></i>
+            <span id="toastMsg">Thao tác thành công!</span>
         </div>
     </div>
 </div>
-
-<footer class="footer text-center p-3 mt-4 shadow-sm">
-    <div class="container">
-        <small>© 2026 Smartphone Store | Admin Dashboard System</small>
-    </div>
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function showDetail(id) {
-        fetch('/admin/orders/api/detail/' + id)
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('displayOrderId').textContent = data.id;
-                document.getElementById('customerInfo').innerHTML = `
-                    <div class="col-md-6">
-                        <strong>Người nhận:</strong> ${data.customerName}<br>
-                        <strong>Số điện thoại:</strong> ${data.receiverPhone}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>Địa chỉ:</strong> ${data.shippingAddress}<br>
-                        <strong>Ghi chú:</strong> ${data.note || 'Không có'}
-                    </div>
-                `;
-                let html = '';
-                data.items.forEach(item => {
-                    html += `<tr>
-                        <td><img src="${item.imageUrl}" width="40" class="me-2 rounded">${item.productName}</td>
-                        <td class="text-center">${new Intl.NumberFormat('vi-VN').format(item.price)} ₫</td>
-                        <td class="text-center">${item.quantity}</td>
-                        <td class="text-end fw-bold">${new Intl.NumberFormat('vi-VN').format(item.subTotal)} ₫</td>
-                    </tr>`;
-                });
-                document.getElementById('orderDetailBody').innerHTML = html;
-                document.getElementById('totalOrderPrice').textContent = new Intl.NumberFormat('vi-VN').format(data.totalPrice) + ' ₫';
-                new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
-            })
-            .catch(err => alert("Lỗi tải chi tiết: " + err));
+    // ======================== AJAX STATUS UPDATES ========================
+    const BADGE_CLASSES = {
+        'PENDING': 'badge-pending',
+        'CONFIRMED': 'badge-confirmed',
+        'SHIPPING': 'badge-shipping',
+        'DELIVERED': 'badge-delivered',
+        'CANCELLED': 'badge-cancelled',
+        'REFUND_REQUESTED': 'badge-refund_requested',
+    };
+
+    function ajaxAction(btn) {
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+
+        if (action === 'cancel' && !confirm('Hủy đơn hàng #' + id + '? Sẽ hoàn kho + voucher.')) return;
+
+        const row = document.getElementById('row-' + id);
+        const badge = document.getElementById('badge-' + id);
+        const actionsDiv = document.getElementById('actions-' + id);
+
+        // Loading state
+        btn.classList.add('loading');
+        btn.querySelector('i').className = 'bi bi-arrow-repeat';
+        row.classList.add('row-updating');
+
+        fetch('/admin/orders/api/' + id + '/' + action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            row.classList.remove('row-updating');
+
+            if (data.success) {
+                // Update badge
+                Object.values(BADGE_CLASSES).forEach(c => badge.classList.remove(c));
+                badge.classList.add(BADGE_CLASSES[data.newStatus] || 'badge-pending');
+                badge.textContent = data.newStatusDisplay;
+
+                // Remove action buttons (except eye)
+                const eyeBtn = actionsDiv.querySelector('a');
+                actionsDiv.innerHTML = '';
+                if (eyeBtn) actionsDiv.appendChild(eyeBtn);
+
+                // Add new relevant buttons
+                if (data.newStatus === 'CONFIRMED') {
+                    actionsDiv.innerHTML += `<button class="btn-action ship" data-id="${id}" data-action="ship" title="Giao hàng" onclick="ajaxAction(this)"><i class="bi bi-truck"></i></button>`;
+                    actionsDiv.innerHTML += `<button class="btn-action cancel" data-id="${id}" data-action="cancel" title="Hủy đơn" onclick="ajaxAction(this)"><i class="bi bi-x-lg"></i></button>`;
+                } else if (data.newStatus === 'SHIPPING') {
+                    actionsDiv.innerHTML += `<button class="btn-action deliver" data-id="${id}" data-action="deliver" title="Đã giao" onclick="ajaxAction(this)"><i class="bi bi-house-check"></i></button>`;
+                }
+
+                // Flash row
+                row.classList.add('row-updated');
+                setTimeout(() => row.classList.remove('row-updated'), 800);
+
+                showToast(data.message, true);
+            } else {
+                showToast(data.message || 'Có lỗi xảy ra', false);
+            }
+        })
+        .catch(err => {
+            row.classList.remove('row-updating');
+            showToast('Lỗi kết nối: ' + err.message, false);
+        });
+    }
+
+    function showToast(msg, success) {
+        const toast = document.getElementById('actionToast');
+        const icon = document.getElementById('toastIcon');
+        const text = document.getElementById('toastMsg');
+
+        icon.className = success ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-exclamation-triangle-fill text-danger fs-5';
+        text.textContent = msg;
+
+        new bootstrap.Toast(toast, { delay: 3000 }).show();
     }
 </script>
 </body>

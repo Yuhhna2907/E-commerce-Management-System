@@ -1,0 +1,1 @@
+2026-04-19 00:17:30.795 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/admin/products/toggle-status/57 ip=0:0:0:0:0:0:0:1

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Access Denied - SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .error-container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .error-icon {
+            font-size: 80px;
+            color: #ef4444;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        
+        .error-message {
+            font-size: 1.1rem;
+            color: #6b7280;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .error-suggestion {
+            font-size: 1rem;
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
+        
+        .btn-home {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .btn-home:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <i class="bi bi-lock-fill error-icon"></i>
+        <h1 class="error-title" th:text="${errorTitle}">Access Denied</h1>
+        <p class="error-message" th:text="${errorMessage}">
+            You do not have permission to access this resource.
+        </p>
+        <p class="error-suggestion" th:text="${errorSuggestion}">
+            Please contact your administrator if you believe this is an error.
+        </p>
+        <a href="javascript:history.back()" class="btn-home me-2">
+            <i class="bi bi-arrow-left me-2"></i>Go Back
+        </a>
+        <a th:href="@{/user/products}" class="btn-home">
+            <i class="bi bi-house me-2"></i>Home
+        </a>
+    </div>
+</body>
+</html>

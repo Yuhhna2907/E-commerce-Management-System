@@ -1,6 +1,8 @@
 package com.codegym.smartphonemanagement.controller.user;
 
-import com.codegym.smartphonemanagement.exception.UnauthorizedException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
 import com.codegym.smartphonemanagement.model.dto.*;
 import com.codegym.smartphonemanagement.service.qa.ProductQuestionService;
 import jakarta.validation.Valid;
@@ -16,6 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller xử lý Q&A System
+ * ✅ Đã tích hợp Spring Security - không còn hardcoded user ID
+ */
 @Controller
 @RequestMapping("/qa")
 @RequiredArgsConstructor
@@ -23,9 +29,6 @@ import java.util.Map;
 public class ProductQuestionController {
     
     private final ProductQuestionService questionService;
-    
-    // TEMPORARY: Hardcoded user ID cho testing (chưa có Spring Security)
-    private static final Long HARDCODED_USER_ID = 1L;
     
     /**
      * Lấy danh sách câu hỏi của sản phẩm với sorting và pagination
@@ -50,15 +53,12 @@ public class ProductQuestionController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            log.info("Fetching questions for product ID: {} with sort: {}, page: {}, size: {}", 
+            log.debug("Fetching questions for product ID: {} with sort: {}, page: {}, size: {}", 
                     productId, sortBy, page, size);
             
-            // Get current user ID (có thể null nếu chưa đăng nhập)
-            Long currentUserId = getCurrentUserId();
-            
-            // Get questions with pagination
+            // Get questions with pagination (service sẽ tự lấy current user từ Spring Security)
             Page<QuestionResponseDTO> questionsPage = questionService.getQuestions(
-                    productId, sortBy, page, size, currentUserId);
+                    productId, sortBy, page, size);
             
             // Build success response
             response.put("success", true);
@@ -69,17 +69,21 @@ public class ProductQuestionController {
             response.put("hasNext", questionsPage.hasNext());
             response.put("hasPrevious", questionsPage.hasPrevious());
             
-            log.debug("Successfully fetched {} questions for product ID: {}", 
+            log.info("Successfully fetched {} questions for product ID: {}", 
                     questionsPage.getContent().size(), productId);
             
             return ResponseEntity.ok(response);
+            
+        } catch (BadRequestException e) {
+            log.warn("Bad request for get questions: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
             
         } catch (Exception e) {
             log.error("Error fetching questions for product ID {}: {}", productId, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Không thể tải danh sách câu hỏi. Vui lòng thử lại.");
-            response.put("error", e.getMessage());
-            response.put("errorType", e.getClass().getSimpleName());
             return ResponseEntity.internalServerError().body(response);
         }
     }
@@ -87,8 +91,6 @@ public class ProductQuestionController {
     /**
      * Tạo câu hỏi mới cho sản phẩm (yêu cầu đăng nhập)
      * Endpoint: POST /qa/products/{productId}/questions
-     * 
-     * TEMPORARY: Sử dụng hardcoded user ID = 1L
      * 
      * @param productId ID của sản phẩm
      * @param requestDTO DTO chứa nội dung câu hỏi
@@ -119,13 +121,10 @@ public class ProductQuestionController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // Get current user ID (mock user = 1L)
-            Long currentUserId = getCurrentUserId();
+            log.debug("Creating question for product ID: {}", productId);
             
-            log.info("Creating question for product ID: {} by user ID: {}", productId, currentUserId);
-            
-            // Create question
-            QuestionResponseDTO questionDTO = questionService.createQuestion(productId, requestDTO, currentUserId);
+            // Create question (service sẽ tự lấy current user từ Spring Security)
+            QuestionResponseDTO questionDTO = questionService.createQuestion(productId, requestDTO);
             
             // Build success response
             response.put("success", true);
@@ -137,14 +136,14 @@ public class ProductQuestionController {
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
-        } catch (UnauthorizedException e) {
+        } catch (UnauthorizedAccessException e) {
             log.warn("Unauthorized attempt to create question: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid argument for create question: {}", e.getMessage());
+        } catch (EntityNotFoundException | BadRequestException e) {
+            log.warn("Invalid request for create question: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
@@ -153,8 +152,6 @@ public class ProductQuestionController {
             log.error("Error creating question for product ID {}: {}", productId, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Không thể tạo câu hỏi. Vui lòng thử lại.");
-            response.put("error", e.getMessage());
-            response.put("errorType", e.getClass().getSimpleName());
             return ResponseEntity.internalServerError().body(response);
         }
     }
@@ -162,8 +159,6 @@ public class ProductQuestionController {
     /**
      * Trả lời câu hỏi (chỉ SELLER hoặc ADMIN)
      * Endpoint: POST /qa/questions/{questionId}/answers
-     * 
-     * TEMPORARY: Sử dụng hardcoded user ID = 1L
      * 
      * @param questionId ID của câu hỏi
      * @param requestDTO DTO chứa nội dung câu trả lời
@@ -174,7 +169,6 @@ public class ProductQuestionController {
      */
     @PostMapping("/questions/{questionId}/answers")
     @ResponseBody
-
     public ResponseEntity<Map<String, Object>> answerQuestion(
             @PathVariable Long questionId,
             @Valid @RequestBody AnswerRequestDTO requestDTO,
@@ -195,13 +189,10 @@ public class ProductQuestionController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // Get current user ID (mock user = 1L)
-            Long currentUserId = getCurrentUserId();
+            log.debug("Answering question ID: {}", questionId);
             
-            log.info("Answering question ID: {} by user ID: {}", questionId, currentUserId);
-            
-            // Answer question
-            AnswerResponseDTO answerDTO = questionService.answerQuestion(questionId, requestDTO, currentUserId);
+            // Answer question (service sẽ tự lấy current user và check permission)
+            AnswerResponseDTO answerDTO = questionService.answerQuestion(questionId, requestDTO);
             
             // Build success response
             response.put("success", true);
@@ -213,14 +204,14 @@ public class ProductQuestionController {
             
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
-        } catch (UnauthorizedException e) {
+        } catch (UnauthorizedAccessException e) {
             log.warn("Unauthorized attempt to answer question: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid argument for answer question: {}", e.getMessage());
+        } catch (EntityNotFoundException | BadRequestException e) {
+            log.warn("Invalid request for answer question: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
@@ -229,8 +220,6 @@ public class ProductQuestionController {
             log.error("Error answering question ID {}: {}", questionId, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Không thể tạo câu trả lời. Vui lòng thử lại.");
-            response.put("error", e.getMessage());
-            response.put("errorType", e.getClass().getSimpleName());
             return ResponseEntity.internalServerError().body(response);
         }
     }
@@ -238,8 +227,6 @@ public class ProductQuestionController {
     /**
      * Bình chọn câu trả lời (yêu cầu đăng nhập)
      * Endpoint: POST /qa/answers/{answerId}/vote
-     * 
-     * TEMPORARY: Sử dụng hardcoded user ID = 1L
      * 
      * @param answerId ID của câu trả lời
      * @param requestDTO DTO chứa giá trị vote (true = helpful, false = not helpful)
@@ -250,7 +237,6 @@ public class ProductQuestionController {
      */
     @PostMapping("/answers/{answerId}/vote")
     @ResponseBody
-
     public ResponseEntity<Map<String, Object>> voteAnswer(
             @PathVariable Long answerId,
             @Valid @RequestBody VoteRequestDTO requestDTO,
@@ -271,32 +257,28 @@ public class ProductQuestionController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // Get current user ID (mock user = 1L)
-            Long currentUserId = getCurrentUserId();
+            log.debug("Voting on answer ID: {} - helpful: {}", answerId, requestDTO.getIsHelpful());
             
-            log.info("Voting on answer ID: {} by user ID: {} - helpful: {}", 
-                    answerId, currentUserId, requestDTO.getIsHelpful());
-            
-            // Vote answer
-            AnswerResponseDTO answerDTO = questionService.voteAnswer(answerId, requestDTO, currentUserId);
+            // Vote answer (service sẽ tự lấy current user từ Spring Security)
+            AnswerResponseDTO answerDTO = questionService.voteAnswer(answerId, requestDTO);
             
             // Build success response
             response.put("success", true);
             response.put("message", "Cảm ơn bạn đã bình chọn");
             response.put("answer", answerDTO);
             
-            log.info("Successfully voted on answer ID: {} by user ID: {}", answerId, currentUserId);
+            log.info("Successfully voted on answer ID: {}", answerId);
             
             return ResponseEntity.ok(response);
             
-        } catch (UnauthorizedException e) {
+        } catch (UnauthorizedAccessException e) {
             log.warn("Unauthorized attempt to vote answer: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid argument for vote answer: {}", e.getMessage());
+        } catch (EntityNotFoundException | BadRequestException e) {
+            log.warn("Invalid request for vote answer: {}", e.getMessage());
             response.put("success", false);
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
@@ -305,18 +287,7 @@ public class ProductQuestionController {
             log.error("Error voting on answer ID {}: {}", answerId, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Không thể bình chọn. Vui lòng thử lại.");
-            response.put("error", e.getMessage());
-            response.put("errorType", e.getClass().getSimpleName());
             return ResponseEntity.internalServerError().body(response);
         }
-    }
-    
-    /**
-     * TEMPORARY: Lấy ID của user hiện tại (hardcoded = 1L)
-     * 
-     * @return User ID = 1L
-     */
-    private Long getCurrentUserId() {
-        return HARDCODED_USER_ID;
     }
 }

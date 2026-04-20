@@ -34,6 +34,15 @@ public class ReviewImage {
     @Column(name = "image_path", nullable = false, length = 500)
     private String imagePath;
     
+    // Thumbnail support
+    @Size(max = 500)
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+    
+    @Size(max = 500)
+    @Column(name = "thumbnail_path", length = 500)
+    private String thumbnailPath;
+    
     @NotNull(message = "File size không được null")
     @Min(value = 0, message = "File size phải >= 0")
     @Column(name = "file_size", nullable = false)
@@ -51,12 +60,42 @@ public class ReviewImage {
     @Column(nullable = false)
     private Integer height;
     
+    // Original dimensions (before compression)
+    @Column(name = "original_width")
+    private Integer originalWidth;
+    
+    @Column(name = "original_height")
+    private Integer originalHeight;
+    
+    // Image metadata
+    @Size(max = 255)
+    @Column(name = "alt_text")
+    private String altText;
+    
+    @Size(max = 50)
+    @Column(name = "image_format")
+    private String imageFormat;
+    
+    @Column(name = "color_depth")
+    private Integer colorDepth;
+    
+    @Column(name = "has_transparency")
+    private Boolean hasTransparency;
+    
     @Column(name = "upload_date", nullable = false)
     private LocalDateTime uploadDate;
     
     @Min(value = 0, message = "Display order phải >= 0")
     @Column(name = "display_order")
     private Integer displayOrder = 0;
+    
+    // Processing status
+    @Enumerated(EnumType.STRING)
+    @Column(name = "processing_status")
+    private ProcessingStatus processingStatus = ProcessingStatus.PENDING;
+    
+    @Column(name = "processing_error")
+    private String processingError;
     
     @PrePersist
     public void prePersist() {
@@ -66,5 +105,15 @@ public class ReviewImage {
         if (this.displayOrder == null) {
             this.displayOrder = 0;
         }
+        if (this.processingStatus == null) {
+            this.processingStatus = ProcessingStatus.PENDING;
+        }
+    }
+    
+    public enum ProcessingStatus {
+        PENDING,
+        PROCESSING,
+        COMPLETED,
+        FAILED
     }
 }

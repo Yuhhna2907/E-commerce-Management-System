@@ -21,8 +21,8 @@ import java.util.Optional;
 public interface ProductRecommendationRepository extends JpaRepository<ProductRecommendation, Long> {
     
     /**
-     * Tìm tất cả gợi ý cho một sản phẩm, sắp xếp theo tần suất giảm dần
-     * Chỉ lấy những gợi ý hợp lệ (frequency >= 5% và count >= 10)
+     * Tìm tất cả gợi ý cho một sản phẩm với recommendedProduct được eager load
+     * Chỉ lấy những gợi ý hợp lệ (frequency >= minFrequency và count >= minCount)
      * 
      * @param productId ID của sản phẩm gốc
      * @param minFrequency Tần suất tối thiểu (mặc định 0.05 = 5%)
@@ -30,10 +30,11 @@ public interface ProductRecommendationRepository extends JpaRepository<ProductRe
      * @return Danh sách gợi ý sắp xếp theo tần suất giảm dần
      */
     @Query("SELECT pr FROM ProductRecommendation pr " +
+           "JOIN FETCH pr.recommendedProduct rp " +
            "WHERE pr.product.id = :productId " +
            "AND pr.coPurchaseFrequency >= :minFrequency " +
            "AND pr.coPurchaseCount >= :minCount " +
-           "AND pr.recommendedProduct.active = true " +
+           "AND rp.active = true " +
            "ORDER BY pr.coPurchaseFrequency DESC")
     List<ProductRecommendation> findValidRecommendationsByProductId(
             @Param("productId") Long productId,

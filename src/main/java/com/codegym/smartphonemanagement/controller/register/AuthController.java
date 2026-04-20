@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.controller.register;
 
 import com.codegym.smartphonemanagement.model.User;
+import com.codegym.smartphonemanagement.model.dto.UserRegistrationDTO;
 import com.codegym.smartphonemanagement.service.register.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -24,12 +25,12 @@ public class AuthController {
 
     @GetMapping("/register")
     public String register(Model model) {
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new UserRegistrationDTO());
         return "register/register";
     }
 
     @PostMapping("/register")
-    public String doRegister(@ModelAttribute("user") @Valid User user, BindingResult bindingResult, Model model) {
+    public String doRegister(@ModelAttribute("user") @Valid UserRegistrationDTO user, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             return "register/register";
         }

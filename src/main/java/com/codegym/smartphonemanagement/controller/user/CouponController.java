@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +32,7 @@ public class CouponController {
 
     @GetMapping("/wallet")
     public String showWalletPage(org.springframework.ui.Model model) {
-        User user = userRepository.findById(USER_ID).orElse(null);
-        if (user != null) {
-            model.addAttribute("myWalletCoupons", couponService.getUserWallet(user));
-        }
+        userRepository.findById(USER_ID).ifPresent(user -> model.addAttribute("myWalletCoupons", couponService.getUserWallet(user)));
         return "user/coupon/wallet";
     }
 
@@ -48,22 +46,17 @@ public class CouponController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         String referer = request.getHeader("Referer");
-        return "redirect:" + (referer != null ? referer : "/user/products");
+        return "redirect:" + (referer != null ? referer : "/user/product/list");
     }
 
     @PostMapping("/apply")
-    public String applyCoupon(@RequestParam("couponCode") String code, HttpSession session, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    public String applyCoupon(@RequestParam(value = "couponCode", required = false) String code,
+                              @RequestParam(value = "shippingCouponCode", required = false) String shippingCode,
+                              HttpSession session, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         String referer = request.getHeader("Referer");
         String redirectUrl = "redirect:/user/order/checkout";
         if (referer != null && referer.contains("/user/cart")) {
             redirectUrl = "redirect:/user/cart";
-        }
-
-        if (code == null || code.trim().isEmpty()) {
-            session.removeAttribute("APPLIED_COUPON");
-            session.removeAttribute("DISCOUNT_AMT");
-            redirectAttributes.addFlashAttribute("errorCoupon", "Vui lòng nhập hoặc hủy mã giảm giá.");
-            return redirectUrl;
         }
 
         User user = userRepository.findById(USER_ID).orElse(null);
@@ -78,9 +71,9 @@ public class CouponController {
             return redirectUrl;
         }
 
-        // Tạo order nháp từ giỏ hàng để validation
         Order orderDraft = new Order();
         orderDraft.setTotalPrice(cart.getTotalPrice());
+        orderDraft.setShippingFee(new BigDecimal("35000")); // Fake shipping fee for validation purposes
         List<OrderItem> items = new ArrayList<>();
         for (CartItemResponseDTO cartItem : cart.getItems()) {
             OrderItem item = new OrderItem();
@@ -93,18 +86,53 @@ public class CouponController {
         }
         orderDraft.setItems(items);
 
-        CouponValidationResult result = couponService.validateCoupon(code, user, orderDraft);
-        
-        if (result.isValid()) {
-            session.setAttribute("APPLIED_COUPON", code);
-            session.setAttribute("DISCOUNT_AMT", result.getDiscountAmount());
-             redirectAttributes.addFlashAttribute("successCoupon", result.getMessage());
+        boolean hasSuccess = false;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder errorMsg = new StringBuilder();
+
+        // Xử lý mã Freeship
+        if (shippingCode == null || shippingCode.trim().isEmpty()) {
+            session.removeAttribute("APPLIED_SHIPPING_COUPON");
+            session.removeAttribute("SHIPPING_DISCOUNT_AMT");
         } else {
-             session.removeAttribute("APPLIED_COUPON");
-             session.removeAttribute("DISCOUNT_AMT");
-             redirectAttributes.addFlashAttribute("errorCoupon", result.getMessage());
+            CouponValidationResult shipResult = couponService.validateCoupon(shippingCode, user, orderDraft);
+            if (shipResult.isValid()) {
+                session.setAttribute("APPLIED_SHIPPING_COUPON", shippingCode);
+                session.setAttribute("SHIPPING_DISCOUNT_AMT", shipResult.getDiscountAmount());
+                successMsg.append("- ").append(shipResult.getMessage()).append(" (Freeship)\n");
+                hasSuccess = true;
+            } else {
+                session.removeAttribute("APPLIED_SHIPPING_COUPON");
+                session.removeAttribute("SHIPPING_DISCOUNT_AMT");
+                errorMsg.append("- ").append(shipResult.getMessage()).append(" (Freeship)\n");
+            }
         }
-        
+
+        // Xử lý mã Giảm giá sản phẩm
+        if (code == null || code.trim().isEmpty()) {
+            session.removeAttribute("APPLIED_COUPON");
+            session.removeAttribute("DISCOUNT_AMT");
+        } else {
+            CouponValidationResult prodResult = couponService.validateCoupon(code, user, orderDraft);
+            if (prodResult.isValid()) {
+                session.setAttribute("APPLIED_COUPON", code);
+                session.setAttribute("DISCOUNT_AMT", prodResult.getDiscountAmount());
+                successMsg.append("- ").append(prodResult.getMessage()).append(" (Đơn hàng)\n");
+                hasSuccess = true;
+            } else {
+                session.removeAttribute("APPLIED_COUPON");
+                session.removeAttribute("DISCOUNT_AMT");
+                errorMsg.append("- ").append(prodResult.getMessage()).append(" (Đơn hàng)\n");
+            }
+        }
+
+        if (hasSuccess) {
+            redirectAttributes.addFlashAttribute("successCoupon", successMsg.toString());
+        }
+        if (!errorMsg.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorCoupon", errorMsg.toString());
+        }
+
         return redirectUrl;
     }
 }

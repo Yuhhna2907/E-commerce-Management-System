@@ -32,4 +32,7 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, Long> 
     void clearDefaultByUserId(@Param("userId") Long userId);
 
     boolean existsByUserId(Long userId);
+
+    // Performance optimization: Count addresses by user without loading all addresses
+    long countByUserId(Long userId);
 }

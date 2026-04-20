@@ -44,4 +44,6 @@ public class ProductResponseDTO {
     private Integer totalReviews;
 
     private List<ProductVariantResponseDTO> variants;
+
+    private ProductSpecificationDTO specification;
 }

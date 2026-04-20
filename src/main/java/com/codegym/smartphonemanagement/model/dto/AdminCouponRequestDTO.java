@@ -37,4 +37,11 @@ public class AdminCouponRequestDTO {
 
     // Null/empty => áp dụng toàn bộ sản phẩm
     private List<Long> applicableProductIds;
+
+    @NotNull(message = "Danh mục khuyến mãi bắt buộc")
+    private com.codegym.smartphonemanagement.model.CouponCategory couponCategory = com.codegym.smartphonemanagement.model.CouponCategory.PRODUCT_DISCOUNT;
+
+    private List<Long> applicableCategoryIds;
+    private List<String> applicableBrands;
+    private List<com.codegym.smartphonemanagement.model.PaymentMethod> applicablePaymentMethods;
 }

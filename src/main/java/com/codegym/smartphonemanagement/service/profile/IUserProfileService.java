@@ -9,8 +9,6 @@ public interface IUserProfileService {
 
     void updateProfile(Long userId, ProfileUpdateRequestDTO dto);
 
-    void changePassword(Long userId, PasswordChangeRequestDTO dto);
-
     // Address Book
     List<UserAddressDTO> getAddresses(Long userId);
 
