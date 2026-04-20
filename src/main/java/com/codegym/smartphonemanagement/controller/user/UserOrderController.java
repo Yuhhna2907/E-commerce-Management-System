@@ -8,7 +8,6 @@ import com.codegym.smartphonemanagement.service.order.RefundService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
-import com.codegym.smartphonemanagement.util.SecurityUtil;
 import com.codegym.smartphonemanagement.model.PaymentMethod;
 import com.codegym.smartphonemanagement.service.payment.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +33,6 @@ public class UserOrderController {
     private final IUserProfileService userProfileService;
     private final UserRepository userRepository;
     private final VNPayService vnPayService;
-    private final com.codegym.smartphonemanagement.repository.user.UserRepository userRepository;
 
     /**
      * Helper method to get current authenticated user ID
@@ -146,7 +144,6 @@ public class UserOrderController {
             return "redirect:/user/order/success/" + savedOrder.getId();
         } catch (Exception e) {
             // Lỗi nghiệp vụ (ví dụ: đang thanh toán thì món đó bị người khác mua mất)
-            e.printStackTrace();
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/user/cart";
         }
