@@ -33,6 +33,11 @@ public class Coupon {
     @Column(nullable = false)
     private DiscountType discountType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private CouponCategory couponCategory = CouponCategory.PRODUCT_DISCOUNT;
+
     @NotNull
     @DecimalMin(value = "0.0")
     private BigDecimal discountValue;
@@ -72,6 +77,25 @@ public class Coupon {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private List<Product> applicableProducts;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "coupon_applicable_categories",
+            joinColumns = @JoinColumn(name = "coupon_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<Category> applicableCategories;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "coupon_applicable_brands", joinColumns = @JoinColumn(name = "coupon_id"))
+    @Column(name = "brand")
+    private List<String> applicableBrands;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "coupon_applicable_payment_methods", joinColumns = @JoinColumn(name = "coupon_id"))
+    @Column(name = "payment_method")
+    private List<PaymentMethod> applicablePaymentMethods;
     
     @Column(length = 200)
     private String description;

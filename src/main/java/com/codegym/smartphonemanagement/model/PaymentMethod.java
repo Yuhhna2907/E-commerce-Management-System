@@ -5,9 +5,9 @@ import lombok.Setter;
 
 @Getter
 public enum PaymentMethod {
-        CASH("Thanh toán tiền mặt"),
-        TRANSFER("Chuyển khoản ngân hàng"),
-        CARD_AT_HOME("Cà thẻ tại nhà");
+        CASH("Thanh toán tiền mặt - COD"),
+        TRANSFER("Chuyển khoản thủ công"),
+        VNPAY("Thanh toán online qua VNPAY");
 
         private final String displayValue;
 

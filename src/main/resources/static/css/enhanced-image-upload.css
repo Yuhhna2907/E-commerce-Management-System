@@ -1,0 +1,362 @@
+/**
+ * Enhanced Image Upload Styles
+ */
+
+/* Upload Container */
+.image-upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Drop Zone */
+.drop-zone {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.drop-zone i {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 16px;
+}
+
+.drop-zone h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.drop-zone p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Upload Button */
+.upload-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 16px;
+    transition: background 0.3s ease;
+}
+
+.upload-btn:hover {
+    background: #0056b3;
+}
+
+.upload-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Progress Container */
+.upload-progress {
+    display: none;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.progress-bar-container {
+    background: #e9ecef;
+    border-radius: 4px;
+    height: 8px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: #007bff;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: #666;
+    margin: 8px 0;
+}
+
+.current-file {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+}
+
+/* Image Previews */
+.image-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.image-preview {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: move;
+}
+
+.image-preview:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.image-preview.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.image-wrapper {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+}
+
+.image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.image-preview:hover .image-wrapper img {
+    transform: scale(1.05);
+}
+
+/* Image Overlay */
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-preview:hover .image-overlay {
+    opacity: 1;
+}
+
+.image-overlay button {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-overlay button:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.btn-edit {
+    color: #007bff;
+}
+
+.btn-delete {
+    color: #dc3545;
+}
+
+/* Image Info */
+.image-info {
+    padding: 12px;
+}
+
+.image-info small {
+    display: block;
+    color: #666;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.alt-text-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: border-color 0.3s ease;
+}
+
+.alt-text-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+}
+
+.notification.success {
+    background: #28a745;
+}
+
+.notification.error {
+    background: #dc3545;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .image-previews {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+    
+    .drop-zone {
+        padding: 30px 15px;
+    }
+    
+    .drop-zone i {
+        font-size: 36px;
+    }
+    
+    .image-upload-container {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .image-previews {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* File Input Hidden */
+#image-files {
+    display: none;
+}
+
+/* Drag and Drop Indicators */
+.drag-indicator {
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: #007bff;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-preview.drag-over .drag-indicator {
+    opacity: 1;
+}
+
+/* Accessibility */
+.image-preview:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.upload-btn:focus,
+.image-overlay button:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .drop-zone {
+        border-color: #000;
+    }
+    
+    .image-overlay {
+        background: rgba(0,0,0,0.9);
+    }
+    
+    .notification {
+        border: 2px solid currentColor;
+    }
+}

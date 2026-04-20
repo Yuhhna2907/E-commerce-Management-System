@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Khách Hàng - SmartZone CRM</title>
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255, 255, 255, 0.85);
+            --sz-glass-border: rgba(255, 255, 255, 0.4);
+            --sz-primary: #1A1C20;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6f9;
+            color: var(--sz-primary);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top right, rgba(13, 110, 253, 0.08) 0%, transparent 50%),
+                              radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* --- LAYOUT CHUNG --- */
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content {
+            flex-grow: 1; padding: 30px 40px; height: 100vh; overflow-y: auto;
+        }
+
+        /* --- GLASSMORPHISM CARDS --- */
+        .glass-card {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            padding: 30px;
+            transition: transform 0.3s;
+        }
+
+        /* --- WALLET CARD --- */
+        .wallet-card {
+            background: linear-gradient(135deg, rgba(33,37,41,0.9), rgba(13,110,253,0.9));
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(13,110,253,0.2);
+        }
+        .wallet-card::before {
+            content: '';
+            position: absolute; width: 300px; height: 300px;
+            background: rgba(255,255,255,0.1); border-radius: 50%;
+            top: -100px; right: -50px;
+        }
+        .wallet-icon {
+            font-size: 3rem; opacity: 0.8;
+            background: -webkit-linear-gradient(45deg, #fff, #a5c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- USER AVATAR BIG --- */
+        .avatar-lg {
+            width: 100px; height: 100px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; font-weight: 800; color: white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        /* --- TABLE LỊCH SỬ --- */
+        .history-table th { border: none; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
+        .history-table td { border-bottom: 1px dashed rgba(0,0,0,0.1); padding: 15px 10px; }
+        .history-table tr:hover td { background: rgba(0,0,0,0.01); }
+
+        /* --- BADGE STATUS --- */
+        .status-badge { padding: 6px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+        .status-active { background: rgba(25, 135, 84, 0.1); color: #198754; }
+        .status-locked { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+
+        /* --- ANIMATION --- */
+        .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- Sidebar Fragment -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
+            <div>
+                <a href="/admin/users" class="text-decoration-none text-muted fw-bold mb-2 d-inline-block">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại Danh sách
+                </a>
+                <h2 class="fw-bolder mb-0" style="font-family: 'Outfit';">Hồ Sơ Điện Tử (User 360)</h2>
+            </div>
+            <div>
+                <form th:action="@{'/admin/users/' + ${profile.id} + '/toggle-lock'}" method="POST" class="d-inline">
+                    <button type="submit" th:if="${profile.locked || !profile.enabled}" class="btn btn-outline-success rounded-pill fw-bold px-4 shadow-sm">
+                        <i class="bi bi-unlock-fill me-2"></i> Mở Khóa Tài Khoản
+                    </button>
+                    <button type="submit" th:unless="${profile.locked || !profile.enabled}" class="btn btn-outline-danger rounded-pill fw-bold px-4 shadow-sm">
+                        <i class="bi bi-shield-lock-fill me-2"></i> Trừng Phạt (Khóa Ngay)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- THÔNG BÁO FLASH -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row g-4">
+            <!-- LEFT PANE: User Info -->
+            <div class="col-lg-4 fade-up delay-1">
+                <div class="glass-card mb-4 h-100 position-relative">
+                    <div class="text-center mb-4 pt-3">
+                        <div class="avatar-lg bg-primary mx-auto mb-3">
+                            <span th:text="${#strings.substring(profile.username, 0, 1).toUpperCase()}">A</span>
+                        </div>
+                        <h4 class="fw-bolder text-dark mb-1" th:text="${profile.username}">Username</h4>
+                        <p class="text-muted mb-2">ID: #<span th:text="${profile.id}">123</span></p>
+                        <span th:if="${!profile.enabled || profile.locked}" class="status-badge status-locked">Tài Khoản Bị Đình Chỉ</span>
+                        <span th:if="${profile.enabled && !profile.locked}" class="status-badge status-active">Hoạt Động Bình Thường</span>
+                    </div>
+
+                    <hr class="opacity-10 mb-4">
+
+                    <dl class="row mb-0 mt-3">
+                        <dt class="col-sm-5 text-muted fw-semibold small mb-3">Họ và Tên</dt>
+                        <dd class="col-sm-7 fw-bold mb-3 text-end" th:text="${profile.fullName != null && !profile.fullName.isEmpty() ? profile.fullName : 'Bí danh'}">N/A</dd>
+
+                        <dt class="col-sm-5 text-muted fw-semibold small mb-3">Email</dt>
+                        <dd class="col-sm-7 fw-bold mb-3 text-end text-break" th:text="${profile.email}">email</dd>
+
+                        <dt class="col-sm-5 text-muted fw-semibold small mb-3">Điện Thoại</dt>
+                        <dd class="col-sm-7 fw-bold mb-3 text-end" th:text="${profile.phone != null ? profile.phone : 'Chưa cung cấp'}">phone</dd>
+
+                        <dt class="col-sm-5 text-muted fw-semibold small mb-3">Địa Chỉ</dt>
+                        <dd class="col-sm-7 fw-bold mb-3 text-end" th:text="${profile.address != null ? profile.address : 'Chưa thiết lập'}">N/A</dd>
+
+                        <dt class="col-sm-5 text-muted fw-semibold small">Ngày Gia Nhập</dt>
+                        <dd class="col-sm-7 fw-bold text-end" th:text="${#temporals.format(profile.createdAt, 'dd/MM/yyyy')}">Date</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- RIGHT PANE: Wallet & History -->
+            <div class="col-lg-8 fade-up delay-2">
+                
+                <!-- Digital Wallet Card -->
+                <div class="glass-card wallet-card p-4 mb-4">
+                    <div class="row align-items-center position-relative z-1">
+                        <div class="col-md-7 border-end border-light border-opacity-10">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-wallet2 wallet-icon me-3"></i>
+                                <div>
+                                    <h6 class="text-white-50 fw-bold mb-1 text-uppercase small">Ví Cống Hiến (Loyalty Points)</h6>
+                                    <h1 class="display-4 fw-bolder mb-0 lh-1"><span th:text="${#numbers.formatInteger(profile.currentPoints, 0, 'POINT')}">0</span> <span class="fs-4 text-white-50">Pts</span></h1>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-4 mt-4 text-white-50 small fw-medium">
+                                <div><i class="bi bi-stars"></i> Tích lũy trọn đời: <strong><span class="text-white">[[${profile.lifetimePoints}]]</span> Pts</strong></div>
+                                <div><i class="bi bi-cart-check"></i> Đã đóng góp: <strong><span class="text-white">[[${#numbers.formatDecimal(profile.totalSpent, 0, 'COMMA', 0, 'POINT')}]]</span> VNĐ</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-md-5 ps-md-4 mt-4 mt-md-0">
+                            <h6 class="fw-bold mb-3 opacity-75">Quyền Lực Admin</h6>
+                            <button class="btn btn-light rounded-pill w-100 fw-bold shadow-sm mb-2 text-primary" data-bs-toggle="modal" data-bs-target="#loyaltyModal">
+                                <i class="bi bi-gift-fill me-1"></i> Điều Chỉnh Điểm Thủ Công
+                            </button>
+                            <p class="small text-white-50 mb-0"><i class="bi bi-info-circle me-1"></i> Tặng quà bồi thường hoặc trừ điểm khi vi phạm chính sách.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent History -->
+                <div class="glass-card p-4">
+                    <h5 class="fw-bold mb-4" style="font-family: 'Outfit';"><i class="bi bi-clock-history me-2 text-primary"></i> 5 Đơn Hàng Gần Nhất</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table history-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Mã Đơn</th>
+                                    <th>Thời Gian</th>
+                                    <th>Giá Trị</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Thanh Toán</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ord : ${profile.recentOrders}">
+                                    <td><a th:href="@{'/admin/orders/detail/' + ${ord.orderId}}" class="fw-bold text-decoration-none">#[[${ord.orderId}]]</a></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(ord.orderDate, 'dd/MM/yyyy HH:mm')}">Date</td>
+                                    <td class="fw-bold text-success" th:text="${#numbers.formatDecimal(ord.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">Price</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">[[${ord.status.name()}]]</span>
+                                    </td>
+                                    <td class="small fw-semibold text-muted">[[${ord.paymentMethod.name()}]]</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(profile.recentOrders)}">
+                                    <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu đơn hàng.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= LOYALTY ADJUST MODAL ================= -->
+<div class="modal fade" id="loyaltyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-primary bg-opacity-10 py-3 border-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-gift-fill me-2"></i> Điều Chỉnh Điểm Loyalty</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{'/admin/users/' + ${profile.id} + '/loyalty-adjust'}" method="POST">
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-4">Sử dụng quyền hạn Quản trị viên để cấp điểm đền bù cho khách hàng hoặc thu hồi điểm do vi phạm.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Số Điểm Điều Chỉnh</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-stars text-warning"></i></span>
+                            <input type="number" name="points" class="form-control border-start-0 ps-0" placeholder="VD: 500 (Cộng) hoặc -200 (Trừ)" required>
+                        </div>
+                        <div class="form-text text-danger small">Lưu ý: Để trừ điểm, hãy nhập số âm.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Lý Do Biên Bản</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="Ghi rõ lý do (VD: Bồi thường sự cố giao hàng ngày 18/04...)" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Thực thi Giao Dịch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

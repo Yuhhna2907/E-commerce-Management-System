@@ -1,5 +1,6 @@
 package com.codegym.smartphonemanagement.controller.seller;
 
+import com.codegym.smartphonemanagement.service.dashboard.DTO.DashboardDTO;
 import com.codegym.smartphonemanagement.service.dashboard.seller.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -8,15 +9,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin/dashboard")
+@RequestMapping("/admin") // Chỉ để /admin ở đây thôi
 @RequiredArgsConstructor
 public class DashboardController {
     private final DashboardService dashboardService;
 
-    @GetMapping
+    @GetMapping("/dashboard") // Đưa /dashboard xuống đây
     public String index(Model model) {
-        model.addAttribute("stats", dashboardService.getDashboardStats());
-        model.addAttribute("pageTitle", "dashboard"); // Để sáng nút Sidebar
-        return "admin/dashboard/index";
+        DashboardDTO stats = dashboardService.getDashboardStats();
+        model.addAttribute("stats", stats);
+        model.addAttribute("pageTitle", "dashboard");
+        return "admin/dashboard/index"; // Đảm bảo file index.html nằm đúng folder này
     }
 }

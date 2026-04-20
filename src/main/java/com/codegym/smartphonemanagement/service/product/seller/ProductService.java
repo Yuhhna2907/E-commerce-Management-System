@@ -1,7 +1,7 @@
 package com.codegym.smartphonemanagement.service.product.seller;
 
 import com.codegym.smartphonemanagement.exception.BadRequestException;
-import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
 import com.codegym.smartphonemanagement.model.Category;
 import com.codegym.smartphonemanagement.model.Product;
 import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
@@ -9,8 +9,13 @@ import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
-
 import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantResponseDTO;
+import com.codegym.smartphonemanagement.model.ProductSpecification;
+import com.codegym.smartphonemanagement.model.ProductVariant;
+import com.codegym.smartphonemanagement.repository.user.ProductSpecificationRepository;
+import com.codegym.smartphonemanagement.repository.user.ProductVariantRepository;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductSpecificationDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +38,8 @@ public class ProductService implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final CartItemRepository cartItemRepository; // FIX #5: Thêm dependency
+    private final ProductSpecificationRepository productSpecificationRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     public ProductResponseDTO create(ProductRequestDTO request) {
 
@@ -44,7 +51,7 @@ public class ProductService implements IProductService {
         // 1️⃣ Kiểm tra category tồn tại
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Category không tồn tại"));
+                        new EntityNotFoundException("Category", request.getCategoryId()));
 
         // 2️⃣ Validate nghiệp vụ thêm (phòng trường hợp bypass validation)
         if (request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
@@ -62,6 +69,7 @@ public class ProductService implements IProductService {
                 .price(request.getPrice())
                 .brand(request.getBrand())
                 .imageUrl(request.getImageUrl())
+                .stock(request.getStock())
                 .category(category)
                 .active(true)
                 .createdAt(LocalDateTime.now())
@@ -75,24 +83,48 @@ public class ProductService implements IProductService {
     }
 
     private ProductResponseDTO mapToResponse(Product product) {
-        // Map danh sách biến thể sang DTO
-        List<ProductVariantResponseDTO> variantDTOs = product.getVariants()
-                .stream()
-                .map(variant -> ProductVariantResponseDTO.builder()
-                        .variantId(variant.getVariantId())
-                        .productId(product.getId())
-                        .sku(variant.getSku())
-                        .variantName(variant.getVariantName())
-                        .color(variant.getColor())
-                        .storage(variant.getStorage())
-                        .ram(variant.getRam())
-                        .costPrice(variant.getCostPrice())
-                        .salePrice(variant.getSalePrice())
-                        .stockQuantity(variant.getStockQuantity())
-                        .active(variant.getIsActive())
-                        .build()
-                )
-                .toList();
+        // Map danh sách biến thể sang DTO - FIX NULL POINTER
+        List<ProductVariantResponseDTO> variantDTOs = new java.util.ArrayList<>();
+        
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            variantDTOs = product.getVariants()
+                    .stream()
+                    .map(variant -> ProductVariantResponseDTO.builder()
+                            .variantId(variant.getVariantId())
+                            .productId(product.getId())
+                            .sku(variant.getSku())
+                            .variantName(variant.getVariantName())
+                            .color(variant.getColor())
+                            .storage(variant.getStorage())
+                            .ram(variant.getRam())
+                            .costPrice(variant.getCostPrice())
+                            .salePrice(variant.getSalePrice())
+                            .stockQuantity(variant.getStockQuantity())
+                            .active(variant.getIsActive())
+                            .build()
+                    )
+                    .toList();
+        }
+
+        // Map specification sang DTO
+        ProductSpecificationDTO specDTO = null;
+        if (product.getSpecification() != null) {
+            ProductSpecification spec = product.getSpecification();
+            specDTO = ProductSpecificationDTO.builder()
+                    .processor(spec.getProcessor())
+                    .antutuScore(spec.getAntutuScore())
+                    .screenSize(spec.getScreenSize())
+                    .screenTech(spec.getScreenTech())
+                    .cameraInfo(spec.getCameraInfo())
+                    .batteryCapacity(spec.getBatteryCapacity())
+                    .chargingSpeed(spec.getChargingSpeed())
+                    .os(spec.getOs())
+                    .weight(spec.getWeight())
+                    .build();
+        }
+
+        int totalStock = product.getVariants() != null ? 
+            product.getVariants().stream().mapToInt(v -> v.getStockQuantity() == null ? 0 : v.getStockQuantity()).sum() : 0;
 
         return ProductResponseDTO.builder()
                 .id(product.getId())
@@ -100,11 +132,14 @@ public class ProductService implements IProductService {
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .price(product.getPrice())
+                .stock(totalStock)
+                .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .active(product.getActive())
                 .variants(variantDTOs) // thêm danh sách biến thể
+                .specification(specDTO) // thêm cấu hình
                 .build();
     }
 
@@ -116,12 +151,12 @@ public class ProductService implements IProductService {
         // 1️⃣ Kiểm tra product tồn tại
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         // 2️⃣ Kiểm tra category tồn tại
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Category không tồn tại"));
+                        new EntityNotFoundException("Category", request.getCategoryId()));
 
         if (!product.getActive()) {
             throw new BadRequestException("Không thể cập nhật sản phẩm đã bị xoá");
@@ -142,6 +177,7 @@ public class ProductService implements IProductService {
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setImageUrl(request.getImageUrl());
+        product.setStock(request.getStock());
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());
 
@@ -156,7 +192,7 @@ public class ProductService implements IProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         if (!product.getActive()) {
             throw new BadRequestException("Product đã bị xoá trước đó");
@@ -221,7 +257,7 @@ public class ProductService implements IProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product không tồn tại"));
+                        new EntityNotFoundException("Product", id));
 
         return mapToResponse(product);
     }
@@ -229,11 +265,14 @@ public class ProductService implements IProductService {
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
 
-        long totalProducts = productRepository.countByActiveTrue();
+        long activeProducts = productRepository.countByActiveTrue();
+        long hiddenProducts = productRepository.countByActiveFalse();
         long lowStockCount = productRepository.countByActiveTrueAndStockLessThan(5);
         java.math.BigDecimal totalValue = productRepository.calculateTotalInventoryValue();
 
-        stats.put("totalProducts", totalProducts);
+        stats.put("totalProducts", activeProducts + hiddenProducts);
+        stats.put("activeProducts", activeProducts);
+        stats.put("hiddenProducts", hiddenProducts);
         stats.put("lowStockCount", lowStockCount);
         stats.put("inventoryValue", totalValue != null ? totalValue : java.math.BigDecimal.ZERO);
 
@@ -243,10 +282,82 @@ public class ProductService implements IProductService {
     @Transactional
     public boolean toggleStatus(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new EntityNotFoundException("Product", id));
 
         boolean newStatus = !product.getActive();
         productRepository.updateActiveStatus(id, newStatus);
         return newStatus;
+    }
+
+    // 🔹 MANAGE SPECIFICATIONS
+    public void saveSpecification(Long productId, ProductSpecificationDTO dto) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+                
+        ProductSpecification spec = product.getSpecification();
+        if (spec == null) {
+            spec = new ProductSpecification();
+            spec.setProduct(product);
+        }
+        
+        spec.setProcessor(dto.getProcessor());
+        spec.setAntutuScore(dto.getAntutuScore());
+        spec.setScreenSize(dto.getScreenSize());
+        spec.setScreenTech(dto.getScreenTech());
+        spec.setCameraInfo(dto.getCameraInfo());
+        spec.setBatteryCapacity(dto.getBatteryCapacity());
+        spec.setChargingSpeed(dto.getChargingSpeed());
+        spec.setOs(dto.getOs());
+        spec.setWeight(dto.getWeight());
+        
+        productSpecificationRepository.save(spec);
+    }
+    
+    // 🔹 MANAGE VARIANTS
+    public void saveVariant(Long productId, ProductVariantRequestDTO dto) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+                
+        ProductVariant variant;
+        if (dto.getVariantId() != null) {
+            variant = productVariantRepository.findById(dto.getVariantId())
+                    .orElseThrow(() -> new EntityNotFoundException("ProductVariant", dto.getVariantId()));
+        } else if (dto.getSku() != null && productVariantRepository.findOptionalBySku(dto.getSku()).isPresent()) {
+            variant = productVariantRepository.findOptionalBySku(dto.getSku()).get();
+        } else {
+            variant = new ProductVariant();
+            variant.setProduct(product);
+            variant.setSku(dto.getSku() != null ? dto.getSku() : java.util.UUID.randomUUID().toString());
+        }
+        
+        variant.setVariantName(dto.getVariantName());
+        variant.setColor(dto.getColor());
+        variant.setStorage(dto.getStorage());
+        variant.setRam(dto.getRam());
+        variant.setCostPrice(dto.getCostPrice());
+        variant.setSalePrice(dto.getSalePrice());
+        variant.setStockQuantity(dto.getStockQuantity());
+        if (dto.getActive() != null) variant.setIsActive(dto.getActive());
+        
+        productVariantRepository.save(variant);
+    }
+
+    public boolean toggleVariantStatus(Long variantId) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new EntityNotFoundException("ProductVariant", variantId));
+        boolean newStatus = (variant.getIsActive() != null && variant.getIsActive()) ? false : true;
+        variant.setIsActive(newStatus);
+        productVariantRepository.save(variant);
+        return newStatus;
+    }
+
+    public void deleteVariant(Long variantId) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new EntityNotFoundException("ProductVariant", variantId));
+        try {
+            productVariantRepository.delete(variant);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            throw new BadRequestException("Phiên bản này đã có giao dịch phát sinh, chỉ có thể khóa (ẩn) thay vì xóa hoàn toàn.");
+        }
     }
 }

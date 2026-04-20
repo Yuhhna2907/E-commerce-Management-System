@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trạm Giải Đáp Thắc Mắc - Admin SmartZone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255,255,255,0.7);
+            --sz-glass-border: rgba(255,255,255,0.4);
+            --sz-primary: #1A1C20;
+            --sz-text-muted: #86868b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f7;
+            color: var(--sz-primary);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(13,202,240,0.07) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(13,110,253,0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; padding: 40px 50px; height: 100vh; overflow-y: auto; }
+        h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; }
+
+        .bento-card {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 24px; padding: 28px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.04);
+            height: 100%; transition: all 0.3s ease;
+        }
+
+        /* ALERT BANNER */
+        .overdue-alert {
+            background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+            border: 1.5px solid #f5c6cb;
+            border-radius: 16px; padding: 14px 22px;
+            display: flex; align-items: center; gap: 12px;
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: #f5c6cb; }
+            50% { border-color: #dc3545; }
+        }
+
+        /* TABLE */
+        .glass-table-container {
+            background: white; border-radius: 24px; padding: 20px 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        .custom-table thead th {
+            border: none; color: var(--sz-text-muted); font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 1px;
+            padding: 0 18px 10px 18px; font-weight: 700;
+        }
+        .custom-table tbody tr { background: #f8f9fa; transition: all 0.2s; }
+        .custom-table tbody tr:hover { transform: scale(1.003); box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: white; }
+        .custom-table tbody td { border: none; padding: 16px 18px; vertical-align: middle; }
+        .custom-table tbody tr td:first-child { border-radius: 16px 0 0 16px; }
+        .custom-table tbody tr td:last-child { border-radius: 0 16px 16px 0; }
+
+        /* ROW URGENCY HIGHLIGHT */
+        .custom-table tbody tr.row-overdue { background: rgba(220,53,69,0.04); }
+        .custom-table tbody tr.row-warning { background: rgba(255,193,7,0.05); }
+
+        /* TIME BADGE */
+        .time-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; padding: 3px 10px; font-size: 0.78rem; font-weight: 700; }
+        .time-badge.fresh { background: rgba(25,135,84,0.1); color: #198754; }
+        .time-badge.warning { background: rgba(255,193,7,0.15); color: #b07e05; }
+        .time-badge.danger { background: rgba(220,53,69,0.12); color: #dc3545; }
+        .time-badge.critical { background: #dc3545; color: white; animation: blink 1.5s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0.6; } }
+
+        /* PRODUCT THUMB */
+        .product-thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 10px; border: 1px solid #eee; }
+
+        /* FILTER PILLS */
+        .filter-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 20px; border-radius: 999px; font-weight: 700;
+            font-size: 0.85rem; cursor: pointer; border: 2px solid transparent;
+            transition: all 0.2s ease; text-decoration: none;
+        }
+        .filter-pill.active { background: #1A1C20; color: white; }
+        .filter-pill:not(.active) { background: rgba(0,0,0,0.04); color: #48484a; }
+        .filter-pill:hover:not(.active) { background: rgba(0,0,0,0.08); }
+
+        /* MODAL */
+        .reply-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+            z-index: 9999; align-items: center; justify-content: center;
+        }
+        .reply-modal-overlay.show { display: flex; }
+        .reply-modal-box {
+            background: white; border-radius: 24px; padding: 36px;
+            max-width: 640px; width: 92%;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+            animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes modalSlideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+
+        /* QUICK REPLY CHIPS */
+        .quick-reply-chip {
+            display: inline-block; padding: 5px 14px; border-radius: 20px;
+            background: #f0f4ff; border: 1px solid #c2d0ff;
+            color: #3558c9; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s ease; user-select: none;
+        }
+        .quick-reply-chip:hover { background: #3558c9; color: white; transform: translateY(-1px); }
+
+        .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+            <div>
+                <a th:href="@{/admin/dashboard}" class="text-decoration-none fw-bold text-muted mb-2 d-block">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <h1 class="fw-bolder mb-0 text-dark">Trạm Giải Đáp Thắc Mắc</h1>
+                <p class="text-muted mb-0 mt-1" style="font-size:0.9rem">Quản lý & phản hồi toàn bộ câu hỏi sản phẩm từ khách hàng</p>
+            </div>
+            <span class="badge bg-white text-dark border px-3 py-2 rounded-pill fw-bold shadow-sm">
+                <i class="bi bi-patch-question-fill text-info me-1"></i> Q&amp;A Center
+            </span>
+        </div>
+
+        <!-- ⚠️ OVERDUE ALERT BANNER -->
+        <div class="overdue-alert mb-4 fade-up" style="animation-delay:0.05s"
+             th:if="${overdueCount != null and overdueCount > 0}">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-4 flex-shrink-0"></i>
+            <div class="flex-grow-1">
+                <span class="fw-bolder text-danger">Cảnh báo phản hồi chậm!</span>
+                <span class="text-dark ms-2">Có
+                    <strong class="text-danger" th:text="${overdueCount}">0</strong>
+                    câu hỏi chưa được trả lời đã <strong>quá 24 giờ</strong>. Hãy ưu tiên xử lý ngay!
+                </span>
+            </div>
+            <a th:href="@{/admin/qa(status='unanswered')}" class="btn btn-danger btn-sm rounded-pill fw-bold px-3 flex-shrink-0">
+                <i class="bi bi-lightning-fill me-1"></i> Xử lý ngay
+            </a>
+        </div>
+
+        <!-- STATS BENTO ROW -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 fade-up" style="animation-delay:0.1s">
+                <div class="bento-card bg-white d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <i class="bi bi-chat-dots-fill fs-3 text-info mb-2"></i>
+                        <span class="badge bg-light text-dark fw-bold border">Tổng</span>
+                    </div>
+                    <div class="mt-2">
+                        <h1 class="display-5 fw-bolder mb-0 text-dark" th:text="${totalQuestions}">0</h1>
+                        <span class="fw-medium text-muted">câu hỏi từ tất cả sản phẩm</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 fade-up" style="animation-delay:0.2s">
+                <a th:href="@{/admin/qa(status='unanswered')}" class="text-decoration-none h-100 d-block">
+                    <div class="bento-card bg-danger bg-opacity-10 border-danger border-opacity-25 d-flex flex-column justify-content-center align-items-center text-center h-100"
+                         style="cursor:pointer; transition: transform 0.2s;"
+                         onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+                        <i class="bi bi-hourglass-split display-4 text-danger opacity-75 mb-2"></i>
+                        <h2 class="fw-bolder text-danger mb-0" th:text="${unansweredCount}">0</h2>
+                        <span class="fw-bold text-danger opacity-75 small text-uppercase">Chờ Phản Hồi</span>
+                        <span th:if="${overdueCount > 0}" class="badge bg-danger text-white mt-2 fw-bold">
+                            <i class="bi bi-clock-history me-1"></i>[[${overdueCount}]] quá 24h
+                        </span>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 fade-up" style="animation-delay:0.3s">
+                <div class="bento-card bg-success bg-opacity-10 border-success border-opacity-25 d-flex flex-column justify-content-center align-items-center text-center">
+                    <i class="bi bi-check2-circle display-4 text-success opacity-75 mb-2"></i>
+                    <h2 class="fw-bolder text-success mb-0" th:text="${answeredCount}">0</h2>
+                    <span class="fw-bold text-success opacity-75 small text-uppercase">Đã Trả Lời</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER + SEARCH -->
+        <div class="glass-table-container mb-3 fade-up" style="animation-delay:0.35s; padding: 16px 24px;">
+            <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/admin/qa(keyword=${keyword})}"
+                       th:classappend="${status == 'all' or status == null} ? 'active' : ''" class="filter-pill">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Tất Cả
+                    </a>
+                    <a th:href="@{/admin/qa(status='unanswered', keyword=${keyword})}"
+                       th:classappend="${status == 'unanswered'} ? 'active' : ''" class="filter-pill">
+                        <i class="bi bi-hourglass-split text-danger"></i> Chờ Trả Lời
+                    </a>
+                </div>
+                <form method="get" th:action="@{/admin/qa}" class="d-flex gap-2" style="min-width: 280px;">
+                    <input type="hidden" name="status" th:value="${status}">
+                    <div class="position-relative flex-grow-1">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" name="keyword" class="form-control bg-light border-0 rounded-pill ps-5 fw-bold py-2 shadow-none"
+                               placeholder="Tìm câu hỏi, sản phẩm, username..." th:value="${keyword}">
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Tìm</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- QUESTIONS TABLE -->
+        <div class="glass-table-container fade-up" style="animation-delay:0.4s">
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Khách Hàng &amp; Thời Gian</th>
+                            <th>Sản Phẩm</th>
+                            <th style="min-width:260px;">Nội Dung Câu Hỏi</th>
+                            <th class="text-center">Trạng Thái</th>
+                            <th class="text-center">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="q : ${questions}">
+                            <!--
+                              urgencyClass: dùng JS tính sau khi render (xem script bên dưới)
+                              data-createdat lưu ISO string để JS tính ago time và urgency
+                            -->
+                            <tr th:id="'row-' + ${q.id}"
+                                th:attr="data-createdat=${q.createdAt},data-answered=${!#lists.isEmpty(q.answers)}">
+                                <td>
+                                    <div class="d-flex align-items-start">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 flex-shrink-0"
+                                             style="width:38px;height:38px;font-size:1rem;">
+                                            [[${#strings.substring(q.user.username, 0, 1).toUpperCase()}]]
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark" th:text="${q.user.username}">User</div>
+                                            <!-- Time badge: JS sẽ fill vào đây -->
+                                            <span class="time-badge mt-1 js-time-ago"
+                                                  th:attr="data-createdat=${q.createdAt},data-answered=${!#lists.isEmpty(q.answers)}">
+                                                <i class="bi bi-clock"></i> ...
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img th:src="${q.product.imageUrl}" onerror="this.src='/images/placeholder.png'"
+                                             class="product-thumb" th:alt="${q.product.name}">
+                                        <div>
+                                            <div class="fw-bolder text-dark" style="font-size:0.85rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                                                 th:text="${q.product.name}">Product</div>
+                                            <a th:href="@{/admin/products/{id}(id=${q.product.id})}"
+                                               class="small text-primary text-decoration-none fw-bold" target="_blank">
+                                                <i class="bi bi-box-arrow-up-right"></i> Xem SP
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-dark text-break" style="font-size:0.92rem;" th:text="${q.questionText}">Q?</div>
+                                    <div th:if="${!#lists.isEmpty(q.answers)}" class="mt-2">
+                                        <div th:each="ans : ${q.answers}" class="p-2 rounded-3 mt-1"
+                                             style="background:rgba(13,110,253,0.05);border-left:3px solid #0d6efd;font-size:0.83rem;">
+                                            <i class="bi bi-reply-fill text-primary me-1"></i>
+                                            <span class="fw-bold text-primary" th:text="${ans.user.username}">Staff</span>:
+                                            <span class="text-dark ms-1" th:text="${ans.answerText}">...</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span th:if="${#lists.isEmpty(q.answers)}"
+                                          class="badge bg-danger bg-opacity-10 text-danger fw-bold px-3 py-2 rounded-pill">
+                                        <i class="bi bi-hourglass-split me-1"></i>Chờ Trả Lời
+                                    </span>
+                                    <span th:if="${!#lists.isEmpty(q.answers)}"
+                                          class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-2 rounded-pill">
+                                        <i class="bi bi-check2-circle me-1"></i>Đã Trả Lời
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-primary fw-bold rounded-pill px-3"
+                                            th:onclick="|openReplyModal(${q.id}, '[[${#strings.escapeXml(q.questionText)}]]', '[[${#strings.escapeXml(q.product.name)}]]')|">
+                                        <i class="bi bi-reply-fill me-1"></i>
+                                        <span th:text="${#lists.isEmpty(q.answers)} ? 'Trả lời' : 'Bổ sung'">Trả lời</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </th:block>
+                        <tr th:if="${#lists.isEmpty(questions)}">
+                            <td colspan="5" class="text-center py-5">
+                                <i class="bi bi-patch-question text-muted opacity-25" style="font-size:3rem;"></i>
+                                <h6 class="text-muted fw-bold mt-3">Không có câu hỏi nào phù hợp!</h6>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            <nav class="mt-4" th:if="${questionPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${questionPage.first} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 fw-bold me-1 text-dark bg-light shadow-sm"
+                           th:href="@{/admin/qa(page=${questionPage.number - 1}, keyword=${keyword}, status=${status})}">
+                            <i class="bi bi-chevron-left"></i> Lui
+                        </a>
+                    </li>
+                    <li class="page-item" th:classappend="${questionPage.last} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 fw-bold ms-1 text-dark bg-light shadow-sm"
+                           th:href="@{/admin/qa(page=${questionPage.number + 1}, keyword=${keyword}, status=${status})}">
+                            Tiếp <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div><!-- /main-content -->
+</div><!-- /admin-layout -->
+
+<!-- ===================== REPLY MODAL ===================== -->
+<div class="reply-modal-overlay" id="replyModalOverlay" onclick="closeReplyModal(event)">
+    <div class="reply-modal-box">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h5 class="fw-bolder mb-0"><i class="bi bi-reply-fill text-primary me-2"></i>Trả Lời Câu Hỏi</h5>
+                <small class="text-muted" id="modalProductName">Sản phẩm: ...</small>
+            </div>
+            <button class="btn btn-sm btn-light rounded-circle" onclick="document.getElementById('replyModalOverlay').classList.remove('show')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Question preview -->
+        <div class="p-3 mb-3 rounded-3" style="background:#f8f9fa;border-left:3px solid #dee2e6;">
+            <p class="fw-bold text-dark mb-0 small" id="modalQuestionText">Câu hỏi...</p>
+        </div>
+
+        <!-- ⚡ Quick Reply Templates -->
+        <div class="mb-3">
+            <p class="text-muted small fw-bold mb-2 text-uppercase" style="letter-spacing:0.5px;">
+                <i class="bi bi-lightning-fill text-warning me-1"></i> Câu trả lời mẫu nhanh:
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('Sản phẩm được bảo hành chính hãng 12 tháng tại tất cả trung tâm bảo hành trên toàn quốc. Quý khách vui lòng giữ phiếu bảo hành để được hỗ trợ tốt nhất ạ!')">
+                    🛡️ Bảo hành 12T
+                </span>
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('Dạ sản phẩm hiện còn hàng và sẵn sàng giao ngay trong ngày (nội thành) hoặc 2-3 ngày (ngoại tỉnh). Quý khách có thể đặt hàng ngay ạ!')">
+                    📦 Còn hàng & giao ngay
+                </span>
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('Sản phẩm hỗ trợ trả góp 0% lãi suất qua thẻ tín dụng hoặc trả góp qua Home Credit, HD Saison với kỳ hạn 3-24 tháng. Quý khách liên hệ hotline để được tư vấn chi tiết!')">
+                    💳 Trả góp 0%
+                </span>
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('SmartZone áp dụng chính sách đổi trả trong vòng 30 ngày kể từ ngày nhận hàng nếu sản phẩm có lỗi từ nhà sản xuất. Quý khách vui lòng liên hệ hotline để được hỗ trợ!')">
+                    🔄 Đổi trả 30 ngày
+                </span>
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('Dạ sản phẩm này có đầy đủ các màu sắc và phiên bản bộ nhớ. Quý khách có thể chọn biến thể phù hợp ngay trên trang sản phẩm ạ!')">
+                    🎨 Phiên bản & màu sắc
+                </span>
+                <span class="quick-reply-chip"
+                      onclick="fillTemplate('Cảm ơn Quý khách đã quan tâm đến sản phẩm! Để được tư vấn chi tiết hơn, Quý khách vui lòng liên hệ hotline 1800-xxxx (miễn phí) hoặc chat trực tiếp với chúng tôi ạ.')">
+                    📞 Liên hệ tư vấn
+                </span>
+            </div>
+        </div>
+
+        <!-- Textarea -->
+        <textarea id="answerTextarea" class="form-control border-0 mb-2 fw-medium" rows="4"
+                  placeholder="Hoặc nhập câu trả lời tùy chỉnh..."
+                  style="background:#f8f9fa;resize:none;border-radius:12px;"
+                  oninput="updateCharCount()"></textarea>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <small class="text-muted"><span id="charCount">0</span> / 1000 ký tự</small>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-light fw-bold rounded-pill px-4"
+                    onclick="document.getElementById('replyModalOverlay').classList.remove('show')">Hủy</button>
+            <button id="submitReplyBtn" class="btn btn-primary fw-bold rounded-pill px-4" onclick="submitAdminReply()">
+                <i class="bi bi-send me-1"></i> Gửi Trả Lời
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+    let activeQuestionId = null;
+
+    // ===================== THỜI GIAN TƯƠNG ĐỐI =====================
+    function timeAgo(dateStr) {
+        const now = new Date();
+        const d = new Date(dateStr);
+        const diffMs = now - d;
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffH = Math.floor(diffMs / 3600000);
+        const diffD = Math.floor(diffMs / 86400000);
+
+        if (diffMin < 1) return { text: 'Vừa xong', cls: 'fresh' };
+        if (diffMin < 60) return { text: diffMin + ' phút trước', cls: 'fresh' };
+        if (diffH < 6) return { text: diffH + ' giờ trước', cls: 'fresh' };
+        if (diffH < 24) return { text: diffH + ' giờ trước', cls: 'warning' };
+        if (diffD < 3) return { text: diffD + ' ngày trước', cls: 'danger' };
+        return { text: diffD + ' ngày trước', cls: 'critical' };
+    }
+
+    function applyTimeBadges() {
+        document.querySelectorAll('.js-time-ago').forEach(el => {
+            const createdAt = el.getAttribute('data-createdat');
+            const answered = el.getAttribute('data-answered') === 'true';
+            if (!createdAt) return;
+
+            const result = timeAgo(createdAt);
+            // Nếu đã trả lời thì chỉ show fresh
+            const cls = answered ? 'fresh' : result.cls;
+            el.className = 'time-badge mt-1 js-time-ago ' + cls;
+            el.innerHTML = `<i class="bi bi-clock"></i> ${result.text}`;
+
+            // Mark row urgency
+            if (!answered) {
+                const row = el.closest('tr');
+                if (row) {
+                    if (cls === 'critical' || cls === 'danger') row.classList.add('row-overdue');
+                    else if (cls === 'warning') row.classList.add('row-warning');
+                }
+            }
+        });
+    }
+
+    // ===================== MODAL =====================
+    function openReplyModal(questionId, questionText, productName) {
+        activeQuestionId = questionId;
+        document.getElementById('modalQuestionText').textContent = questionText;
+        document.getElementById('modalProductName').textContent = 'Sản phẩm: ' + productName;
+        document.getElementById('answerTextarea').value = '';
+        document.getElementById('charCount').textContent = '0';
+        document.getElementById('replyModalOverlay').classList.add('show');
+        setTimeout(() => document.getElementById('answerTextarea').focus(), 200);
+    }
+
+    function closeReplyModal(event) {
+        if (event.target === document.getElementById('replyModalOverlay')) {
+            document.getElementById('replyModalOverlay').classList.remove('show');
+        }
+    }
+
+    // ===================== QUICK REPLY TEMPLATES =====================
+    function fillTemplate(text) {
+        document.getElementById('answerTextarea').value = text;
+        updateCharCount();
+        document.getElementById('answerTextarea').focus();
+    }
+
+    function updateCharCount() {
+        const len = document.getElementById('answerTextarea').value.length;
+        document.getElementById('charCount').textContent = len;
+    }
+
+    // ===================== SUBMIT REPLY =====================
+    function submitAdminReply() {
+        const answerText = document.getElementById('answerTextarea').value.trim();
+        if (!answerText) {
+            Toastify({ text: 'Vui lòng nhập nội dung câu trả lời!', duration: 2500, style: { background: '#dc3545', borderRadius: '8px', fontWeight: 'bold' } }).showToast();
+            return;
+        }
+
+        const btn = document.getElementById('submitReplyBtn');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
+        btn.disabled = true;
+
+        fetch(`/admin/qa/questions/${activeQuestionId}/answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answerText })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Toastify({
+                    text: '✅ ' + data.message, duration: 3000,
+                    style: { background: '#198754', borderRadius: '8px', fontWeight: 'bold' }
+                }).showToast();
+                document.getElementById('replyModalOverlay').classList.remove('show');
+
+                // Update row UI without reload
+                const row = document.getElementById('row-' + activeQuestionId);
+                if (row) {
+                    const badgeCell = row.querySelector('td:nth-child(4)');
+                    if (badgeCell) {
+                        badgeCell.innerHTML = '<span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-2 rounded-pill"><i class="bi bi-check2-circle me-1"></i>Đã Trả Lời</span>';
+                    }
+                    const btn2 = row.querySelector('td:nth-child(5) button');
+                    if (btn2) btn2.innerHTML = '<i class="bi bi-reply-fill me-1"></i> Bổ sung';
+                    // Reset time badge to fresh
+                    const timeBadge = row.querySelector('.js-time-ago');
+                    if (timeBadge) {
+                        timeBadge.className = 'time-badge mt-1 js-time-ago fresh';
+                        timeBadge.innerHTML = '<i class="bi bi-check-circle"></i> Đã trả lời';
+                        timeBadge.setAttribute('data-answered', 'true');
+                    }
+                    row.classList.remove('row-overdue', 'row-warning');
+                }
+            } else {
+                Toastify({ text: '❌ ' + data.message, duration: 3000, style: { background: '#dc3545' } }).showToast();
+            }
+        })
+        .catch(() => Toastify({ text: 'Lỗi kết nối, vui lòng thử lại.', duration: 3000, style: { background: '#dc3545' } }).showToast())
+        .finally(() => { btn.innerHTML = oldHtml; btn.disabled = false; });
+    }
+
+    // On load
+    document.addEventListener('DOMContentLoaded', applyTimeBadges);
+</script>
+</body>
+</html>

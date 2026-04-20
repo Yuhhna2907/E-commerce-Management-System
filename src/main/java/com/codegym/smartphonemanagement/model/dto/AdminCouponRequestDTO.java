@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class AdminCouponRequestDTO {
@@ -33,4 +34,14 @@ public class AdminCouponRequestDTO {
     private LocalDateTime endDate;
     
     private String description;
+
+    // Null/empty => áp dụng toàn bộ sản phẩm
+    private List<Long> applicableProductIds;
+
+    @NotNull(message = "Danh mục khuyến mãi bắt buộc")
+    private com.codegym.smartphonemanagement.model.CouponCategory couponCategory = com.codegym.smartphonemanagement.model.CouponCategory.PRODUCT_DISCOUNT;
+
+    private List<Long> applicableCategoryIds;
+    private List<String> applicableBrands;
+    private List<com.codegym.smartphonemanagement.model.PaymentMethod> applicablePaymentMethods;
 }

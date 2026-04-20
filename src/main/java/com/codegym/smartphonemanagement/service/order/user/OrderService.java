@@ -6,16 +6,25 @@ import com.codegym.smartphonemanagement.service.cart.DTO.CartItemRequestDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
+import com.codegym.smartphonemanagement.exception.InsufficientStockException;
+import com.codegym.smartphonemanagement.exception.InvalidOrderStatusException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codegym.smartphonemanagement.service.NotificationService;
+import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
+import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
@@ -31,9 +40,16 @@ public class OrderService implements IOrderService {
     private final ICartService cartService;
     private final ICouponService couponService;
     private final NotificationService notificationService;
+    private final RecommendationService recommendationService;
+    private final ILoyaltyPointService loyaltyPointService;
 
-    // Giả lập (thay bằng Security context sau)
-    private static final Long MOCK_USER_ID = 1L;
+    // ======================= CONSTANTS =======================
+    
+    private static final BigDecimal STANDARD_SHIPPING_FEE = BigDecimal.valueOf(50000);
+    private static final BigDecimal MAJOR_CITY_SHIPPING_FEE = BigDecimal.valueOf(30000);
+    private static final int REFUND_WINDOW_DAYS = 14;
+    private static final int ESTIMATED_DELIVERY_BUSINESS_DAYS = 5;
+    private static final Set<String> MAJOR_CITIES = Set.of("hà nội", "hồ chí minh", "đà nẵng");
 
     // ======================= STATE MACHINE CONFIG =======================
 
@@ -64,75 +80,142 @@ public class OrderService implements IOrderService {
     @Override
     @Transactional
     public OrderResponseDTO createOrder(Long userId, OrderRequestDTO orderDTO) {
+        // 1. Validate cart
+        Cart cart = validateAndGetCart(userId);
+        User user = getUserById(userId);
+
+        // 2. Calculate totals
+        BigDecimal subtotal = calculateCartSubtotal(cart);
+        BigDecimal shippingFee = calculateShippingFee(orderDTO.getProvince());
+        
+        // 3. Create order
+        Order order = buildOrder(user, orderDTO, subtotal, shippingFee);
+        Order savedOrder = orderRepository.save(order);
+
+        // 4. Process order items and update stock
+        List<OrderItem> orderItems = processOrderItems(cart, savedOrder);
+        orderItemRepository.saveAll(orderItems);
+        savedOrder.setItems(orderItems);
+
+        // 5. Apply discount
+        applyDiscountToOrder(savedOrder);
+
+        // 6. Clear cart
+        cartItemRepository.deleteAllByCartId(cart.getId());
+
+        // 7. Record history
+        saveHistory(savedOrder, null, OrderStatus.PENDING, "SYSTEM", "Đơn hàng được tạo");
+
+        return mapToResponseDTO(savedOrder);
+    }
+
+    private Cart validateAndGetCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại!"));
-        if (cart.getItems().isEmpty()) throw new RuntimeException("Giỏ hàng trống!");
+                .orElseThrow(() -> new EntityNotFoundException("Giỏ hàng không tồn tại!"));
+        if (cart.getItems().isEmpty()) {
+            throw new BadRequestException("Giỏ hàng trống!");
+        }
+        return cart;
+    }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại!"));
+    }
 
-        String fullAddress = String.format("%s, %s, %s, %s",
-                orderDTO.getAddressDetail(),
-                orderDTO.getWard(),
-                orderDTO.getDistrict(),
-                orderDTO.getProvince());
-
-        BigDecimal total = cart.getItems().stream()
+    private BigDecimal calculateCartSubtotal(Cart cart) {
+        return cart.getItems().stream()
                 .map(item -> item.getPriceAtTime().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
-        Order order = Order.builder()
+    private BigDecimal calculateShippingFee(String province) {
+        if (province == null) return STANDARD_SHIPPING_FEE;
+        
+        String lowerProvince = province.toLowerCase();
+        boolean isMajorCity = MAJOR_CITIES.stream().anyMatch(lowerProvince::contains);
+        
+        return isMajorCity ? MAJOR_CITY_SHIPPING_FEE : STANDARD_SHIPPING_FEE;
+    }
+
+    private Order buildOrder(User user, OrderRequestDTO orderDTO, BigDecimal subtotal, BigDecimal shippingFee) {
+        String fullAddress = formatFullAddress(orderDTO);
+        BigDecimal totalPrice = subtotal.add(shippingFee);
+
+        return Order.builder()
                 .user(user)
                 .receiverName(orderDTO.getCustomerName())
                 .receiverPhone(orderDTO.getReceiverPhone())
                 .shippingAddress(fullAddress)
                 .note(orderDTO.getNote())
-                .totalPrice(total)
+                .totalPrice(totalPrice)
+                .shippingFee(shippingFee)
                 .status(OrderStatus.PENDING)
                 .paymentMethod(orderDTO.getPaymentMethod())
                 .couponCode(orderDTO.getCouponCode())
                 .build();
+    }
 
-        Order savedOrder = orderRepository.save(order);
+    private String formatFullAddress(OrderRequestDTO orderDTO) {
+        return String.format("%s, %s, %s, %s",
+                orderDTO.getAddressDetail(),
+                orderDTO.getWard(),
+                orderDTO.getDistrict(),
+                orderDTO.getProvince());
+    }
 
-        // Chuyển CartItem → OrderItem & TRỪ KHO
-        List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
-            ProductVariant variant = cartItem.getProductVariant();
-            if (variant.getStockQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
-            }
-            variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
-            productVariantRepository.save(variant);
+    private List<OrderItem> processOrderItems(Cart cart, Order order) {
+        return cart.getItems().stream()
+                .map(cartItem -> createOrderItemAndUpdateStock(cartItem, order))
+                .collect(Collectors.toList());
+    }
 
-            return OrderItem.builder()
-                    .order(savedOrder)
-                    .product(cartItem.getProduct())
-                    .productVariant(variant)
-                    .quantity(cartItem.getQuantity())
-                    .price(cartItem.getPriceAtTime())
-                    .build();
-        }).collect(Collectors.toList());
-
-        orderItemRepository.saveAll(orderItems);
-        savedOrder.setItems(orderItems);
-
-        // Áp dụng Voucher (phân bổ discount vào từng OrderItem)
-        couponService.applyDiscountToOrder(savedOrder);
-        orderItemRepository.saveAll(orderItems); // Save allocated discounts
-
-        // Cập nhật totalPrice = original - discount
-        if (savedOrder.getTotalDiscount() != null && savedOrder.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            savedOrder.setTotalPrice(total.subtract(savedOrder.getTotalDiscount()));
-            orderRepository.save(savedOrder);
+    private OrderItem createOrderItemAndUpdateStock(CartItem cartItem, Order order) {
+        ProductVariant variant = cartItem.getProductVariant();
+        
+        // Validate stock
+        if (variant.getStockQuantity() < cartItem.getQuantity()) {
+            throw new InsufficientStockException(
+                    "Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
         }
 
-        // Xóa giỏ hàng
-        cartItemRepository.deleteAllByCartId(cart.getId());
+        // Update stock
+        variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
+        productVariantRepository.save(variant);
 
-        // Ghi audit trail
-        saveHistory(savedOrder, null, OrderStatus.PENDING, "SYSTEM", "Đơn hàng được tạo");
+        // Create order item
+        return OrderItem.builder()
+                .order(order)
+                .product(cartItem.getProduct())
+                .productVariant(variant)
+                .quantity(cartItem.getQuantity())
+                .price(cartItem.getPriceAtTime())
+                .build();
+    }
 
-        return mapToResponseDTO(savedOrder);
+    private void applyDiscountToOrder(Order order) {
+        // Apply voucher discount
+        couponService.applyDiscountToOrder(order);
+        orderItemRepository.saveAll(order.getItems());
+
+        // Recalculate total price
+        if (order.getTotalDiscount() != null && order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal subtotal = calculateOrderSubtotal(order);
+            BigDecimal finalPrice = subtotal.add(order.getShippingFee()).subtract(order.getTotalDiscount());
+            
+            if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
+                finalPrice = BigDecimal.ZERO;
+            }
+            
+            order.setTotalPrice(finalPrice);
+            orderRepository.save(order);
+        }
+    }
+
+    private BigDecimal calculateOrderSubtotal(Order order) {
+        return order.getItems().stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     // ======================== USER: HỦY ĐƠN ========================
@@ -140,57 +223,151 @@ public class OrderService implements IOrderService {
     @Override
     @Transactional
     public void cancelOrder(Long userId, Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
-
-        if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
-        }
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Chỉ có thể hủy đơn khi đang ở trạng thái Chờ xác nhận.");
-        }
+        Order order = findOrderById(orderId);
+        validateOrderOwnership(order, userId);
+        validateOrderCancellable(order);
 
         OrderStatus oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        // Hoàn kho
+        // Restore resources
         restoreStock(order);
-        // Hoàn voucher usage
         couponService.restoreVoucherUsage(order.getCouponCode());
-        // Ghi audit
+        
+        // Record history
         saveHistory(order, oldStatus, OrderStatus.CANCELLED, "USER", "Khách hàng hủy đơn");
+    }
+
+    private Order findOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại!"));
+    }
+
+    private void validateOrderOwnership(Order order, Long userId) {
+        if (!order.getUser().getId().equals(userId)) {
+            throw new UnauthorizedAccessException("Bạn không có quyền thao tác đơn hàng này.");
+        }
+    }
+
+    private void validateOrderCancellable(Order order) {
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new InvalidOrderStatusException(
+                    "Chỉ có thể hủy đơn khi đang ở trạng thái Chờ xác nhận.");
+        }
     }
 
     // ======================== ADMIN: CHUYỂN TRẠNG THÁI ========================
 
     @Transactional
     public void updateOrderStatus(Long orderId, OrderStatus newStatus, String reason) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
-
+        Order order = findOrderById(orderId);
         OrderStatus oldStatus = order.getStatus();
+        
         validateTransition(oldStatus, newStatus);
 
-        // Nếu Admin hủy đơn → hoàn kho + voucher
+        // Handle cancellation
         if (newStatus == OrderStatus.CANCELLED) {
-            restoreStock(order);
-            couponService.restoreVoucherUsage(order.getCouponCode());
+            handleOrderCancellation(order);
         }
 
+        // Update status
         order.setStatus(newStatus);
         orderRepository.save(order);
 
+        // Record history
         saveHistory(order, oldStatus, newStatus, "ADMIN",
                 reason != null ? reason : "Admin cập nhật trạng thái");
-                
-        // Send Notification
-        String msg = String.format("Đơn hàng #%d của bạn đã chuyển sang trạng thái: %s", 
-             order.getId(), STATUS_DISPLAY.getOrDefault(newStatus, newStatus.name()));
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+
+        // Post-status-change actions
+        handlePostStatusChangeActions(order, newStatus);
     }
 
-    // Backward compat — old signature
+    private void handleOrderCancellation(Order order) {
+        restoreStock(order);
+        couponService.restoreVoucherUsage(order.getCouponCode());
+    }
+
+    private void handlePostStatusChangeActions(Order order, OrderStatus newStatus) {
+        // Send notification
+        sendOrderStatusNotification(order, newStatus);
+
+        // Handle delivery completion
+        if (newStatus == OrderStatus.DELIVERED) {
+            handleOrderDelivered(order);
+        }
+
+        // Handle refunds
+        if (newStatus == OrderStatus.REFUNDED || newStatus == OrderStatus.PARTIAL_REFUNDED) {
+            handleOrderRefunded(order);
+        }
+    }
+
+    private void sendOrderStatusNotification(Order order, OrderStatus newStatus) {
+        String message = String.format("Đơn hàng #%d của bạn đã chuyển sang trạng thái: %s",
+                order.getId(), STATUS_DISPLAY.getOrDefault(newStatus, newStatus.name()));
+        notificationService.sendNotification(
+                order.getUser(), message,
+                NotificationType.ORDER_STATUS_CHANGED,
+                "/user/order/detail/" + order.getId());
+    }
+
+    private void handleOrderDelivered(Order order) {
+        // Update recommendations
+        updateRecommendations(order);
+        
+        // Award loyalty points
+        awardLoyaltyPoints(order);
+    }
+
+    private void updateRecommendations(Order order) {
+        if (order.getItems() == null) return;
+        
+        order.getItems().forEach(item -> {
+            try {
+                recommendationService.buildRecommendationsForProduct(item.getProduct().getId());
+                log.info("Successfully triggered real-time recommendation build for product: {}",
+                        item.getProduct().getId());
+            } catch (Exception e) {
+                log.error("Failed to build real-time recommendation for product: {}",
+                        item.getProduct().getId(), e);
+            }
+        });
+    }
+
+    private void awardLoyaltyPoints(Order order) {
+        try {
+            loyaltyPointService.earnPoints(order.getUser().getId(), order);
+            int earned = order.getPointsEarned() != null ? order.getPointsEarned() : 0;
+            
+            if (earned > 0) {
+                sendLoyaltyPointsNotification(order, earned);
+                orderRepository.save(order);
+            }
+        } catch (Exception e) {
+            log.error("Failed to earn loyalty points for order #{}", order.getId(), e);
+        }
+    }
+
+    private void sendLoyaltyPointsNotification(Order order, int pointsEarned) {
+        String message = String.format(
+                "🌟 Bạn vừa tích được %d điểm từ đơn hàng #%d! Dùng điểm để đổi ưu đãi tại trang Điểm Tích Lũy.",
+                pointsEarned, order.getId());
+        notificationService.sendNotification(
+                order.getUser(), message,
+                NotificationType.ORDER_STATUS_CHANGED,
+                "/user/loyalty");
+    }
+
+    private void handleOrderRefunded(Order order) {
+        try {
+            loyaltyPointService.deductPoints(order.getUser().getId(), order);
+        } catch (Exception e) {
+            log.error("Failed to deduct loyalty points for order #{}", order.getId(), e);
+        }
+    }
+
+    // Backward compatibility
     @Transactional
     public void updateOrderStatus(Long orderId, OrderStatus newStatus) {
         updateOrderStatus(orderId, newStatus, null);
@@ -213,18 +390,14 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderResponseDTO getOrderDetail(Long userId, Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
-        if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền xem đơn hàng này.");
-        }
+        Order order = findOrderById(orderId);
+        validateOrderOwnership(order, userId);
         return mapToResponseDTO(order);
     }
 
     @Override
     public OrderResponseDTO getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+        Order order = findOrderById(id);
         return mapToResponseDTO(order);
     }
 
@@ -241,22 +414,25 @@ public class OrderService implements IOrderService {
     @Override
     @Transactional
     public void reorderOrderToCart(Long userId, Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
-        if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
+        Order order = findOrderById(orderId);
+        validateOrderOwnership(order, userId);
+        validateOrderHasItems(order);
+
+        order.getItems().forEach(orderItem -> addOrderItemToCart(userId, orderItem));
+    }
+
+    private void validateOrderHasItems(Order order) {
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            throw new BadRequestException("Đơn hàng không có sản phẩm.");
         }
-        List<OrderItem> items = order.getItems();
-        if (items == null || items.isEmpty()) {
-            throw new RuntimeException("Đơn hàng không có sản phẩm.");
-        }
-        for (OrderItem oi : items) {
-            CartItemRequestDTO req = new CartItemRequestDTO();
-            req.setProductId(oi.getProduct().getId());
-            req.setVariantId(oi.getProductVariant().getVariantId());
-            req.setQuantity(oi.getQuantity());
-            cartService.addToCart(userId, req);
-        }
+    }
+
+    private void addOrderItemToCart(Long userId, OrderItem orderItem) {
+        CartItemRequestDTO request = new CartItemRequestDTO();
+        request.setProductId(orderItem.getProduct().getId());
+        request.setVariantId(orderItem.getProductVariant().getVariantId());
+        request.setQuantity(orderItem.getQuantity());
+        cartService.addToCart(userId, request);
     }
 
     @Override
@@ -272,7 +448,7 @@ public class OrderService implements IOrderService {
     private void validateTransition(OrderStatus from, OrderStatus to) {
         Set<OrderStatus> allowed = VALID_TRANSITIONS.get(from);
         if (allowed == null || !allowed.contains(to)) {
-            throw new RuntimeException(
+            throw new InvalidOrderStatusException(
                     String.format("Không thể chuyển trạng thái từ %s sang %s", from, to));
         }
     }
@@ -300,66 +476,14 @@ public class OrderService implements IOrderService {
     // ======================== MAPPING DTO ========================
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
-        List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
-                .map(item -> {
-                    BigDecimal subTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-                    BigDecimal allocated = item.getAllocatedDiscount() != null ? item.getAllocatedDiscount() : BigDecimal.ZERO;
-                    return OrderItemResponseDTO.builder()
-                            .id(item.getId())
-                            .productId(item.getProduct().getId())
-                            .variantId(item.getProductVariant() != null ? item.getProductVariant().getVariantId() : null)
-                            .productName(item.getProduct().getName())
-                            .variantName(item.getProductVariant() != null ? item.getProductVariant().getVariantName() : "")
-                            .imageUrl(item.getProduct().getImageUrl())
-                            .quantity(item.getQuantity())
-                            .price(item.getPrice())
-                            .subTotal(subTotal)
-                            .allocatedDiscount(allocated)
-                            .netPrice(subTotal.subtract(allocated))
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        // Timeline
-        List<OrderHistoryDTO> timeline = orderHistoryRepository
-                .findByOrderIdOrderByCreatedAtAsc(order.getId())
-                .stream()
-                .map(h -> OrderHistoryDTO.builder()
-                        .statusFrom(h.getStatusFrom() != null ? h.getStatusFrom().name() : null)
-                        .statusTo(h.getStatusTo().name())
-                        .updatedBy(h.getUpdatedBy())
-                        .reason(h.getReason())
-                        .createdAt(h.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
-
-        // Active refund
-        RefundResponseDTO activeRefund = null;
-        RefundRequest refReq = refundRequestRepository
-                .findByOrderIdAndStatus(order.getId(), RefundStatus.PENDING)
-                .orElse(null);
-        if (refReq != null) {
-            activeRefund = mapRefundToDTO(refReq);
-        }
-
-        // Can cancel / can refund flags
+        List<OrderItemResponseDTO> itemDTOs = mapOrderItems(order);
+        List<OrderHistoryDTO> timeline = mapOrderHistory(order);
+        RefundResponseDTO activeRefund = findActiveRefund(order);
+        
         boolean canCancel = order.getStatus() == OrderStatus.PENDING;
-
-        // refund trong 14 ngày sau DELIVERED
-        boolean canRefund = false;
-        if (order.getStatus() == OrderStatus.DELIVERED) {
-            // Tìm thời điểm chuyển sang DELIVERED
-            Optional<OrderHistory> deliveredEvent = orderHistoryRepository
-                    .findByOrderIdOrderByCreatedAtDesc(order.getId())
-                    .stream()
-                    .filter(h -> h.getStatusTo() == OrderStatus.DELIVERED)
-                    .findFirst();
-            if (deliveredEvent.isPresent()) {
-                LocalDateTime deliveredAt = deliveredEvent.get().getCreatedAt();
-                canRefund = deliveredAt.plusDays(14).isAfter(LocalDateTime.now());
-            }
-            // Nếu không tìm thấy event, không cho refund (an toàn hơn)
-        }
+        boolean canRefund = canRequestRefund(order);
+        LocalDateTime estimatedDelivery = calculateEstimatedDeliveryDate(
+                order.getCreatedAt());
 
         String statusName = order.getStatus() != null ? order.getStatus().name() : "PENDING";
 
@@ -367,6 +491,7 @@ public class OrderService implements IOrderService {
                 .id(order.getId())
                 .totalPrice(order.getTotalPrice())
                 .totalDiscount(order.getTotalDiscount())
+                .shippingFee(order.getShippingFee())
                 .couponCode(order.getCouponCode())
                 .status(statusName)
                 .statusDisplay(STATUS_DISPLAY.getOrDefault(order.getStatus(), statusName))
@@ -377,12 +502,120 @@ public class OrderService implements IOrderService {
                 .note(order.getNote())
                 .paymentMethodDisplay(order.getPaymentMethod() != null ?
                         order.getPaymentMethod().getDisplayValue() : "Chưa xác định")
+                .paymentStatus(order.getPaymentStatus() != null ? 
+                        order.getPaymentStatus().name() : "PENDING")
+                .paymentStatusDisplay(getPaymentStatusDisplay(order.getPaymentStatus()))
                 .items(itemDTOs)
                 .timeline(timeline)
                 .activeRefund(activeRefund)
                 .canCancel(canCancel)
                 .canRefund(canRefund)
+                .estimatedDeliveryDate(estimatedDelivery)
+                .userId(order.getUser() != null ? order.getUser().getId() : null)
+                .buyerUsername(order.getUser() != null ? order.getUser().getUsername() : "")
+                .buyerFullName(order.getUser() != null ? order.getUser().getFullName() : "")
                 .build();
+    }
+
+    private List<OrderItemResponseDTO> mapOrderItems(Order order) {
+        return order.getItems().stream()
+                .map(this::mapOrderItem)
+                .collect(Collectors.toList());
+    }
+
+    private OrderItemResponseDTO mapOrderItem(OrderItem item) {
+        BigDecimal subTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+        BigDecimal allocated = item.getAllocatedDiscount() != null ? 
+                item.getAllocatedDiscount() : BigDecimal.ZERO;
+
+        return OrderItemResponseDTO.builder()
+                .id(item.getId())
+                .productId(item.getProduct().getId())
+                .variantId(item.getProductVariant() != null ? 
+                        item.getProductVariant().getVariantId() : null)
+                .productName(item.getProduct().getName())
+                .variantName(item.getProductVariant() != null ? 
+                        item.getProductVariant().getVariantName() : "")
+                .imageUrl(item.getProduct().getImageUrl())
+                .quantity(item.getQuantity())
+                .price(item.getPrice())
+                .subTotal(subTotal)
+                .allocatedDiscount(allocated)
+                .netPrice(subTotal.subtract(allocated))
+                .build();
+    }
+
+    private List<OrderHistoryDTO> mapOrderHistory(Order order) {
+        return orderHistoryRepository
+                .findByOrderIdOrderByCreatedAtAsc(order.getId())
+                .stream()
+                .map(this::mapHistoryToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private OrderHistoryDTO mapHistoryToDTO(OrderHistory history) {
+        return OrderHistoryDTO.builder()
+                .statusFrom(history.getStatusFrom() != null ? 
+                        history.getStatusFrom().name() : null)
+                .statusTo(history.getStatusTo().name())
+                .updatedBy(history.getUpdatedBy())
+                .reason(history.getReason())
+                .createdAt(history.getCreatedAt())
+                .build();
+    }
+
+    private RefundResponseDTO findActiveRefund(Order order) {
+        return refundRequestRepository
+                .findByOrderIdAndStatus(order.getId(), RefundStatus.PENDING)
+                .map(this::mapRefundToDTO)
+                .orElse(null);
+    }
+
+    private boolean canRequestRefund(Order order) {
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            return false;
+        }
+
+        Optional<OrderHistory> deliveredEvent = orderHistoryRepository
+                .findByOrderIdOrderByCreatedAtDesc(order.getId())
+                .stream()
+                .filter(h -> h.getStatusTo() == OrderStatus.DELIVERED)
+                .findFirst();
+
+        if (deliveredEvent.isEmpty()) {
+            return false;
+        }
+
+        LocalDateTime deliveredAt = deliveredEvent.get().getCreatedAt();
+        return deliveredAt.plusDays(REFUND_WINDOW_DAYS).isAfter(LocalDateTime.now());
+    }
+
+    private String getPaymentStatusDisplay(com.codegym.smartphonemanagement.model.PaymentStatus status) {
+        if (status == null) return "Chờ thanh toán";
+        return switch (status) {
+            case COMPLETED -> "Đã thanh toán";
+            case FAILED -> "Thanh toán thất bại";
+            case REFUNDED -> "Đã hoàn tiền";
+            default -> "Chờ thanh toán";
+        };
+    }
+
+    /**
+     * Calculate estimated delivery date by adding business days (skip weekends)
+     */
+    private LocalDateTime calculateEstimatedDeliveryDate(LocalDateTime startDate) {
+        LocalDateTime result = startDate;
+        int addedDays = 0;
+
+        while (addedDays < OrderService.ESTIMATED_DELIVERY_BUSINESS_DAYS) {
+            result = result.plusDays(1);
+            // Skip weekends (Saturday = 6, Sunday = 7)
+            if (result.getDayOfWeek().getValue() < 6) {
+                addedDays++;
+            }
+        }
+
+        return result;
     }
 
     private RefundResponseDTO mapRefundToDTO(RefundRequest req) {

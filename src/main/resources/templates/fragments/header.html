@@ -178,6 +178,142 @@
             opacity: 1;
         }
 
+        /* Search Suggestions Dropdown */
+        .search-suggestions-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            z-index: 1060;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 400px;
+            overflow: hidden;
+        }
+
+        .search-suggestions-dropdown.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .suggestions-header {
+            padding: 12px 16px;
+            background: rgba(245, 158, 11, 0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+        }
+
+        .suggestions-list {
+            max-height: 350px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+
+        .suggestions-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .suggestions-list::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.45);
+            border-radius: 100px;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            text-decoration: none;
+            color: #0f172a;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(245, 158, 11, 0.08);
+            padding-left: 20px;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .suggestion-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0f172a;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .suggestion-meta {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .suggestion-arrow {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            transition: all 0.25s ease;
+        }
+
+        .suggestion-item:hover .suggestion-arrow {
+            color: #f59e0b;
+            transform: translateX(4px);
+        }
+
+        /* Loading State */
+        .suggestions-loading {
+            padding: 24px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .suggestions-empty {
+            padding: 24px;
+            text-align: center;
+            color: #64748b;
+            font-weight: 500;
+        }
+
         /* ========================================================= */
         /* 5. LINE ART ICONS & PULSE BADGE                           */
         /* ========================================================= */
@@ -278,17 +414,17 @@
                         
                         <div class="bento-grid">
                             <a href="/user/products?brand=Apple" class="bento-box d-flex align-items-center gap-3">
-                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <i class="bi bi-apple fs-4" style="color: #1e293b;"></i>
+                                <div style="background: #f8f8f8; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                    <img src="https://cdn.simpleicons.org/apple/1e293b" width="26" height="26" alt="Apple" style="object-fit:contain;">
                                 </div>
                                 <div>
                                     <div class="bento-title">Apple iPhone</div>
-                                    <div class="bento-desc">Đỉnh cao thiết kế & iOS</div>
+                                    <div class="bento-desc">Đỉnh cao thiết kế &amp; iOS</div>
                                 </div>
                             </a>
                             <a href="/user/products?brand=Samsung" class="bento-box d-flex align-items-center gap-3">
-                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <i class="bi bi-android2 fs-4 text-primary"></i>
+                                <div style="background: #eef4ff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                    <img src="https://cdn.simpleicons.org/samsung/1428A0" width="26" height="26" alt="Samsung" style="object-fit:contain;">
                                 </div>
                                 <div>
                                     <div class="bento-title">Samsung Galaxy</div>
@@ -296,8 +432,8 @@
                                 </div>
                             </a>
                             <a href="/user/products?brand=Xiaomi" class="bento-box d-flex align-items-center gap-3">
-                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <i class="bi bi-lightning-charge fs-4 text-warning"></i>
+                                <div style="background: #fff5ee; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                    <img src="https://cdn.simpleicons.org/xiaomi/FF6900" width="26" height="26" alt="Xiaomi" style="object-fit:contain;">
                                 </div>
                                 <div>
                                     <div class="bento-title">Xiaomi</div>
@@ -305,8 +441,8 @@
                                 </div>
                             </a>
                             <a href="/user/products?brand=Oppo" class="bento-box d-flex align-items-center gap-3">
-                                <div style="background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <i class="bi bi-camera fs-4 text-success"></i>
+                                <div style="background: #edfbf2; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); width:50px; height:50px; display:flex; align-items:center; justify-content:center;">
+                                    <img src="https://cdn.simpleicons.org/oppo/1D8348" width="26" height="26" alt="Oppo" style="object-fit:contain;">
                                 </div>
                                 <div>
                                     <div class="bento-title">Oppo Flagship</div>
@@ -321,11 +457,25 @@
             <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
                 
                 <!-- Expandable Search Capsule -->
-                <form action="/user/products" method="get" class="m-0">
-                    <div class="header-search-capsule" id="headerSearch" onclick="this.classList.add('expanded'); document.getElementById('hInput').focus();">
+                <form action="/user/products" method="get" class="m-0 position-relative">
+                    <div class="header-search-capsule" id="headerSearch" onclick="expandSearch()">
                         <i class="bi bi-search header-search-icon"></i>
                         <input type="text" id="hInput" name="keyword" class="header-search-input" placeholder="Tìm siêu phẩm..."
-                               onblur="if(this.value === '') this.parentElement.classList.remove('expanded');">
+                               autocomplete="off"
+                               oninput="handleSearchInput(this.value)"
+                               onfocus="handleSearchFocus()"
+                               onblur="handleSearchBlur()">
+                    </div>
+                    
+                    <!-- Search Suggestions Dropdown -->
+                    <div class="search-suggestions-dropdown" id="searchSuggestions">
+                        <div class="suggestions-header">
+                            <i class="bi bi-clock-history me-2"></i>
+                            <span>Tìm kiếm phổ biến</span>
+                        </div>
+                        <div class="suggestions-list" id="suggestionsList">
+                            <!-- Popular searches will be inserted here -->
+                        </div>
                     </div>
                 </form>
 
@@ -340,6 +490,16 @@
                    title="Bộ sưu tập của tôi"
                    aria-label="Bộ sưu tập của tôi">
                     <i class="bi bi-heart fs-4"></i>
+                </a>
+
+                <!-- Sản phẩm đã lưu (Saved for Later) -->
+                <a th:href="@{/user/saved-items}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   title="Sản phẩm đã lưu"
+                   aria-label="Sản phẩm đã lưu">
+                    <i class="bi bi-bookmark fs-4"></i>
                 </a>
 
                 <!-- So sánh sản phẩm -->
@@ -365,7 +525,32 @@
                           th:title="|${headerPendingOrdersCount} đơn đang xử lý|"></span>
                 </a>
 
-                <!-- Thông báo (Real-time) -->
+                <!-- 🌟 Loyalty Points Badge -->
+                <a th:href="@{/user/loyalty}"
+                   class="icon-action-btn nav-interactive-glow position-relative loyalty-btn"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   th:title="|${loyaltyPoints != null ? loyaltyPoints : 0} điểm tích lũy — Nhấn để xem ưu đãi|"
+                   aria-label="Điểm tích lũy"
+                   style="width:auto; padding: 6px 14px; gap:6px; border-radius:50px;
+                          background: linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));
+                          border:1.5px solid rgba(245,158,11,0.3);">
+                    <i class="bi bi-star-fill" style="color:#f59e0b; font-size:1rem;"></i>
+                    <span class="fw-bold" style="font-size:0.85rem; color:#b45309; white-space:nowrap;"
+                          th:text="${(loyaltyPoints != null ? loyaltyPoints : 0) + ' pts'}">0 pts</span>
+                </a>
+
+                <!-- 🪙 SmartZone Xu (Wallet) -->
+                <a th:href="@{/user/wallet}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   th:title="|Ví SmartZone Xu — Số dư: ${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : 0}₫|"
+                   aria-label="Ví SmartZone Xu">
+                    <i class="bi bi-coin" style="color: #f59e0b; font-size: 1.4rem;"></i>
+                </a>
+
+
                 <div class="nav-item dropdown position-relative">
                     <a href="#" class="icon-action-btn nav-interactive-glow position-relative"
                        id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
@@ -432,12 +617,37 @@
             }
         });
         
-        // Cần đảm bảo việc click vào input không đóng capsule ngay
+        // Search capsule management
         const searchInput = document.getElementById('hInput');
-        if(searchInput) {
+        const searchCapsule = document.getElementById('headerSearch');
+        const searchDropdown = document.getElementById('searchSuggestions');
+        
+        if(searchInput && searchCapsule) {
+            // Prevent capsule click from bubbling
             searchInput.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
+            
+            // Close search when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchCapsule.contains(e.target) && !searchDropdown?.contains(e.target)) {
+                    // Only collapse if input is empty
+                    if (searchInput.value.trim() === '') {
+                        searchCapsule.classList.remove('expanded');
+                    }
+                    hideSearchSuggestions();
+                }
+            });
+            
+            // Prevent dropdown clicks from closing
+            if (searchDropdown) {
+                searchDropdown.addEventListener('click', function(e) {
+                    // Allow links to work but prevent closing
+                    if (!e.target.closest('a')) {
+                        e.stopPropagation();
+                    }
+                });
+            }
         }
 
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
@@ -448,6 +658,266 @@
         setTimeout(() => {
             document.getElementById('floatingWalletBtn')?.classList.add('pulse-strong');
         }, 3000);
+    });
+
+    // Expand search capsule
+    function expandSearch() {
+        const searchCapsule = document.getElementById('headerSearch');
+        const searchInput = document.getElementById('hInput');
+        
+        if (searchCapsule && searchInput) {
+            searchCapsule.classList.add('expanded');
+            searchInput.focus();
+        }
+    }
+
+    // Handle search focus
+    function handleSearchFocus() {
+        const searchInput = document.getElementById('hInput');
+        if (searchInput && searchInput.value.trim() === '') {
+            showPopularSearches();
+        } else if (searchInput && searchInput.value.trim() !== '') {
+            searchProducts(searchInput.value.trim());
+        }
+    }
+
+    // Handle search blur - only hide dropdown, don't collapse capsule
+    function handleSearchBlur() {
+        // Delay to allow clicking on suggestions
+        setTimeout(() => {
+            const searchInput = document.getElementById('hInput');
+            const searchCapsule = document.getElementById('headerSearch');
+            
+            // Only collapse if input is empty AND not focused
+            if (searchInput && searchCapsule && 
+                searchInput.value.trim() === '' && 
+                document.activeElement !== searchInput) {
+                searchCapsule.classList.remove('expanded');
+                hideSearchSuggestions();
+            }
+        }, 200);
+    }
+
+    // Search History Management (localStorage)
+    const SEARCH_HISTORY_KEY = 'smartzone_search_history';
+    const MAX_HISTORY_ITEMS = 10;
+
+    function getSearchHistory() {
+        try {
+            const history = localStorage.getItem(SEARCH_HISTORY_KEY);
+            return history ? JSON.parse(history) : [];
+        } catch (e) {
+            console.error('Error reading search history:', e);
+            return [];
+        }
+    }
+
+    function saveToSearchHistory(keyword) {
+        if (!keyword || keyword.trim() === '') return;
+        
+        try {
+            let history = getSearchHistory();
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.keyword.toLowerCase() !== keyword.toLowerCase());
+            
+            // Add to beginning
+            history.unshift({
+                keyword: keyword.trim(),
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only MAX_HISTORY_ITEMS
+            history = history.slice(0, MAX_HISTORY_ITEMS);
+            
+            localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+        } catch (e) {
+            console.error('Error saving search history:', e);
+        }
+    }
+
+    function clearSearchHistory() {
+        try {
+            localStorage.removeItem(SEARCH_HISTORY_KEY);
+        } catch (e) {
+            console.error('Error clearing search history:', e);
+        }
+    }
+
+    // Popular searches data (fallback nếu không có history)
+    const popularSearches = [
+        { keyword: 'iPhone 15 Pro Max', icon: 'bi-apple', meta: 'Flagship Apple' },
+        { keyword: 'Samsung Galaxy S24', icon: 'bi-phone', meta: 'Flagship Samsung' },
+        { keyword: 'Xiaomi 14', icon: 'bi-lightning-charge', meta: 'Hiệu năng cao' },
+        { keyword: 'Oppo Find X7', icon: 'bi-camera', meta: 'Chuyên nhiếp ảnh' },
+        { keyword: 'iPhone 14', icon: 'bi-apple', meta: 'Giá tốt' },
+        { keyword: 'Samsung A54', icon: 'bi-phone', meta: 'Tầm trung' }
+    ];
+
+    let searchTimeout;
+    
+    function handleSearchInput(value) {
+        clearTimeout(searchTimeout);
+        
+        if (value.trim() === '') {
+            showPopularSearches();
+            return;
+        }
+        
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+            searchProducts(value);
+        }, 300);
+    }
+
+    function showPopularSearches() {
+        const dropdown = document.getElementById('searchSuggestions');
+        const list = document.getElementById('suggestionsList');
+        
+        if (!dropdown || !list) return;
+        
+        // Get search history
+        const history = getSearchHistory();
+        
+        // Update header based on whether we have history
+        const header = dropdown.querySelector('.suggestions-header');
+        if (header) {
+            if (history.length > 0) {
+                header.innerHTML = `
+                    <i class="bi bi-clock-history me-2"></i>
+                    <span>Tìm kiếm gần đây</span>
+                    <button onclick="clearSearchHistory(); showPopularSearches();" 
+                            class="btn btn-sm text-danger p-0 ms-auto" 
+                            style="font-size: 0.75rem; text-decoration: underline;"
+                            title="Xóa lịch sử">
+                        Xóa
+                    </button>
+                `;
+            } else {
+                header.innerHTML = '<i class="bi bi-fire me-2"></i><span>Tìm kiếm phổ biến</span>';
+            }
+        }
+        
+        // Render history or popular searches
+        const items = history.length > 0 
+            ? history.map(item => ({
+                keyword: item.keyword,
+                icon: 'bi-clock-history',
+                meta: 'Đã tìm gần đây'
+            }))
+            : popularSearches;
+        
+        list.innerHTML = items.map(item => `
+            <a href="/user/products?keyword=${encodeURIComponent(item.keyword)}" 
+               class="suggestion-item"
+               onclick="saveToSearchHistory('${item.keyword.replace(/'/g, "\\'")}')">
+                <div class="suggestion-icon">
+                    <i class="${item.icon}"></i>
+                </div>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${item.keyword}</div>
+                    <div class="suggestion-meta">${item.meta}</div>
+                </div>
+                <i class="bi bi-arrow-right suggestion-arrow"></i>
+            </a>
+        `).join('');
+        
+        dropdown.classList.add('show');
+    }
+
+    function searchProducts(keyword) {
+        const dropdown = document.getElementById('searchSuggestions');
+        const list = document.getElementById('suggestionsList');
+        
+        if (!dropdown || !list) return;
+        
+        // Update header
+        const header = dropdown.querySelector('.suggestions-header');
+        if (header) {
+            header.innerHTML = '<i class="bi bi-search me-2"></i><span>Kết quả tìm kiếm</span>';
+        }
+        
+        // Show loading
+        list.innerHTML = '<div class="suggestions-loading"><div class="spinner-border spinner-border-sm text-warning me-2"></div>Đang tìm kiếm...</div>';
+        dropdown.classList.add('show');
+        
+        // Call API backend
+        fetch(`/user/products/api/search-suggestions?keyword=${encodeURIComponent(keyword)}`)
+            .then(response => response.json())
+            .then(results => {
+                if (results.length === 0) {
+                    list.innerHTML = `
+                        <div class="suggestions-empty">
+                            <i class="bi bi-search fs-3 mb-2 d-block"></i>
+                            Không tìm thấy kết quả cho "<strong>${keyword}</strong>"
+                        </div>
+                    `;
+                } else {
+                    list.innerHTML = results.map(product => {
+                        // Highlight matching text
+                        const highlightedTitle = product.name.replace(
+                            new RegExp(keyword, 'gi'),
+                            match => `<mark style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-weight: 700; padding: 0 2px; border-radius: 3px;">${match}</mark>`
+                        );
+                        
+                        // Format price
+                        const formattedPrice = new Intl.NumberFormat('vi-VN').format(product.price) + ' ₫';
+                        
+                        // Stock status
+                        const stockStatus = product.stock > 0 
+                            ? `<span class="text-success small">✓ Còn hàng</span>` 
+                            : `<span class="text-danger small">✗ Hết hàng</span>`;
+                        
+                        return `
+                            <a href="/user/products/${product.id}" 
+                               class="suggestion-item"
+                               onclick="saveToSearchHistory('${product.name.replace(/'/g, "\\'")}')">
+                                <div class="suggestion-icon">
+                                    <i class="${product.icon}"></i>
+                                </div>
+                                <div class="suggestion-content">
+                                    <div class="suggestion-title">${highlightedTitle}</div>
+                                    <div class="suggestion-meta">
+                                        <span class="fw-bold text-danger">${formattedPrice}</span>
+                                        <span class="mx-2">•</span>
+                                        ${stockStatus}
+                                    </div>
+                                </div>
+                                <i class="bi bi-arrow-right suggestion-arrow"></i>
+                            </a>
+                        `;
+                    }).join('');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                list.innerHTML = `
+                    <div class="suggestions-empty">
+                        <i class="bi bi-exclamation-triangle fs-3 mb-2 d-block text-warning"></i>
+                        Lỗi kết nối. Vui lòng thử lại!
+                    </div>
+                `;
+            });
+    }
+
+    function hideSearchSuggestions() {
+        const dropdown = document.getElementById('searchSuggestions');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    }
+
+    // Save search when form is submitted
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.querySelector('form[action="/user/products"]');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(e) {
+                const input = document.getElementById('hInput');
+                if (input && input.value.trim() !== '') {
+                    saveToSearchHistory(input.value.trim());
+                }
+            });
+        }
     });
 
     function toggleWalletPopup() {
@@ -629,13 +1099,170 @@
 
 <!-- Toast Container for Notifications -->
 <div aria-live="polite" aria-atomic="true" class="position-relative">
-  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastPlacement" style="z-index: 9999;">
-  </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastPlacement" style="z-index: 9999;">
+    </div>
+    
+    <!-- User Notification Dropdown (Inside Notification Bell) -->
+    <!-- Mapped inside the main navbar dynamically by JS -->
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-<script src="/js/realtime-notification.js"></script>
+<script>
+    // Embedded directly to fix 404 issue and encoding
+    let stompClient = null;
+
+    function connectNotificationWebSocket() {
+        const username = document.getElementById("currentUsername")?.value;
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, function (frame) {
+            stompClient.subscribe('/topic/user/' + username + '/notifications', function (notificationMsg) {
+                const notification = JSON.parse(notificationMsg.body);
+                showNotificationToast(notification);
+                updateNotificationBadgeCount(notification.unreadCount);
+                prependNotificationToList(notification);
+            });
+        }, function(error) {
+            setTimeout(connectNotificationWebSocket, 5000);
+        });
+    }
+
+    function showNotificationToast(notification) {
+        const toastHtml = `
+            <div class="toast align-items-center bg-white border-0" role="alert" style="margin-bottom: 10px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); backdrop-filter: blur(10px); background: rgba(255,255,255,0.85) !important;">
+              <div class="d-flex">
+                <div class="toast-body fw-bold d-flex align-items-center gap-2" style="color: #2d3436;">
+                  <i class="bi bi-bell-fill text-primary"></i> ${notification.message}
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+              </div>
+            </div>`;
+        const container = document.getElementById("toastPlacement");
+        if(container) {
+            container.insertAdjacentHTML('beforeend', toastHtml);
+            const toast = new bootstrap.Toast(container.lastElementChild, {delay: 5000});
+            toast.show();
+        }
+    }
+
+    function updateNotificationBadgeCount(count) {
+        const badge = document.getElementById("notificationBadge");
+        if(!badge) return;
+        if (count > 0) {
+            badge.style.display = 'inline-block';
+            badge.innerText = count > 99 ? '99+' : count;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function prependNotificationToList(notification) {
+        const list = document.getElementById("notificationList");
+        const noNotif = document.getElementById("noNotificationText");
+        if(noNotif) noNotif.remove();
+        let targetUrl = notification.relatedUrl || '#';
+        if (targetUrl.startsWith('/user/orders/')) {
+            targetUrl = targetUrl.replace('/user/orders/', '/user/order/detail/');
+        }
+        
+        const itemHtml = `
+            <a href="${targetUrl}" class="text-decoration-none border-bottom p-3 d-flex flex-column gap-1 notification-item" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); color: #2d3436; border-left: 3px solid #3b82f6;">
+                <div class="fw-bold d-flex justify-content-between align-items-center" style="font-size: 0.9rem;">
+                    <span>${notification.message}</span>
+                    <i class="bi bi-check-circle text-primary ms-2" style="cursor: pointer; font-size: 1.1rem;" title="Đánh dấu đã đọc" onclick="markNotificationAsRead(event, ${notification.id}, this)"></i>
+                </div>
+                <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-clock"></i> Vừa xong <span class="badge bg-primary ms-auto">Mới</span></div>
+            </a>`;
+        list.insertAdjacentHTML('afterbegin', itemHtml);
+    }
+    
+    function markNotificationAsRead(event, id, element) {
+        if(event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        
+        fetch('/user/notifications/' + id + '/read', { method: 'POST' })
+            .then(() => {
+                const parentItem = element.closest('.notification-item');
+                if(parentItem) {
+                    parentItem.style.background = 'transparent';
+                    parentItem.style.borderLeft = 'none';
+                    parentItem.style.backdropFilter = 'none';
+                    
+                    const titleDiv = parentItem.querySelector('div.fw-bold');
+                    if (titleDiv) titleDiv.classList.remove('fw-bold');
+                    
+                    const badge = parentItem.querySelector('.badge');
+                    if (badge) badge.remove();
+                    
+                    element.remove();
+                }
+                
+                const badge = document.getElementById("notificationBadge");
+                if (badge) {
+                     let currentCount = parseInt(badge.innerText);
+                     if(!isNaN(currentCount) && currentCount > 0) {
+                         updateNotificationBadgeCount(currentCount - 1);
+                     }
+                }
+            });
+    }
+
+    function fetchInitialNotifications() {
+        if(document.getElementById("notificationList")) {
+            Object.assign(document.getElementById("notificationList").parentElement.style, {
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.4)",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.1)"
+            });
+        }
+        
+        fetch('/user/notifications/all-json', { cache: 'no-store' })
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById("notificationList");
+                if(data.length > 0) {
+                    const noNotif = document.getElementById("noNotificationText");
+                    if(noNotif) noNotif.remove();
+                    let html = '';
+                    data.forEach(n => {
+                        const isRead = n.read || n.isRead;
+                        const bgStyle = isRead ? 'background: transparent;' : 'background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-left: 3px solid #3b82f6;';
+                        const fwStyle = isRead ? '' : 'fw-bold';
+                        const colorStyle = '#2d3436';
+                        const checkIcon = isRead ? '' : `<i class="bi bi-check-circle text-primary ms-2" style="cursor: pointer; font-size: 1.1rem;" title="Đánh dấu đã đọc" onclick="markNotificationAsRead(event, ${n.id}, this)"></i>`;
+                        const badge = isRead ? '' : `<span class="badge bg-primary ms-auto">Mới</span>`;
+
+                        let targetUrl = n.relatedUrl || '#';
+                        if (targetUrl.startsWith('/user/orders/')) {
+                            targetUrl = targetUrl.replace('/user/orders/', '/user/order/detail/');
+                        }
+
+                        html += `
+                            <a href="${targetUrl}" class="text-decoration-none border-bottom p-3 d-flex flex-column gap-1 notification-item" style="${bgStyle} color: ${colorStyle};">
+                                <div class="${fwStyle} d-flex justify-content-between align-items-center" style="font-size: 0.9rem;">
+                                    <span>${n.message}</span>
+                                    ${checkIcon}
+                                </div>
+                                <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-clock"></i> ${n.createdAt ? 'Thông báo' : ''} ${badge}</div>
+                            </a>`;
+                    });
+                    list.innerHTML = html;
+                    updateNotificationBadgeCount(data.filter(n => !(n.read || n.isRead)).length);
+                }
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchInitialNotifications();
+        connectNotificationWebSocket();
+    });
+</script>
 </div>
 
 <!-- ========================================================= -->
@@ -708,6 +1335,19 @@
             transform: scale(1.1);
         }
         
+        /* Step 4 (Hoàn tất) - màu xanh lá cây khi active */
+        .stepper-step:last-child.active .stepper-icon,
+        .stepper-step:last-child.completed .stepper-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+            color: #fff;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .stepper-step:last-child.active .stepper-icon {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+        
         .stepper-label {
             font-size: 0.75rem;
             font-weight: 700;
@@ -757,3 +1397,164 @@
         </div>
     </div>
 </div>
+
+
+<!-- ========================================================= -->
+<!-- BREADCRUMB NAVIGATION FRAGMENT                            -->
+<!-- ========================================================= -->
+<nav th:fragment="breadcrumb(items)" aria-label="breadcrumb" class="breadcrumb-nav-wrapper">
+    <style>
+        .breadcrumb-nav-wrapper {
+            max-width: 1400px;
+            margin: 0 auto 24px auto;
+            padding: 0 20px;
+            animation: breadcrumb-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes breadcrumb-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .breadcrumb-container {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .breadcrumb-item {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+        
+        .breadcrumb-item:not(.active):hover {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            transform: translateY(-1px);
+        }
+        
+        .breadcrumb-item.active {
+            color: #0f172a;
+            font-weight: 700;
+            cursor: default;
+        }
+        
+        .breadcrumb-separator {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            margin: 0 4px;
+            user-select: none;
+        }
+        
+        .breadcrumb-icon {
+            margin-right: 6px;
+            font-size: 1rem;
+        }
+        
+        /* Ripple effect on click */
+        .breadcrumb-item:not(.active)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .breadcrumb-item:not(.active):active::after {
+            width: 100px;
+            height: 100px;
+        }
+        
+        /* Mobile responsive - collapse middle items */
+        @media (max-width: 767px) {
+            .breadcrumb-container {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+            
+            .breadcrumb-item {
+                font-size: 0.85rem;
+                padding: 3px 6px;
+            }
+            
+            /* Hide middle items if more than 3 items */
+            .breadcrumb-nav-wrapper[data-item-count="4"] .breadcrumb-item:nth-child(3),
+            .breadcrumb-nav-wrapper[data-item-count="4"] .breadcrumb-separator:nth-child(2),
+            .breadcrumb-nav-wrapper[data-item-count="5"] .breadcrumb-item:nth-child(3),
+            .breadcrumb-nav-wrapper[data-item-count="5"] .breadcrumb-separator:nth-child(2),
+            .breadcrumb-nav-wrapper[data-item-count="5"] .breadcrumb-item:nth-child(5),
+            .breadcrumb-nav-wrapper[data-item-count="5"] .breadcrumb-separator:nth-child(4),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-item:nth-child(3),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-separator:nth-child(2),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-item:nth-child(5),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-separator:nth-child(4),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-item:nth-child(7),
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-separator:nth-child(6) {
+                display: none;
+            }
+            
+            /* Show ellipsis for collapsed items */
+            .breadcrumb-nav-wrapper[data-item-count="4"] .breadcrumb-separator:nth-child(2)::after,
+            .breadcrumb-nav-wrapper[data-item-count="5"] .breadcrumb-separator:nth-child(2)::after,
+            .breadcrumb-nav-wrapper[data-item-count="6"] .breadcrumb-separator:nth-child(2)::after {
+                content: '...';
+                color: #cbd5e1;
+                margin: 0 4px;
+            }
+        }
+    </style>
+    
+    <div class="breadcrumb-container" 
+         th:if="${items != null and !#lists.isEmpty(items)}"
+         th:attr="data-item-count=${#lists.size(items) * 2 - 1}">
+        <th:block th:each="item, iterStat : ${items}">
+            <!-- Breadcrumb Item -->
+            <a th:if="${!item.active and item.url != null}" 
+               th:href="${item.url}"
+               th:text="${item.label}"
+               class="breadcrumb-item"
+               th:attr="aria-label=${item.label}">
+            </a>
+            
+            <span th:if="${item.active or item.url == null}"
+                  th:text="${item.label}"
+                  class="breadcrumb-item active"
+                  aria-current="page">
+            </span>
+            
+            <!-- Separator (not after last item) -->
+            <span th:if="${!iterStat.last}" 
+                  class="breadcrumb-separator"
+                  aria-hidden="true">
+                <i class="bi bi-chevron-right"></i>
+            </span>
+        </th:block>
+    </div>
+</nav>

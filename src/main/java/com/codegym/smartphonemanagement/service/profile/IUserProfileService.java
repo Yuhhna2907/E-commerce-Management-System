@@ -9,8 +9,6 @@ public interface IUserProfileService {
 
     void updateProfile(Long userId, ProfileUpdateRequestDTO dto);
 
-    void changePassword(Long userId, PasswordChangeRequestDTO dto);
-
     // Address Book
     List<UserAddressDTO> getAddresses(Long userId);
 
@@ -19,6 +17,8 @@ public interface IUserProfileService {
     void setDefaultAddress(Long userId, Long addressId);
 
     void deleteAddress(Long userId, Long addressId);
+
+    void updateAddress(Long userId, Long addressId, UserAddressRequestDTO dto);
 
     UserAddressDTO getDefaultAddress(Long userId);
 }

@@ -3,6 +3,8 @@ package com.codegym.smartphonemanagement.controller.seller;
 import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductSpecificationDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantRequestDTO;
 import com.codegym.smartphonemanagement.service.product.seller.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -54,6 +56,8 @@ public class ProductController {
 
         // 4. Đổ dữ liệu thống kê ra giao diện
         model.addAttribute("totalProducts", stats.get("totalProducts"));
+        model.addAttribute("activeProducts", stats.get("activeProducts"));
+        model.addAttribute("hiddenProducts", stats.get("hiddenProducts"));
         model.addAttribute("lowStockCount", stats.get("lowStockCount"));
         model.addAttribute("inventoryValue", stats.get("inventoryValue"));
 
@@ -72,13 +76,13 @@ public class ProductController {
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("productRequestDTO", new ProductRequestDTO());
 
-        model.addAttribute("pageTitle", "order");
+        model.addAttribute("pageTitle", "product");
 
         return "admin/product/list";
     }
 
     // ===============================
-    // 3. SAVE PRODUCT (Nâng cấp để nhận File)
+    // 3. SAVE PRODUCT (Nâng cấp để nhận File) - CẢI TIẾN
     // ===============================
     @PostMapping("/save")
     @ResponseBody
@@ -87,46 +91,91 @@ public class ProductController {
             @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile
     ) {
         Map<String, Object> response = new HashMap<>();
+        System.out.println("📥 [ProductController.saveProduct] Nhận request - Name: " + dto.getName() + ", Brand: " + dto.getBrand());
+        
         try {
-            if (imageFile != null && !imageFile.isEmpty()) {
-                // 1. Xác định đường dẫn thư mục lưu ảnh
-                // Nó sẽ lưu vào: [Thư mục dự án]/src/main/resources/static/uploads/
-                String uploadRoot = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
-                java.io.File uploadDir = new java.io.File(uploadRoot);
-
-                // 2. Nếu thư mục chưa tồn tại thì tạo mới
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-
-                // 3. Tạo tên file duy nhất (Ví dụ: a1b2c3..._fox.jpg) để không bị trùng
-                String fileName = java.util.UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
-
-                // 4. Lưu file vật lý vào ổ cứng
-                java.io.File fileToSave = new java.io.File(uploadRoot + fileName);
-                imageFile.transferTo(fileToSave);
-
-                // 5. QUAN TRỌNG: Lưu đường dẫn ảo vào DTO để lưu xuống Database
-                // Trình duyệt sẽ gọi ảnh qua cái này
-                dto.setImageUrl("/uploads/" + fileName);
+            // ✅ VALIDATE DTO
+            if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Tên sản phẩm không được trống");
+            }
+            if (dto.getBrand() == null || dto.getBrand().trim().isEmpty()) {
+                throw new IllegalArgumentException("Hãng không được trống");
+            }
+            if (dto.getCategoryId() == null) {
+                throw new IllegalArgumentException("Danh mục không được trống");
+            }
+            if (dto.getPrice() == null || dto.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Giá phải lớn hơn 0");
+            }
+            if (dto.getStock() == null || dto.getStock() < 0) {
+                throw new IllegalArgumentException("Số lượng không được âm");
             }
 
-            // 6. Gọi service lưu vào DB
+            // ✅ XỬ LÝ UPLOAD ẢNH
+            if (imageFile != null && !imageFile.isEmpty()) {
+                System.out.println("📸 Đang upload ảnh: " + imageFile.getOriginalFilename() + ", Size: " + imageFile.getSize());
+                
+                // Validate file size (5MB)
+                if (imageFile.getSize() > 5 * 1024 * 1024) {
+                    throw new IllegalArgumentException("File ảnh không được vượt quá 5MB");
+                }
+
+                // Validate file type
+                String contentType = imageFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new IllegalArgumentException("File phải là ảnh (JPEG, PNG, GIF, WebP)");
+                }
+
+                try {
+                    // 1. Xác định đường dẫn thư mục lưu ảnh
+                    String uploadRoot = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
+                    java.io.File uploadDir = new java.io.File(uploadRoot);
+
+                    // 2. Nếu thư mục chưa tồn tại thì tạo mới
+                    if (!uploadDir.exists()) {
+                        boolean created = uploadDir.mkdirs();
+                        System.out.println("📁 Tạo thư mục uploads: " + created);
+                    }
+
+                    // 3. Tạo tên file duy nhất
+                    String fileName = java.util.UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+
+                    // 4. Lưu file vật lý vào ổ cứng
+                    java.io.File fileToSave = new java.io.File(uploadRoot + fileName);
+                    imageFile.transferTo(fileToSave);
+                    System.out.println("✅ Lưu ảnh thành công: " + fileToSave.getAbsolutePath());
+
+                    // 5. Lưu đường dẫn ảo vào DTO
+                    dto.setImageUrl("/uploads/" + fileName);
+                } catch (java.io.IOException ioException) {
+                    System.err.println("❌ Lỗi upload file: " + ioException.getMessage());
+                    throw new RuntimeException("Lỗi upload ảnh: " + ioException.getMessage());
+                }
+            }
+
+            // ✅ GỌI SERVICE LƯU VÀO DB
+            System.out.println("💾 Đang lưu sản phẩm vào database...");
             ProductResponseDTO saved = productService.create(dto);
+            System.out.println("✅ Sản phẩm lưu thành công! ID: " + saved.getId());
 
             response.put("status", "success");
-            response.put("message", "Thêm sản phẩm thành công!");
+            response.put("message", "✅ Thêm sản phẩm thành công!");
             response.put("product", saved);
+        } catch (IllegalArgumentException e) {
+            System.err.println("⚠️ Validation error: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", "❌ " + e.getMessage());
         } catch (Exception e) {
+            System.err.println("❌ Lỗi khi thêm sản phẩm: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             e.printStackTrace();
             response.put("status", "error");
-            response.put("message", "Lỗi lưu file: " + e.getMessage());
+            response.put("message", "❌ Lỗi: " + e.getMessage());
         }
         return response;
     }
 
     // ===============================
-    // 4. UPDATE PRODUCT (Dành cho nút Sửa)
+    // 4. UPDATE PRODUCT (Dành cho nút Sửa) - CẢI TIẾN
     // ===============================
     @PostMapping("/update/{id}")
     @ResponseBody
@@ -136,18 +185,84 @@ public class ProductController {
             @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile
     ) {
         Map<String, Object> response = new HashMap<>();
+        System.out.println("📥 [ProductController.updateProduct] Cập nhật sản phẩm ID: " + id);
+        
         try {
-            // Tương tự, xử lý ảnh nếu Duy chọn file mới
-            if (imageFile != null && !imageFile.isEmpty()) {
-                // Xử lý lưu file...
+            // ✅ VALIDATE DTO
+            if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Tên sản phẩm không được trống");
+            }
+            if (dto.getBrand() == null || dto.getBrand().trim().isEmpty()) {
+                throw new IllegalArgumentException("Hãng không được trống");
+            }
+            if (dto.getCategoryId() == null) {
+                throw new IllegalArgumentException("Danh mục không được trống");
+            }
+            if (dto.getPrice() == null || dto.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Giá phải lớn hơn 0");
+            }
+            if (dto.getStock() == null || dto.getStock() < 0) {
+                throw new IllegalArgumentException("Số lượng không được âm");
             }
 
-            productService.update(id, dto); // Đảm bảo productService của Duy có hàm update này
+            // ✅ XỬ LÝ UPLOAD ẢNH MỚI NẾU CÓ
+            if (imageFile != null && !imageFile.isEmpty()) {
+                System.out.println("📸 Đang upload ảnh mới: " + imageFile.getOriginalFilename());
+                
+                // Validate file size (5MB)
+                if (imageFile.getSize() > 5 * 1024 * 1024) {
+                    throw new IllegalArgumentException("File ảnh không được vượt quá 5MB");
+                }
+
+                // Validate file type
+                String contentType = imageFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new IllegalArgumentException("File phải là ảnh (JPEG, PNG, GIF, WebP)");
+                }
+
+                try {
+                    // 1. Xác định đường dẫn thư mục lưu ảnh
+                    String uploadRoot = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
+                    java.io.File uploadDir = new java.io.File(uploadRoot);
+
+                    // 2. Nếu thư mục chưa tồn tại thì tạo mới
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+
+                    // 3. Tạo tên file duy nhất
+                    String fileName = java.util.UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+
+                    // 4. Lưu file vật lý vào ổ cứng
+                    java.io.File fileToSave = new java.io.File(uploadRoot + fileName);
+                    imageFile.transferTo(fileToSave);
+                    System.out.println("✅ Lưu ảnh mới thành công: " + fileToSave.getAbsolutePath());
+
+                    // 5. Lưu đường dẫn ảo vào DTO
+                    dto.setImageUrl("/uploads/" + fileName);
+                } catch (java.io.IOException ioException) {
+                    System.err.println("❌ Lỗi upload file: " + ioException.getMessage());
+                    throw new RuntimeException("Lỗi upload ảnh: " + ioException.getMessage());
+                }
+            }
+
+            // ✅ GỌI SERVICE CẬP NHẬT
+            System.out.println("💾 Đang cập nhật sản phẩm...");
+            ProductResponseDTO updated = productService.update(id, dto);
+            System.out.println("✅ Sản phẩm cập nhật thành công!");
+
             response.put("status", "success");
-            response.put("message", "Cập nhật sản phẩm thành công!");
-        } catch (Exception e) {
+            response.put("message", "✅ Cập nhật sản phẩm thành công!");
+            response.put("product", updated);
+        } catch (IllegalArgumentException e) {
+            System.err.println("⚠️ Validation error: " + e.getMessage());
             response.put("status", "error");
-            response.put("message", e.getMessage());
+            response.put("message", "❌ " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi cập nhật sản phẩm: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "❌ Lỗi: " + e.getMessage());
         }
         return response;
     }
@@ -172,6 +287,78 @@ public class ProductController {
             response.put("newStatus", newStatus);
             response.put("message", "Đã cập nhật trạng thái!");
         } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    // ===============================
+    // 6. PRODUCT 360 WORKSPACE
+    // ===============================
+    @GetMapping("/{id}/detail")
+    public String viewProductDetail(@PathVariable Long id, Model model) {
+        ProductResponseDTO product = productService.getById(id);
+        model.addAttribute("product", product);
+        model.addAttribute("pageTitle", "product");
+        return "admin/product/detail";
+    }
+
+    @PostMapping("/{id}/specs")
+    @ResponseBody
+    public Map<String, Object> saveSpecification(@PathVariable Long id, @RequestBody ProductSpecificationDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.saveSpecification(id, dto);
+            response.put("status", "success");
+            response.put("message", "Cập nhật cấu hình thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/{id}/variants/save")
+    @ResponseBody
+    public Map<String, Object> saveVariant(@PathVariable Long id, @RequestBody ProductVariantRequestDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.saveVariant(id, dto);
+            response.put("status", "success");
+            response.put("message", "Lưu biến thể thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/variants/{variantId}/toggle")
+    @ResponseBody
+    public Map<String, Object> toggleVariantStatus(@PathVariable Long variantId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean newStatus = productService.toggleVariantStatus(variantId);
+            response.put("status", "success");
+            response.put("newStatus", newStatus);
+            response.put("message", "Đã khóa/mở cấu hình thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @DeleteMapping("/variants/{variantId}")
+    @ResponseBody
+    public Map<String, Object> deleteVariant(@PathVariable Long variantId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.deleteVariant(variantId);
+            response.put("status", "success");
+            response.put("message", "Xóa biến thể thành công! Giao diện sẽ cập nhật...");
+        } catch(Exception e) {
             response.put("status", "error");
             response.put("message", e.getMessage());
         }

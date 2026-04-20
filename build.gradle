@@ -25,6 +25,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-devtools'
+    
+    // Email support
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    
+    // Caching support
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    
+    // Retry support for email
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
+    
+    // Image processing dependencies
+    implementation 'net.coobird:thumbnailator:0.4.20'
+    
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
@@ -32,6 +47,11 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+    // Thư viện chính của Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Thư viện để sử dụng các thẻ của Security trong Thymeleaf (như ẩn/hiện nút Logout)
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 tasks.named('test') {

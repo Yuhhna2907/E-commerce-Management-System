@@ -2,115 +2,207 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Khuyến mãi - Smartphone Store</title>
-
+    <title>Quản lý Khuyến mãi - SmartZone Enterprise</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .header-red {
-            background-color: #d70018;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+            --sz-gray: #f2f2f7;
+            --sz-text-muted: #8E8E93;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            --glass-blur: blur(20px);
         }
-        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
-        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
-        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
-        .footer { background: #212529; color: white; }
+
+        body {
+            background-color: #f0f2f5;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+        }
+
+        /* Tùy chỉnh bảng */
+        .coupon-table { border-collapse: separate; border-spacing: 0 8px; }
+        .coupon-table thead th {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--sz-text-muted); border: none; padding: 10px 16px;
+        }
+        .coupon-table tbody tr {
+            background: white; border-radius: 16px; transition: all 0.25s ease;
+        }
+        .coupon-table tbody tr:hover { transform: translateX(3px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+        .coupon-table tbody td { padding: 14px 16px; border: none; vertical-align: middle; }
+        .coupon-table tbody td:first-child { border-radius: 16px 0 0 16px; }
+        .coupon-table tbody td:last-child { border-radius: 0 16px 16px 0; }
+
+        /* Nút Tác vụ */
+        .btn-action {
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 10px; border: 1px solid rgba(0,0,0,0.06);
+            background: white; color: #6e6e73;
+            transition: all 0.2s; cursor: pointer; font-size: 0.85rem;
+        }
+        .btn-action:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-action.edit { color: var(--sz-orange); }
+        .btn-action.delete { color: #dc3545; }
+        .btn-action.toggle-active { color: #198754; }
+        .btn-action.toggle-pause { color: #6c757d; }
+
+        /* Badge Trạng thái */
+        .badge-status {
+            padding: 5px 12px; border-radius: 10px; font-weight: 700;
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent;
+        }
+        .bg-active { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .bg-expired { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+        .bg-paused { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+
+        /* Animations */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" th:href="@{/admin/dashboard}">
-            <i class="bi bi-phone"></i> SMARTPHONE STORE
-        </a>
-        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
-    </div>
-</nav>
-
-<div class="container-fluid">
-    <div class="row">
-
-        <!-- Sidebar -->
-        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
-            <h6 class="text-muted text-uppercase fw-bold">Danh mục quản lý</h6>
-
-            <a th:href="@{/admin/dashboard}" class="sidebar-link">
-                <i class="bi bi-speedometer2 me-2"></i> Tổng quan
-            </a>
-
-            <a th:href="@{/admin/products}" class="sidebar-link">
-                <i class="bi bi-box-seam me-2"></i> Sản phẩm
-            </a>
-
-            <a th:href="@{/admin/categories}" class="sidebar-link">
-                <i class="bi bi-tags me-2"></i> Danh mục
-            </a>
-
-            <a th:href="@{/admin/orders}" class="sidebar-link">
-                <i class="bi bi-cart-check me-2"></i> Đơn hàng
-            </a>
-
-            <a th:href="@{/admin/coupons}" class="sidebar-link active">
-                <i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi / Voucher
-            </a>
-            <hr>
+<div class="container-fluid p-0">
+    <div class="row g-0 mx-3 my-3">
+        <!-- SIDEBAR -->
+        <div class="col-auto" style="width: 260px;">
+            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
         </div>
 
-        <!-- Main Content -->
-        <div class="col-md-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark">Danh sách Khuyến mãi</h3>
-                <a th:href="@{/admin/coupons/create}" class="btn btn-danger shadow-sm">
-                    <i class="bi bi-plus-lg"></i> Thêm mã giảm giá
-                </a>
+        <!-- MAIN CONTENT -->
+        <div class="col ps-4 pe-2">
+            <!-- PAGE HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+                <div>
+                    <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">Quản lý Khuyến Mãi</h2>
+                    <p class="text-muted mb-0 small fw-medium">Tạo mã giảm giá và chiến dịch Marketing cho SmartZone</p>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <a th:href="@{/admin/coupons/export}" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Xuất CSV
+                    </a>
+                    <a th:href="@{/admin/coupons/create}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm text-dark border-0" style="background-color: var(--sz-orange);">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm mã giảm giá
+                    </a>
+                </div>
             </div>
 
-            <div class="table-responsive bg-white shadow-sm rounded">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                    <tr class="text-center">
-                        <th>Mã Code</th>
-                        <th>Loại giảm</th>
-                        <th>Giá trị</th>
-                        <th>Bắt đầu</th>
-                        <th>Kết thúc</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
+            <!-- CONTENT CARD -->
+            <div class="glass-card p-4 fade-up delay-1">
+                <table class="table coupon-table mb-0 w-100 text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-start">MÃ CODE</th>
+                            <th>LOẠI GIẢM</th>
+                            <th class="text-start">GIÁ TRỊ</th>
+                            <th>THỜI GIAN</th>
+                            <th>LƯỢT DÙNG</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>THAO TÁC</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr th:if="${#lists.isEmpty(coupons)}">
-                        <td colspan="7" class="text-center py-4 text-muted">Chưa có mã giảm giá nào được tạo.</td>
-                    </tr>
-                    <tr th:each="coupon : ${coupons}" class="text-center">
-                        <td class="fw-bold text-danger" th:text="${coupon.code}"></td>
-                        <td>
-                            <span class="badge bg-secondary" th:text="${coupon.discountType.name() == 'PERCENTAGE' ? '%' : 'VNĐ'}"></span>
-                        </td>
-                        <td class="fw-bold" th:text="${coupon.discountType.name() == 'PERCENTAGE'} ? ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + '%' : ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
-                        <td th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td>
-                            <span th:classappend="${coupon.status.name() == 'ACTIVE' ? 'bg-success' : (coupon.status.name() == 'EXPIRED' ? 'bg-danger' : 'bg-warning')}"
-                                  class="badge"
-                                  th:text="${coupon.status.name() == 'ACTIVE' ? 'Hoạt động' : (coupon.status.name() == 'EXPIRED' ? 'Hết hạn' : 'Tạm ngưng')}">
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <a th:href="@{'/admin/coupons/edit/' + ${coupon.id}}" class="btn btn-sm btn-outline-warning" title="Sửa">
-                                    <i class="bi bi-wrench"></i> Sửa
-                                </a>
-                                <a th:href="@{'/admin/coupons/delete/' + ${coupon.id}}" onclick="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi này không? Việc này không thể hoàn tác!');" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                    <i class="bi bi-trash"></i> Xóa
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
+                        <tr th:if="${#lists.isEmpty(coupons)}">
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-ticket-perforated-fill display-4 d-block mb-3 opacity-25"></i>
+                                    <h6 class="fw-bold">Chưa có mã giảm giá nào</h6>
+                                    <p class="small mb-0">Thêm mã giảm giá mới để tạo khuyến mãi.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:each="coupon : ${coupons}" th:if="${coupon.status.name() != 'CANCELLED'}">
+                            <td class="text-start">
+                                <span class="fw-bolder text-dark bg-light px-3 py-2 rounded-3 border" th:text="${coupon.code}"></span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill bg-light text-secondary border px-3 mt-1"
+                                      th:text="${coupon.discountType.name() == 'PERCENTAGE' ? 'Phần trăm' : 'Trực tiếp'}"></span>
+                            </td>
+                            <td class="text-start">
+                                <span class="fw-bold text-danger fs-5"
+                                      th:text="${coupon.discountType.name() == 'PERCENTAGE'} ? ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + '%' : ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                            </td>
+                            <td>
+                                <div class="small fw-medium text-muted">
+                                    <i class="bi bi-calendar-check me-1 text-success"></i> <span th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy HH:mm')}"></span>
+                                </div>
+                                <div class="small fw-medium text-muted mt-1">
+                                    <i class="bi bi-calendar-x me-1 text-danger"></i> <span th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}"></span>
+                                </div>
+                            </td>
+                            <td class="small fw-bold">
+                                <span th:text="${coupon.currentUsageGlobal}" class="text-primary fs-6">0</span> <span class="text-muted">/</span>
+                                <span th:text="${coupon.maxUsageGlobal == null ? '∞' : coupon.maxUsageGlobal}" class="text-muted">∞</span>
+                                <div class="progress mt-2 mx-auto" style="height: 4px; max-width: 100px;" th:if="${coupon.maxUsageGlobal != null}">
+                                    <div class="progress-bar bg-warning" role="progressbar"
+                                         th:style="'width: ' + (${coupon.currentUsageGlobal} * 100 / ${coupon.maxUsageGlobal}) + '%'"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-status"
+                                      th:classappend="${coupon.status.name() == 'ACTIVE' ? 'bg-active' : (coupon.status.name() == 'EXPIRED' ? 'bg-expired' : 'bg-paused')}"
+                                      th:text="${coupon.status.name() == 'ACTIVE' ? 'Hoạt động' : (coupon.status.name() == 'EXPIRED' ? 'Hết hạn' : 'Tạm ngưng')}">
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a th:href="@{'/admin/coupons/edit/' + ${coupon.id}}" class="btn-action edit" title="Sửa">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <form th:action="@{'/admin/coupons/toggle-status/' + ${coupon.id}}" method="POST" class="m-0">
+                                        <button type="submit" class="btn-action" th:classappend="${coupon.status.name() == 'ACTIVE' ? 'toggle-pause' : 'toggle-active'}" title="Bật/Tắt trạng thái">
+                                            <i class="bi" th:classappend="${coupon.status.name() == 'ACTIVE' ? 'bi-pause-circle-fill' : 'bi-play-circle-fill'}"></i>
+                                        </button>
+                                    </form>
+                                    <a th:href="@{'/admin/coupons/delete/' + ${coupon.id}}"
+                                       onclick="return confirm('Anh có chắc chắn muốn hủy khuyến mãi này không? Khi hủy, khách hàng sẽ không thấy / không dùng được mã này nữa!');"
+                                       class="btn-action delete" title="Hủy mã">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

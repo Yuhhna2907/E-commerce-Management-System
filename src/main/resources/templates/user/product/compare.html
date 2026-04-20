@@ -8,9 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/mobile/bottom-navigation.css}">
 
     <style>
         :root {
+            --compare-label-width: 200px;
             --bg-page: #F1F3F5;
             --bento-bg: rgba(255, 255, 255, 0.7);
             --bento-border: rgba(255, 255, 255, 0.9);
@@ -126,6 +128,23 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Fallback: force sticky with fixed positioning */
+        .sticky-product-header.is-fixed {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 24px);
+            max-width: 1320px;
+        }
+
+        .sticky-header-placeholder {
+            display: none;
+        }
+
+        .sticky-header-placeholder.active {
+            display: block;
+        }
+
         .sticky-product-header.scrolled {
             padding: 10px 20px;
             box-shadow: 0 15px 40px -10px rgba(0,0,0,0.15);
@@ -180,7 +199,8 @@
         }
 
         .row-header {
-            flex: 0 0 180px;
+            flex: 0 0 var(--compare-label-width);
+            min-width: var(--compare-label-width);
             padding-right: 16px;
             display: flex;
             align-items: center;
@@ -199,8 +219,20 @@
         .cells-container {
             display: flex;
             flex-grow: 1;
+            flex: 1 1 0;
+            min-width: 0;
             gap: 12px;
             padding-left: 16px;
+        }
+
+        .spec-placeholder-cell {
+            flex: 1;
+            min-width: 0;
+            min-height: 80px;
+            border-radius: var(--radius-medium);
+            border: 1.5px dashed rgba(15, 23, 42, 0.06);
+            background: rgba(255, 255, 255, 0.25);
+            pointer-events: none;
         }
 
         .spec-cell {
@@ -401,6 +433,36 @@
             transform: scale(1.1);
         }
 
+        .btn-swap-product {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2;
+        }
+
+        .product-head-cell:hover .btn-swap-product {
+            opacity: 1;
+        }
+
+        .btn-swap-product:hover {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #fff;
+            border-color: transparent;
+            transform: scale(1.08);
+        }
+
         /* Nút Mua Ngay - COMPACT */
         .btn-buy-now {
             background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
@@ -578,8 +640,17 @@
             font-size: 0.85rem;
         }
 
+        .compare-label-spacer {
+            flex: 0 0 var(--compare-label-width);
+            min-width: var(--compare-label-width);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
+            :root {
+                --compare-label-width: 150px;
+            }
+
             .comparison-dashboard {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
@@ -598,7 +669,8 @@
             }
             
             .row-header {
-                flex: 0 0 150px;
+                flex: 0 0 var(--compare-label-width);
+                min-width: var(--compare-label-width);
                 font-size: 0.9rem;
             }
             
@@ -663,12 +735,15 @@
     <!-- Sticky Product Header -->
     <div class="sticky-product-header" id="stickyHeader">
         <div class="d-flex align-items-center">
-            <div style="flex: 0 0 200px;"></div>
+            <div class="compare-label-spacer" aria-hidden="true"></div>
             <div class="cells-container" id="productHeaderContainer">
                 
                 <!-- Existing Products -->
                 <div th:each="item : ${comparisonList}" class="product-head-cell" th:data-product-id="${item.productId}">
-                    <button class="btn-remove-product" th:onclick="|removeProduct(${item.productId})|" title="Xóa khỏi so sánh">
+                    <button type="button" class="btn-swap-product" th:onclick="|openProductSelectorForReplace(${item.productId})|" title="Đổi sản phẩm khác">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </button>
+                    <button type="button" class="btn-remove-product" th:onclick="|removeProduct(${item.productId})|" title="Xóa khỏi so sánh">
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <a th:href="@{/user/products/{id}(id=${item.productId})}">
@@ -681,8 +756,8 @@
                     </a>
                 </div>
 
-                <!-- Add Product Button (Show if less than 4 products) -->
-                <div class="add-product-cell" th:if="${comparisonList == null || #lists.size(comparisonList) < 4}" onclick="openProductSelector()">
+                <!-- Add Product Button (Show if less than 3 products) -->
+                <div class="add-product-cell" th:if="${comparisonList == null || #lists.size(comparisonList) < 3}" onclick="openProductSelector()">
                     <div class="add-icon">
                         <i class="bi bi-plus-lg"></i>
                     </div>
@@ -693,6 +768,7 @@
             </div>
         </div>
     </div>
+    <div class="sticky-header-placeholder" id="stickyHeaderPlaceholder" aria-hidden="true"></div>
 
     <div class="comparison-dashboard" id="comparisonDashboard">
 
@@ -706,6 +782,7 @@
                     <div class="spec-value" th:text="${item.processor != null ? item.processor : 'N/A'}">Apple A18 Pro</div>
                     <div class="spec-unit">Bộ xử lý</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -727,6 +804,7 @@
                         </div>
                     </div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -743,6 +821,7 @@
                     </div>
                     <div class="spec-unit" th:text="${item.screenTech != null ? item.screenTech : 'Không rõ công nghệ'}">Super Retina XDR OLED</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -756,6 +835,7 @@
                     <div class="spec-value" style="font-size: 0.95rem; line-height: 1.4;" th:text="${item.cameraInfo != null ? item.cameraInfo : 'N/A'}">48MP + 12MP + 12MP</div>
                     <div class="spec-unit">Hệ thống camera</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -770,6 +850,7 @@
                     <div class="spec-value numeric" th:text="${item.batteryCapacity != null ? item.batteryCapacity : 'N/A'}">4422</div>
                     <div class="spec-unit">mAh</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -786,6 +867,7 @@
                     </div>
                     <div class="spec-unit">Tốc độ sạc</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -799,6 +881,7 @@
                     <div class="spec-value" th:text="${item.os != null ? item.os : 'N/A'}">iOS 18</div>
                     <div class="spec-unit">Operating System</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -815,6 +898,7 @@
                     </div>
                     <div class="spec-unit">Trọng lượng</div>
                 </div>
+                <div th:if="${comparisonList != null && #lists.size(comparisonList) < 3}" class="spec-placeholder-cell" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -826,7 +910,7 @@
 <div class="product-selector-overlay" id="productSelectorOverlay" onclick="closeProductSelector(event)">
     <div class="product-selector-popup" onclick="event.stopPropagation()">
         <div class="popup-header">
-            <h3 class="popup-title">Chọn sản phẩm so sánh</h3>
+            <h3 class="popup-title" id="productSelectorTitle">Chọn sản phẩm so sánh</h3>
             <button class="btn-close-popup" onclick="closeProductSelector()">
                 <i class="bi bi-x-lg fs-5"></i>
             </button>
@@ -849,24 +933,167 @@
     </div>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090">
+    <div id="compareToast" class="toast text-bg-light border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+        <div class="toast-header bg-white border-0">
+            <i class="bi bi-info-circle text-warning me-2"></i>
+            <strong class="me-auto">SmartZone</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+        <div class="toast-body" id="compareToastBody"></div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<div th:replace="~{fragments/bottom-nav :: bottom-nav}"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    // Get current product IDs from URL
+    const SWAP_KEY = 'compareSwapCount';
     const urlParams = new URLSearchParams(window.location.search);
-    let currentProductIds = urlParams.get('ids') ? urlParams.get('ids').split(',').map(id => parseInt(id)) : [];
+    let currentProductIds = [];
+    if (urlParams.get('ids')) {
+        currentProductIds = urlParams.get('ids').split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+    }
+    if (currentProductIds.length > 3) {
+        currentProductIds = currentProductIds.slice(0, 3);
+    }
+    const renderedProductIds = Array.from(document.querySelectorAll('.product-head-cell[data-product-id]'))
+        .map(el => parseInt(el.getAttribute('data-product-id'), 10))
+        .filter(id => !isNaN(id));
+    if (renderedProductIds.length > 0) {
+        currentProductIds = renderedProductIds.slice(0, 3);
+    }
+    if (urlParams.get('ids') && urlParams.get('ids') !== currentProductIds.join(',')) {
+        window.history.replaceState({}, '', '/user/compare?ids=' + currentProductIds.join(','));
+    }
 
-    <!-- Sticky Header Shrink Effect - ENHANCED FOR SMOOTH TRANSITIONS -->
-    window.addEventListener('scroll', function() {
-        const stickyHeader = document.getElementById('stickyHeader');
-        if (window.scrollY > 150) {
-            stickyHeader.classList.add('scrolled');
-        } else {
-            stickyHeader.classList.remove('scrolled');
+    let replaceTargetProductId = null;
+
+    function getSwapCount() {
+        return parseInt(sessionStorage.getItem(SWAP_KEY) || '0', 10);
+    }
+
+    function incrementSwapCount() {
+        sessionStorage.setItem(SWAP_KEY, String(getSwapCount() + 1));
+    }
+
+    function showCompareToast(message) {
+        const body = document.getElementById('compareToastBody');
+        if (!body) return;
+        body.textContent = message;
+        const el = document.getElementById('compareToast');
+        if (!el || typeof bootstrap === 'undefined') return;
+        const t = bootstrap.Toast.getOrCreateInstance(el);
+        t.show();
+    }
+
+    function showCompareToastHtml(html) {
+        const body = document.getElementById('compareToastBody');
+        if (!body) return;
+        body.innerHTML = html;
+        const el = document.getElementById('compareToast');
+        if (!el || typeof bootstrap === 'undefined') return;
+        const t = bootstrap.Toast.getOrCreateInstance(el);
+        t.show();
+    }
+
+    function setProductSelectorTitle(isReplace) {
+        const title = document.getElementById('productSelectorTitle');
+        if (title) {
+            title.textContent = isReplace ? 'Chọn sản phẩm thay thế' : 'Chọn sản phẩm so sánh';
         }
-    });
+    }
 
-    // Toggle "Chỉ xem khác biệt"
+    function getNavbarHeight() {
+        const nav = document.getElementById('mainNavbar');
+        return nav ? nav.getBoundingClientRect().height : 0;
+    }
+
+    function syncStickyTop() {
+        const stickyHeader = document.getElementById('stickyHeader');
+        if (!stickyHeader) return;
+        const top = Math.round(getNavbarHeight() + 12);
+        stickyHeader.style.top = top + 'px';
+    }
+
+    function setupStickyFallback() {
+        const stickyHeader = document.getElementById('stickyHeader');
+        const placeholder = document.getElementById('stickyHeaderPlaceholder');
+        if (!stickyHeader || !placeholder) return;
+
+        syncStickyTop();
+
+        // store initial document position after layout is ready
+        const update = () => {
+            const top = parseInt(stickyHeader.style.top || '0', 10) || 0;
+            const rect = stickyHeader.getBoundingClientRect();
+            const shouldFix = rect.top <= top;
+
+            if (shouldFix) {
+                if (!stickyHeader.classList.contains('is-fixed')) {
+                    stickyHeader.classList.add('is-fixed');
+                    placeholder.style.height = stickyHeader.offsetHeight + 'px';
+                    placeholder.classList.add('active');
+                }
+            } else {
+                stickyHeader.classList.remove('is-fixed');
+                placeholder.classList.remove('active');
+                placeholder.style.height = '0px';
+            }
+
+            if (window.scrollY > 150) stickyHeader.classList.add('scrolled');
+            else stickyHeader.classList.remove('scrolled');
+        };
+
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', () => {
+            syncStickyTop();
+            update();
+        });
+
+        // initial run
+        setTimeout(update, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', setupStickyFallback);
+
+    function addToCartFromCompare(btnEl) {
+        const productId = parseInt(btnEl?.getAttribute('data-product-id') || '', 10);
+        if (!productId || isNaN(productId)) {
+            showCompareToast('Không xác định được sản phẩm để thêm vào giỏ.');
+            return;
+        }
+
+        const original = btnEl.innerHTML;
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang thêm...';
+
+        fetch('/user/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: productId, quantity: 1 })
+        })
+            .then(r => r.json())
+            .then(data => {
+                btnEl.disabled = false;
+                btnEl.innerHTML = original;
+                if (data && data.success) {
+                    const name = data.productName ? String(data.productName) : 'Sản phẩm';
+                    showCompareToastHtml(`${name} đã được thêm vào giỏ. <a href="/user/cart" class="fw-bold text-decoration-none">Mở giỏ hàng</a>`);
+                } else {
+                    showCompareToast('Không thể thêm vào giỏ: ' + ((data && data.message) ? data.message : 'Vui lòng thử lại'));
+                }
+            })
+            .catch(() => {
+                btnEl.disabled = false;
+                btnEl.innerHTML = original;
+                showCompareToast('Không thể thêm vào giỏ (lỗi mạng).');
+            });
+    }
+
     let showOnlyDifferences = false;
 
     function toggleDifferences() {
@@ -877,10 +1104,11 @@
         const rows = document.querySelectorAll('.bento-row');
         rows.forEach(row => {
             if (showOnlyDifferences) {
-                const cells = row.querySelectorAll('.spec-cell .spec-value');
+                const cells = row.querySelectorAll('.spec-cell:not(.spec-placeholder-cell) .spec-value');
                 const values = Array.from(cells).map(cell => cell.textContent.trim());
+                if (values.length === 0) return;
                 const allSame = values.every(val => val === values[0]);
-                
+
                 if (allSame) {
                     row.classList.add('hidden-row');
                 } else {
@@ -892,39 +1120,56 @@
         });
     }
 
-    // Open Product Selector Popup
-    function openProductSelector() {
+    function openProductSelectorForReplace(productId) {
+        if (getSwapCount() >= 3) {
+            showCompareToast('Bạn đã dùng hết 3 lượt đổi sản phẩm trong phiên này.');
+            return;
+        }
+        replaceTargetProductId = productId;
+        setProductSelectorTitle(true);
         const overlay = document.getElementById('productSelectorOverlay');
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
-        
-        // Load products via AJAX
         loadProducts();
     }
 
-    // Close Product Selector
+    function openProductSelector() {
+        replaceTargetProductId = null;
+        setProductSelectorTitle(false);
+        const overlay = document.getElementById('productSelectorOverlay');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        loadProducts();
+    }
+
     function closeProductSelector(event) {
         if (event && event.target !== event.currentTarget) return;
         const overlay = document.getElementById('productSelectorOverlay');
         overlay.classList.remove('active');
         document.body.style.overflow = 'auto';
+        replaceTargetProductId = null;
+        setProductSelectorTitle(false);
     }
 
-    // Load Products via AJAX
     function loadProducts() {
         const productListPopup = document.getElementById('productListPopup');
-        
+
         fetch('/user/products/api/list?size=50')
             .then(response => response.json())
             .then(products => {
                 if (products && products.length > 0) {
-                    productListPopup.innerHTML = products.map(product => `
-                        <div class="product-item" onclick="addProductToComparison(${product.id})" ${currentProductIds.includes(product.id) ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
+                    productListPopup.innerHTML = products.map(product => {
+                        const inList = currentProductIds.includes(product.id);
+                        const isReplaceSlot = replaceTargetProductId != null && product.id === replaceTargetProductId;
+                        const disabled = inList && !isReplaceSlot;
+                        return `
+                        <div class="product-item" onclick="addProductToComparison(${product.id})" ${disabled ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
                             <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" alt="${product.name}">
                             <div class="product-item-name">${product.name}</div>
-                            <div class="product-item-price">${formatPrice(product.discountPrice || product.price)}₫</div>
+                            <div class="product-item-price">${formatPrice(product.discountPrice || product.price || 0)}₫</div>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                 } else {
                     productListPopup.innerHTML = '<p class="text-center text-muted py-5">Không có sản phẩm nào</p>';
                 }
@@ -935,12 +1180,11 @@
             });
     }
 
-    // Filter Products
     function filterProducts() {
         const searchInput = document.getElementById('productSearchInput');
         const keyword = searchInput.value.toLowerCase();
         const productItems = document.querySelectorAll('.product-item');
-        
+
         productItems.forEach(item => {
             const name = item.querySelector('.product-item-name').textContent.toLowerCase();
             if (name.includes(keyword)) {
@@ -951,15 +1195,38 @@
         });
     }
 
-    // Add Product to Comparison
     function addProductToComparison(productId) {
-        if (currentProductIds.includes(productId)) {
-            alert('Sản phẩm này đã có trong danh sách so sánh');
+        if (replaceTargetProductId != null) {
+            if (productId === replaceTargetProductId) {
+                closeProductSelector();
+                return;
+            }
+            if (currentProductIds.includes(productId)) {
+                showCompareToast('Sản phẩm này đã có trong danh sách so sánh.');
+                return;
+            }
+            if (getSwapCount() >= 3) {
+                showCompareToast('Bạn đã dùng hết 3 lượt đổi sản phẩm trong phiên này.');
+                closeProductSelector();
+                return;
+            }
+            const idx = currentProductIds.indexOf(replaceTargetProductId);
+            if (idx >= 0) {
+                currentProductIds[idx] = productId;
+                incrementSwapCount();
+                replaceTargetProductId = null;
+                updateComparisonPage();
+            }
             return;
         }
 
-        if (currentProductIds.length >= 4) {
-            alert('Chỉ có thể so sánh tối đa 4 sản phẩm');
+        if (currentProductIds.includes(productId)) {
+            showCompareToast('Sản phẩm này đã có trong danh sách so sánh.');
+            return;
+        }
+
+        if (currentProductIds.length >= 3) {
+            showCompareToast('So sánh tối đa 3 sản phẩm.');
             return;
         }
 
@@ -967,35 +1234,35 @@
         updateComparisonPage();
     }
 
-    // Remove Product from Comparison
     function removeProduct(productId) {
         currentProductIds = currentProductIds.filter(id => id !== productId);
-        
+
         if (currentProductIds.length === 0) {
             window.location.href = '/user/products';
             return;
         }
-        
+
         updateComparisonPage();
     }
 
-    // Update Comparison Page
     function updateComparisonPage() {
         const idsParam = currentProductIds.join(',');
-        window.location.href = `/user/compare?ids=${idsParam}`;
+        window.location.href = '/user/compare?ids=' + idsParam;
     }
 
-    // Format Price
     function formatPrice(price) {
-        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return String(price).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
-    // Close popup on ESC key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeProductSelector();
         }
     });
 </script>
+
+<!-- Mobile Bottom Navigation JavaScript -->
+<script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
 </body>
 </html>

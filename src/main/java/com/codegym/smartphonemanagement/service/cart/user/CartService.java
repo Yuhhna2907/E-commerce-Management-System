@@ -1,8 +1,11 @@
 package com.codegym.smartphonemanagement.service.cart.user;
 
 import com.codegym.smartphonemanagement.exception.BadRequestException;
-import com.codegym.smartphonemanagement.exception.ResourceNotFoundException;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.InsufficientStockException;
+import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
 import com.codegym.smartphonemanagement.model.*;
+import com.codegym.smartphonemanagement.model.dto.SaveForLaterResponse;
 import com.codegym.smartphonemanagement.repository.user.CartItemRepository;
 import com.codegym.smartphonemanagement.repository.user.CartRepository;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
@@ -13,6 +16,7 @@ import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartItemResponseDTO;
 import com.codegym.smartphonemanagement.service.logicDiscount.DiscountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +35,7 @@ public class CartService implements ICartService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final DiscountService discountService;
+    private final com.codegym.smartphonemanagement.repository.user.WishlistRepository wishlistRepository;
 
     private Cart getOrCreateCart(User user) {
         return cartRepository.findByUser(user)
@@ -39,18 +44,15 @@ public class CartService implements ICartService {
 
     private void checkStock(ProductVariant variant, int quantity) {
         if (variant.getStockQuantity() < quantity) {
-            throw new BadRequestException(
-                    "Biến thể '" + variant.getVariantName() + "' của sản phẩm '"
-                            + variant.getProduct().getName()
-                            + "' chỉ còn " + variant.getStockQuantity() + " sản phẩm"
-            );
+            String productName = variant.getVariantName() + " - " + variant.getProduct().getName();
+            throw new InsufficientStockException(productName, quantity, variant.getStockQuantity());
         }
     }
 
     @Override
     public CartResponseDTO getCart(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
         Cart cart = getOrCreateCart(user);
         return mapToResponseDTO(cart);
     }
@@ -63,20 +65,31 @@ public class CartService implements ICartService {
     @Override
     @Transactional
     public CartResponseDTO addToCart(Long userId, CartItemRequestDTO request) {
+        try {
+            return addToCartInternal(userId, request);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            // FIX #1: Handle race condition - retry một lần
+            throw new BadRequestException(
+                "Có người khác đang thao tác với sản phẩm này. Vui lòng thử lại."
+            );
+        }
+    }
+
+    private CartResponseDTO addToCartInternal(Long userId, CartItemRequestDTO request) {
         // FIX #2: Validate số lượng phải > 0
         if (request.getQuantity() == null || request.getQuantity() <= 0) {
             throw new BadRequestException("Số lượng phải lớn hơn 0");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Product", request.getProductId()));
 
         // FIX #1: Load variant với pessimistic lock để tránh race condition
         ProductVariant variant = productVariantRepository.findById(request.getVariantId())
-                .orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("ProductVariant", request.getVariantId()));
 
         Cart cart = getOrCreateCart(user);
 
@@ -123,19 +136,19 @@ public class CartService implements ICartService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("Product", request.getProductId()));
 
         ProductVariant variant = productVariantRepository.findById(request.getVariantId())
-                .orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("ProductVariant", request.getVariantId()));
 
         Cart cart = getOrCreateCart(user);
 
         CartItem item = cartItemRepository
                 .findByCartAndProductAndProductVariant(cart, product, variant)
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng"));
+                .orElseThrow(() -> new EntityNotFoundException("CartItem không tồn tại trong giỏ hàng"));
 
         int newQty = request.getQuantity();
         int previousQty = item.getQuantity();
@@ -155,13 +168,13 @@ public class CartService implements ICartService {
     @Transactional
     public void removeItem(Long userId, Long cartItemId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
         Cart cart = getOrCreateCart(user);
 
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Item không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("CartItem", cartItemId));
         if (!item.getCart().getUser().getId().equals(userId)) {
-            throw new BadRequestException("Bạn không có quyền xóa sản phẩm này");
+            throw new UnauthorizedAccessException("CartItem");
         }
         cart.getItems().remove(item);
         cartRepository.save(cart);
@@ -171,7 +184,7 @@ public class CartService implements ICartService {
     @Transactional
     public void clearCart(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
         Cart cart = getOrCreateCart(user);
         cartItemRepository.deleteAllByCart(cart);
     }
@@ -222,5 +235,72 @@ public class CartService implements ICartService {
                 .items(itemDTOs)
                 .totalPrice(total)
                 .build();
+    }
+    
+    @Override
+    @Transactional
+    public SaveForLaterResponse saveForLater(Long userId, Long cartItemId, Long productId) {
+        try {
+            // 1. Validate user
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User", userId));
+            
+            // 2. Find cart item
+            CartItem cartItem = cartItemRepository.findById(cartItemId)
+                    .orElseThrow(() -> new EntityNotFoundException("CartItem", cartItemId));
+            
+            // 3. Verify ownership
+            if (!cartItem.getCart().getUser().getId().equals(userId)) {
+                throw new UnauthorizedAccessException("CartItem");
+            }
+            
+            // 4. Get product
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new EntityNotFoundException("Product", productId));
+            
+            // 5. Remove from cart
+            Cart cart = cartItem.getCart();
+            cart.getItems().remove(cartItem);
+            cartItemRepository.delete(cartItem);
+            
+            // 6. Add to wishlist (check if already exists)
+            boolean alreadyInWishlist = wishlistRepository.existsByUserIdAndProductId(userId, productId);
+            if (!alreadyInWishlist) {
+                com.codegym.smartphonemanagement.model.Wishlist wishlist = 
+                    com.codegym.smartphonemanagement.model.Wishlist.builder()
+                        .user(user)
+                        .product(product)
+                        .addedAt(java.time.LocalDateTime.now())
+                        .build();
+                wishlistRepository.save(wishlist);
+            }
+            
+            // 7. Get updated counts
+            int cartCount = cart.getItems().size();
+            int wishlistCount = wishlistRepository.countByUserId(userId);
+            
+            // 8. Return response
+            return SaveForLaterResponse.builder()
+                    .success(true)
+                    .message("Đã lưu " + product.getName() + " vào danh sách yêu thích")
+                    .cartItemCount(cartCount)
+                    .wishlistItemCount(wishlistCount)
+                    .build();
+                    
+        } catch (EntityNotFoundException | UnauthorizedAccessException | BadRequestException e) {
+            return SaveForLaterResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .cartItemCount(0)
+                    .wishlistItemCount(0)
+                    .build();
+        } catch (Exception e) {
+            return SaveForLaterResponse.builder()
+                    .success(false)
+                    .message("Không thể lưu sản phẩm: " + e.getMessage())
+                    .cartItemCount(0)
+                    .wishlistItemCount(0)
+                    .build();
+        }
     }
 }

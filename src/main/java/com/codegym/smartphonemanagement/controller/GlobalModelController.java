@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.dto.UserProfileDTO;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
+import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,8 +21,24 @@ public class GlobalModelController {
     private final ICouponService couponService;
     private final UserRepository userRepository;
     private final IUserProfileService userProfileService;
+    private final ILoyaltyPointService loyaltyPointService;
+    private final com.codegym.smartphonemanagement.service.wallet.WalletService walletService;
 
-    private static final Long MOCK_USER_ID = 1L; // thay bằng Security principal sau
+    /**
+     * Helper method to get current authenticated user (returns null if not authenticated)
+     */
+    private User getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        try {
+            String username = authentication.getName();
+            return userRepository.findByUsername(username).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @ModelAttribute("GlobalVouchers")
     public List<CouponResponseDTO> globalVouchers() {
@@ -40,9 +57,8 @@ public class GlobalModelController {
     }
 
     @ModelAttribute("SavedVoucherCodes")
-    public List<String> savedVoucherCodes() {
-        // Hardcode mock user ID for now
-        User user = userRepository.findById(MOCK_USER_ID).orElse(null);
+    public List<String> savedVoucherCodes(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
         if (user == null) {
             return List.of();
         }
@@ -52,11 +68,41 @@ public class GlobalModelController {
     }
 
     @ModelAttribute("currentUser")
-    public UserProfileDTO currentUser() {
+    public UserProfileDTO currentUser(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
+            return null;
+        }
         try {
-            return userProfileService.getProfile(MOCK_USER_ID);
+            return userProfileService.getProfile(user.getId());
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    @ModelAttribute("loyaltyPoints")
+    public Integer loyaltyPoints(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
+            return 0;
+        }
+        try {
+            return loyaltyPointService.getAccountInfo(user.getId()).getTotalPoints();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    @ModelAttribute("walletBalance")
+    public java.math.BigDecimal walletBalance(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        try {
+            return walletService.getWalletDTO(user.getId()).getBalance();
+        } catch (Exception e) {
+            return java.math.BigDecimal.ZERO;
         }
     }
 }

@@ -4,6 +4,10 @@ import com.codegym.smartphonemanagement.model.*;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
+import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
+import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
+import com.codegym.smartphonemanagement.exception.InvalidOrderStatusException;
+import com.codegym.smartphonemanagement.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
+@Service("orderRefundService")
 @RequiredArgsConstructor
 public class RefundService {
 
@@ -37,16 +41,16 @@ public class RefundService {
     @Transactional
     public RefundResponseDTO createRefundRequest(Long userId, RefundRequestDTO dto) {
         Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Đơn hàng không tồn tại!"));
 
         // Validate ownership
         if (!order.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này.");
+            throw new UnauthorizedAccessException("Bạn không có quyền thao tác đơn hàng này.");
         }
 
         // Validate status = DELIVERED
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new RuntimeException("Chỉ có thể yêu cầu hoàn trả khi đơn hàng đã được giao.");
+            throw new InvalidOrderStatusException("Chỉ có thể yêu cầu hoàn trả khi đơn hàng đã được giao.");
         }
 
         // Validate within 14-day window
@@ -57,22 +61,22 @@ public class RefundService {
                 .findFirst();
         
         if (!deliveredEvent.isPresent()) {
-            throw new RuntimeException("Không tìm thấy thông tin giao hàng. Vui lòng liên hệ hỗ trợ.");
+            throw new BadRequestException("Không tìm thấy thông tin giao hàng. Vui lòng liên hệ hỗ trợ.");
         }
         
         LocalDateTime deliveredAt = deliveredEvent.get().getCreatedAt();
         if (deliveredAt.plusDays(REFUND_WINDOW_DAYS).isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Đã quá thời hạn " + REFUND_WINDOW_DAYS + " ngày để yêu cầu hoàn trả.");
+            throw new BadRequestException("Đã quá thời hạn " + REFUND_WINDOW_DAYS + " ngày để yêu cầu hoàn trả.");
         }
 
         // Validate no pending refund exists
         if (refundRequestRepository.existsByOrderIdAndStatus(order.getId(), RefundStatus.PENDING)) {
-            throw new RuntimeException("Đơn hàng này đang có yêu cầu hoàn trả chờ duyệt.");
+            throw new BadRequestException("Đơn hàng này đang có yêu cầu hoàn trả chờ duyệt.");
         }
 
         // Validate at least 1 item
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn ít nhất 1 sản phẩm cần hoàn trả.");
+            throw new BadRequestException("Vui lòng chọn ít nhất 1 sản phẩm cần hoàn trả.");
         }
 
         // Filter out items with quantity = 0
@@ -81,7 +85,7 @@ public class RefundService {
                 .collect(Collectors.toList());
 
         if (validItems.isEmpty()) {
-            throw new RuntimeException("Vui lòng nhập số lượng trả lại cho ít nhất 1 sản phẩm.");
+            throw new BadRequestException("Vui lòng nhập số lượng trả lại cho ít nhất 1 sản phẩm.");
         }
 
         // Create RefundRequest
@@ -100,17 +104,17 @@ public class RefundService {
 
         for (RefundItemDTO itemDto : validItems) {
             OrderItem orderItem = orderItemRepository.findById(itemDto.getOrderItemId())
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại trong đơn hàng."));
+                    .orElseThrow(() -> new EntityNotFoundException("Sản phẩm không tồn tại trong đơn hàng."));
 
             // Validate item belongs to this order
             if (!orderItem.getOrder().getId().equals(order.getId())) {
-                throw new RuntimeException("Sản phẩm không thuộc đơn hàng này.");
+                throw new BadRequestException("Sản phẩm không thuộc đơn hàng này.");
             }
 
             // Calculate already refunded quantity for this item
             int alreadyRefundedQty = refundRequestRepository.findByOrderId(order.getId())
                     .stream()
-                    .filter(r -> r.getStatus() == RefundStatus.APPROVED)
+                    .filter(r -> r.getStatus() == RefundStatus.COMPLETED )
                     .flatMap(r -> r.getItems().stream())
                     .filter(ri -> ri.getOrderItem().getId().equals(orderItem.getId()))
                     .mapToInt(RefundItem::getQuantity)
@@ -119,7 +123,7 @@ public class RefundService {
             // Validate quantity: current + already refunded <= original quantity
             int remainingQty = orderItem.getQuantity() - alreadyRefundedQty;
             if (itemDto.getQuantity() > remainingQty) {
-                throw new RuntimeException("Số lượng trả lại không hợp lệ cho " + orderItem.getProduct().getName() 
+                throw new BadRequestException("Số lượng trả lại không hợp lệ cho " + orderItem.getProduct().getName() 
                         + ". Đã mua: " + orderItem.getQuantity() 
                         + ", Đã hoàn trả: " + alreadyRefundedQty 
                         + ", Còn lại: " + remainingQty);
@@ -140,7 +144,7 @@ public class RefundService {
 
             // Validate refund amount > 0
             if (itemRefund.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new RuntimeException("Số tiền hoàn trả không hợp lệ cho " + orderItem.getProduct().getName() 
+                throw new BadRequestException("Số tiền hoàn trả không hợp lệ cho " + orderItem.getProduct().getName() 
                         + ". Sản phẩm này có thể đã được giảm giá 100%.");
             }
 
@@ -158,6 +162,33 @@ public class RefundService {
         }
 
         refundItemRepository.saveAll(refundItems);
+
+        // Check if this request refunds all remaining items to include shipping fee
+        boolean refundingAllRemaining = true;
+        for (OrderItem oi : order.getItems()) {
+            int alreadyRefundedQty = refundRequestRepository.findByOrderId(order.getId())
+                    .stream()
+                    .filter(r -> r.getStatus() == RefundStatus.COMPLETED || r.getStatus() == RefundStatus.PENDING)
+                    .flatMap(r -> r.getItems().stream())
+                    .filter(ri -> ri.getOrderItem().getId().equals(oi.getId()))
+                    .mapToInt(RefundItem::getQuantity)
+                    .sum();
+            int remainingQty = oi.getQuantity() - alreadyRefundedQty;
+            
+            Optional<RefundItemDTO> requested = validItems.stream()
+                    .filter(i -> i.getOrderItemId().equals(oi.getId()))
+                    .findFirst();
+            int qtyToRefund = requested.map(RefundItemDTO::getQuantity).orElse(0);
+            
+            if (qtyToRefund < remainingQty) {
+                refundingAllRemaining = false;
+                break;
+            }
+        }
+        
+        if (refundingAllRemaining && order.getShippingFee() != null && order.getShippingFee().compareTo(BigDecimal.ZERO) > 0) {
+            totalRefund = totalRefund.add(order.getShippingFee());
+        }
 
         // Update total
         refundRequest.setTotalRefundAmount(totalRefund);
@@ -180,13 +211,13 @@ public class RefundService {
     @Transactional
     public RefundResponseDTO approveRefund(Long refundRequestId, String adminNote) {
         RefundRequest req = refundRequestRepository.findById(refundRequestId)
-                .orElseThrow(() -> new RuntimeException("Yêu cầu hoàn trả không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Yêu cầu hoàn trả không tồn tại!"));
 
         if (req.getStatus() != RefundStatus.PENDING) {
-            throw new RuntimeException("Yêu cầu hoàn trả này đã được xử lý.");
+            throw new BadRequestException("Yêu cầu hoàn trả này đã được xử lý.");
         }
 
-        req.setStatus(RefundStatus.APPROVED);
+        req.setStatus(RefundStatus.COMPLETED);
         req.setAdminNote(adminNote);
         refundRequestRepository.save(req);
 
@@ -249,7 +280,7 @@ public class RefundService {
         // Notify user
         String msg = String.format("Yêu cầu hoàn trả cho đơn hàng #%d đã được duyệt. Trạng thái đơn: %s", 
                 order.getId(), newStatus.name());
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
 
         return mapToDTO(req);
     }
@@ -259,13 +290,13 @@ public class RefundService {
     @Transactional
     public RefundResponseDTO rejectRefund(Long refundRequestId, String adminNote) {
         RefundRequest req = refundRequestRepository.findById(refundRequestId)
-                .orElseThrow(() -> new RuntimeException("Yêu cầu hoàn trả không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Yêu cầu hoàn trả không tồn tại!"));
 
         if (req.getStatus() != RefundStatus.PENDING) {
-            throw new RuntimeException("Yêu cầu hoàn trả này đã được xử lý.");
+            throw new BadRequestException("Yêu cầu hoàn trả này đã được xử lý.");
         }
 
-        req.setStatus(RefundStatus.REJECTED);
+        req.setStatus(RefundStatus.FAILED);
         req.setAdminNote(adminNote);
         refundRequestRepository.save(req);
 
@@ -280,7 +311,7 @@ public class RefundService {
                 
         // Notify user
         String msg = String.format("Yêu cầu hoàn trả cho đơn hàng #%d đã bị từ chối.", order.getId());
-        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/orders/" + order.getId());
+        notificationService.sendNotification(order.getUser(), msg, NotificationType.ORDER_STATUS_CHANGED, "/user/order/detail/" + order.getId());
 
         return mapToDTO(req);
     }
@@ -302,7 +333,7 @@ public class RefundService {
 
     public RefundResponseDTO getRefundById(Long id) {
         RefundRequest req = refundRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Yêu cầu hoàn trả không tồn tại!"));
+                .orElseThrow(() -> new EntityNotFoundException("Yêu cầu hoàn trả không tồn tại!"));
         return mapToDTO(req);
     }
 
@@ -315,7 +346,7 @@ public class RefundService {
         // Lấy tất cả approved refunds + current request
         List<RefundRequest> approvedReqs = refundRequestRepository.findByOrderId(order.getId())
                 .stream()
-                .filter(r -> r.getStatus() == RefundStatus.APPROVED || r.getId().equals(currentReq.getId()))
+                .filter(r -> r.getStatus() == RefundStatus.COMPLETED || r.getId().equals(currentReq.getId()))
                 .collect(Collectors.toList());
 
         // Tổng hợp quantity đã refund cho mỗi orderItem

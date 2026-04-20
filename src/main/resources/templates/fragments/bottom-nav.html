@@ -1,0 +1,40 @@
+<nav th:fragment="bottom-nav" class="bottom-nav" aria-label="Primary navigation" data-current-path="">
+    <a href="/" class="bottom-nav__item" data-nav-path="/">
+        <i class="bi bi-house-door"></i>
+        <span>Home</span>
+    </a>
+    <a href="/user/search" class="bottom-nav__item" data-nav-path="/user/search">
+        <i class="bi bi-search"></i>
+        <span>Search</span>
+    </a>
+    <a href="/user/cart" class="bottom-nav__item" data-nav-path="/user/cart">
+        <i class="bi bi-cart"></i>
+        <span class="bottom-nav__badge" th:if="${cart != null and cart.items != null and #lists.size(cart.items) > 0}" 
+            th:attr="data-count=${#lists.size(cart.items)}">Cart</span>
+        <span th:unless="${cart != null and cart.items != null and #lists.size(cart.items) > 0}">Cart</span>
+    </a>
+    <a href="/user/profile" class="bottom-nav__item" data-nav-path="/user/profile">
+        <i class="bi bi-person"></i>
+        <span>Profile</span>
+    </a>
+</nav>
+
+<script th:inline="javascript">
+    // Set active navigation item based on current path
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.bottom-nav__item');
+        
+        navItems.forEach(item => {
+            const navPath = item.getAttribute('data-nav-path');
+            
+            // Check if current path matches or starts with nav path
+            if (currentPath === navPath || 
+                (navPath === '/' && currentPath === '/user/products') ||
+                (navPath !== '/' && currentPath.startsWith(navPath))) {
+                item.classList.add('active');
+                item.setAttribute('aria-current', 'page');
+            }
+        });
+    });
+</script>

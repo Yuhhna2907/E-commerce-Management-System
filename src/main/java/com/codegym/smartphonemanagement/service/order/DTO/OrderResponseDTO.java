@@ -9,6 +9,7 @@ public class OrderResponseDTO {
     private Long id;
     private BigDecimal totalPrice;
     private BigDecimal totalDiscount;
+    private BigDecimal shippingFee;
     private String couponCode;
     private String status;
     private LocalDateTime createdAt;
@@ -18,6 +19,8 @@ public class OrderResponseDTO {
     private String note;
     private List<OrderItemResponseDTO> items;
     private String paymentMethodDisplay;
+    private String paymentStatus;
+    private String paymentStatusDisplay;
     // OMS timeline
     private List<OrderHistoryDTO> timeline;
     // Refund info (nếu có)
@@ -27,4 +30,10 @@ public class OrderResponseDTO {
     // Cho user biết có thể hủy / refund không
     private boolean canCancel;
     private boolean canRefund;
+    // Ngày giao hàng dự kiến (3-5 ngày làm việc)
+    private LocalDateTime estimatedDeliveryDate;
+    // Thông tin người mua
+    private Long userId;
+    private String buyerUsername;
+    private String buyerFullName;
 }

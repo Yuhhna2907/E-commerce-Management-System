@@ -65,10 +65,33 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "payment_status")
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
     @Column(name = "coupon_code", length = 50)
     private String couponCode;
+
+    @Column(name = "shipping_coupon_code", length = 50)
+    private String shippingCouponCode;
 
     @Column(name = "total_discount")
     @Builder.Default
     private BigDecimal totalDiscount = BigDecimal.ZERO;
+
+    @Column(name = "shipping_discount")
+    @Builder.Default
+    private BigDecimal shippingDiscount = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee")
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    /**
+     * Số điểm tích được từ đơn hàng này (cộng khi DELIVERED, trừ lại khi REFUNDED)
+     */
+    @Column(name = "points_earned")
+    @Builder.Default
+    private Integer pointsEarned = 0;
 }

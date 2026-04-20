@@ -2,158 +2,210 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý hoàn trả - Admin</title>
+    <title>Quản lý hoàn trả - SmartZone Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .header-red { background-color: #d70018; position: sticky; top: 0; z-index: 1000; }
-        .sidebar { min-height: 100vh; border-right: 1px solid #dee2e6; }
-        .sidebar a { text-decoration: none; display: block; padding: 10px; color: #333; border-radius: 5px; }
-        .sidebar a:hover, .sidebar a.active { background-color: #f8f9fa; color: #d70018; font-weight: bold; }
-
-        .refund-card {
-            background: #fff; border-radius: 16px; padding: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px;
-            border-left: 4px solid #f59e0b;
-            transition: transform 0.2s;
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1d1d1f;
+            --sz-light: #f5f5f7;
+            --sz-white: #ffffff;
         }
-        .refund-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        .refund-card.approved { border-left-color: #10b981; }
-        .refund-card.rejected { border-left-color: #ef4444; }
 
-        .badge-refund { padding: 5px 12px; border-radius: 50px; font-weight: 700; font-size: 0.8rem; }
-        .badge-refund.pending { background: rgba(245,158,11,0.15); color: #d97706; }
-        .badge-refund.approved { background: rgba(16,185,129,0.12); color: #059669; }
-        .badge-refund.rejected { background: rgba(239,68,68,0.12); color: #dc2626; }
+        body {
+            background-color: var(--sz-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--sz-dark);
+        }
 
-        .filter-btn {
-            border: 1px solid #dee2e6; background: #fff;
-            padding: 6px 14px; border-radius: 50px;
+        /* Header Trắng hiện đại */
+        .header-sz {
+            background-color: var(--sz-white);
+            border-bottom: 1px solid #e5e5e5;
+            position: sticky; top: 0; z-index: 1050;
+        }
+
+        /* Sidebar thiết kế dạng thẻ nổi */
+        .sidebar-container {
+            min-height: calc(100vh - 100px);
+            background: var(--sz-white);
+            border-radius: 16px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5e5;
+        }
+
+        .sidebar-link {
+            text-decoration: none; display: flex; align-items: center;
+            padding: 12px 15px; color: #6e6e73; border-radius: 12px;
+            margin-bottom: 4px; transition: all 0.2s; font-weight: 500;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #fff9e6; color: var(--sz-orange);
+        }
+
+        /* Filter Buttons */
+        .filter-sz {
+            border: 1px solid #e5e5e5; background: var(--sz-white);
+            padding: 8px 18px; border-radius: 12px;
             font-weight: 600; font-size: 0.85rem;
-            color: #64748b; text-decoration: none; transition: all 0.2s;
+            color: #6e6e73; text-decoration: none; transition: 0.3s;
         }
-        .filter-btn:hover, .filter-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+        .filter-sz:hover, .filter-sz.active {
+            background: var(--sz-dark); color: white; border-color: var(--sz-dark);
+        }
+
+        /* Refund Card Modern */
+        .refund-card-sz {
+            background: var(--sz-white); border-radius: 20px; padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
+            border: 1px solid #e5e5e5; transition: transform 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .refund-card-sz:hover { transform: translateY(-5px); }
+        .refund-card-sz::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+        }
+        .refund-card-sz.pending::before { background: var(--sz-orange); }
+        .refund-card-sz.approved::before { background: #10b981; }
+        .refund-card-sz.rejected::before { background: #ef4444; }
+
+        /* Badges */
+        .badge-sz { padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+        .bg-pending-sz { background: #fff7ed; color: #c2410c; }
+        .bg-approved-sz { background: #ecfdf5; color: #047857; }
+        .bg-rejected-sz { background: #fef2f2; color: #b91c1c; }
+
+        .item-row-sz { background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 8px; font-size: 0.9rem; border: 1px dashed #dee2e6; }
+        .btn-sz-sm { border-radius: 10px; font-weight: 600; padding: 8px 16px; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg header-red navbar-dark shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" th:href="@{/admin/products}"><i class="bi bi-phone"></i> SMARTPHONE STORE</a>
-        <div class="text-white">Xin chào, <span class="fw-bold">Admin</span></div>
+<nav class="navbar navbar-expand-lg header-sz py-3">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center fw-bold text-dark" th:href="@{/admin/dashboard}">
+            <div class="bg-warning rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                <i class="bi bi-phone-fill text-white"></i>
+            </div>
+            SmartZone <span class="text-warning ms-1">Admin</span>
+        </a>
+        <div class="text-dark fw-bold">Xin chào, <span class="text-warning">Admin Duy</span></div>
     </div>
 </nav>
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2 bg-white sidebar p-3 shadow-sm">
-            <h6 class="text-muted text-uppercase fw-bold small mb-3">Danh mục quản lý</h6>
-            <a th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-            <a th:href="@{/admin/products}"><i class="bi bi-box-seam me-2"></i> Sản phẩm</a>
-            <a th:href="@{/admin/categories}"><i class="bi bi-tags me-2"></i> Danh mục</a>
-            <a th:href="@{/admin/orders}"><i class="bi bi-cart-check me-2"></i> Đơn hàng</a>
-            <a th:href="@{/admin/orders/refunds}" class="active">
-                <i class="bi bi-arrow-return-left me-2"></i> Hoàn trả
-                <span th:if="${countPending != null && countPending > 0}" class="badge bg-danger ms-1" th:text="${countPending}"></span>
-            </a>
-            <a th:href="@{/admin/coupons}"><i class="bi bi-ticket-perforated me-2"></i> Khuyến mãi</a>
-            <hr>
-            <a th:href="@{/admin/products}" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Thoát</a>
+    <div class="row px-2">
+        <div class="col-md-2 p-3">
+            <div class="sidebar-container p-3">
+                <p class="text-muted small fw-bold px-3 mb-3 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Quản lý</p>
+                <a th:href="@{/admin/dashboard}" class="sidebar-link mb-2"><i class="bi bi-grid-1x2-fill me-3"></i> Tổng quan</a>
+                <a th:href="@{/admin/products}" class="sidebar-link mb-2"><i class="bi bi-phone-vibrate-fill me-3"></i> Sản phẩm</a>
+                <a th:href="@{/admin/categories}" class="sidebar-link mb-2"><i class="bi bi-stack me-3"></i> Danh mục</a>
+                <a th:href="@{/admin/orders}" class="sidebar-link mb-2"><i class="bi bi-cart-check-fill me-3"></i> Đơn hàng</a>
+                <a th:href="@{/admin/orders/refunds}" class="sidebar-link mb-2 active">
+                    <i class="bi bi-arrow-return-left me-3"></i> Hoàn trả
+                    <span th:if="${countPending != null && countPending > 0}" class="badge bg-danger ms-auto" th:text="${countPending}"></span>
+                </a>
+                <a th:href="@{/admin/coupons}" class="sidebar-link mb-2"><i class="bi bi-ticket-perforated-fill me-3"></i> Khuyến mãi</a>
+                <hr class="my-4 opacity-25">
+                <a th:href="@{/admin/products}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-left me-3"></i> Thoát</a>
+            </div>
         </div>
 
         <div class="col-md-10 p-4">
-            <h3 class="fw-bold text-dark mb-3">Quản lý yêu cầu hoàn trả</h3>
+            <div class="mb-4">
+                <h2 class="fw-bold text-dark mb-1">Quản lý hoàn trả</h2>
+                <p class="text-muted small">Phê duyệt và xử lý các yêu cầu trả hàng từ khách hàng</p>
+            </div>
 
             <div class="d-flex gap-2 flex-wrap mb-4">
-                <a th:href="@{/admin/orders/refunds}" class="filter-btn" th:classappend="${currentStatus == null} ? 'active'">Tất cả</a>
-                <a th:href="@{/admin/orders/refunds(status='PENDING')}" class="filter-btn" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
-                    <i class="bi bi-hourglass-split me-1"></i> Chờ duyệt
-                    <span th:if="${countPending != null && countPending > 0}" class="badge bg-danger ms-1" th:text="${countPending}"></span>
+                <a th:href="@{/admin/orders/refunds}" class="filter-sz" th:classappend="${currentStatus == null} ? 'active'">Tất cả yêu cầu</a>
+                <a th:href="@{/admin/orders/refunds(status='PENDING')}" class="filter-sz d-flex align-items-center" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
+                    <i class="bi bi-hourglass-split me-2"></i> Chờ duyệt
+                    <span th:if="${countPending != null && countPending > 0}" class="badge bg-warning text-dark ms-2" th:text="${countPending}"></span>
                 </a>
-                <a th:href="@{/admin/orders/refunds(status='APPROVED')}" class="filter-btn" th:classappend="${currentStatus?.name() == 'APPROVED'} ? 'active'">
-                    <i class="bi bi-check-circle me-1"></i> Đã duyệt
+                <a th:href="@{/admin/orders/refunds(status='APPROVED')}" class="filter-sz" th:classappend="${currentStatus?.name() == 'APPROVED'} ? 'active'">
+                    <i class="bi bi-check-circle me-2"></i> Đã duyệt
                 </a>
-                <a th:href="@{/admin/orders/refunds(status='REJECTED')}" class="filter-btn" th:classappend="${currentStatus?.name() == 'REJECTED'} ? 'active'">
-                    <i class="bi bi-x-circle me-1"></i> Từ chối
+                <a th:href="@{/admin/orders/refunds(status='REJECTED')}" class="filter-sz" th:classappend="${currentStatus?.name() == 'REJECTED'} ? 'active'">
+                    <i class="bi bi-x-circle me-2"></i> Đã từ chối
                 </a>
             </div>
 
-            <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-sm">
+            <div th:if="${message}" class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
                 <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${message}"></span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm">
-                <i class="bi bi-x-circle-fill me-2"></i> <span th:text="${error}"></span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
-            <div th:if="${#lists.isEmpty(refunds)}" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox display-4 d-block mb-3"></i>
-                Không có yêu cầu hoàn trả nào.
+            <div th:if="${#lists.isEmpty(refunds)}" class="text-center py-5 bg-white rounded-5 shadow-sm">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" style="width: 80px; opacity: 0.3;" class="mb-3">
+                <p class="text-muted fw-medium">Hiện tại chưa có yêu cầu hoàn trả nào.</p>
             </div>
 
-            <div th:each="refund : ${refunds}" class="refund-card"
-                 th:classappend="${refund.status.toLowerCase()}">
+            <div th:each="refund : ${refunds}" class="refund-card-sz shadow-sm" th:classappend="${refund.status.toLowerCase()}">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <h5 class="fw-bold mb-1">Đơn #<span th:text="${refund.orderId}"></span></h5>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h5 class="fw-bold text-dark mb-0">Đơn hàng #[[${refund.orderId}]]</h5>
+                            <a th:href="@{/admin/orders/detail/{id}(id=${refund.orderId})}" class="text-primary small text-decoration-none">
+                                <i class="bi bi-box-arrow-up-right ms-1"></i> Xem chi tiết
+                            </a>
+                        </div>
                         <div class="small text-muted">
-                            Khách: <strong th:text="${refund.userName}"></strong>
-                            &bull; Gửi lúc <span th:text="${#temporals.format(refund.createdAt, 'HH:mm dd/MM/yyyy')}"></span>
+                            <i class="bi bi-person-circle me-1"></i> <strong th:text="${refund.userName}"></strong>
+                            <span class="mx-2 text-silver">|</span>
+                            <i class="bi bi-clock me-1"></i> <span th:text="${#temporals.format(refund.createdAt, 'HH:mm dd/MM/yyyy')}"></span>
                         </div>
                     </div>
-                    <span class="badge-refund" th:classappend="${refund.status.toLowerCase()}"
-                          th:text="${refund.status == 'PENDING' ? 'Chờ duyệt' : (refund.status == 'APPROVED' ? 'Đã duyệt' : 'Từ chối')}"></span>
+                    <span class="badge-sz" th:classappend="'bg-' + ${refund.status.toLowerCase()} + '-sz'"
+                          th:text="${refund.status == 'PENDING' ? 'Đang chờ' : (refund.status == 'APPROVED' ? 'Thành công' : 'Bị từ chối')}"></span>
                 </div>
 
-                <div class="mb-2"><strong>Lý do:</strong> <span th:text="${refund.reason}"></span></div>
-                <div class="mb-2">
-                    <strong>Tổng hoàn:</strong>
-                    <span class="text-danger fw-bold" style="font-family: monospace; font-size: 1.1rem;"
-                          th:text="${#numbers.formatDecimal(refund.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                <div class="p-3 bg-light rounded-4 mb-3 border">
+                    <div class="small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">Lý do hoàn trả:</div>
+                    <div class="text-dark" th:text="${refund.reason}"></div>
                 </div>
 
-                <!-- Items breakdown -->
                 <div th:if="${refund.items != null && !refund.items.isEmpty()}" class="mb-3">
-                    <div th:each="item : ${refund.items}" class="small d-flex justify-content-between p-2 bg-light rounded mb-1">
-                        <span>
-                            <strong th:text="${item.productName}"></strong>
-                            <span class="text-muted" th:text="'(' + ${item.variantName} + ')'"></span>
-                            × <span th:text="${item.quantityReturned}"></span>
+                    <div th:each="item : ${refund.items}" class="item-row-sz d-flex justify-content-between">
+                        <span class="text-dark fw-medium">
+                            <i class="bi bi-dot text-warning fs-4"></i> [[${item.productName}]]
+                            <span class="text-muted small">([[${item.variantName}]])</span>
+                            <span class="badge bg-white text-dark border ms-2">SL Trả: [[${item.quantityReturned}]]</span>
                         </span>
-                        <span class="fw-bold" th:text="${#numbers.formatDecimal(item.refundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                        <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(item.refundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
                     </div>
                 </div>
 
-                <div th:if="${refund.adminNote != null}" class="small p-2 bg-light rounded mb-3">
-                    <strong>Admin Note:</strong> <span th:text="${refund.adminNote}"></span>
-                </div>
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <span class="text-muted small">Tổng tiền hoàn trả:</span>
+                        <span class="ms-2 fw-bold text-dark fs-5" th:text="${#numbers.formatDecimal(refund.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + '₫'"></span>
+                    </div>
 
-                <!-- Approve / Reject buttons -->
-                <div th:if="${refund.status == 'PENDING'}" class="d-flex gap-2 flex-wrap">
-                    <form th:action="@{/admin/orders/refunds/{id}/approve(id=${refund.id})}" method="post" class="d-flex gap-2 flex-grow-1">
-                        <input type="text" name="adminNote" class="form-control form-control-sm" placeholder="Ghi chú (tùy chọn)..." style="border-radius: 50px;">
-                        <button class="btn btn-sm btn-success px-3 fw-bold" style="border-radius: 50px; white-space: nowrap;">
-                            <i class="bi bi-check-lg"></i> Duyệt
-                        </button>
-                    </form>
-                    <form th:action="@{/admin/orders/refunds/{id}/reject(id=${refund.id})}" method="post">
-                        <button class="btn btn-sm btn-outline-danger px-3 fw-bold" style="border-radius: 50px;"
-                                onclick="return confirm('Từ chối yêu cầu hoàn trả này?')">
-                            <i class="bi bi-x-lg"></i> Từ chối
-                        </button>
-                    </form>
-                    <a th:href="@{/admin/orders/detail/{id}(id=${refund.orderId})}" class="btn btn-sm btn-outline-info px-3 fw-bold" style="border-radius: 50px;">
-                        <i class="bi bi-eye"></i> Xem đơn
-                    </a>
+                    <div th:if="${refund.status == 'PENDING'}" class="d-flex gap-2">
+                        <form th:action="@{/admin/orders/refunds/{id}/approve(id=${refund.id})}" method="post" class="d-flex gap-2">
+                            <input type="text" name="adminNote" class="form-control form-control-sm rounded-pill px-3" placeholder="Ghi chú admin..." style="width: 200px;">
+                            <button class="btn btn-sm btn-success btn-sz-sm shadow-sm"><i class="bi bi-check2"></i> Duyệt</button>
+                        </form>
+                        <form th:action="@{/admin/orders/refunds/{id}/reject(id=${refund.id})}" method="post">
+                            <button class="btn btn-sm btn-outline-danger btn-sz-sm" onclick="return confirm('Bạn muốn từ chối yêu cầu này?')"><i class="bi bi-x-lg"></i> Từ chối</button>
+                        </form>
+                    </div>
+
+                    <div th:if="${refund.status != 'PENDING'}" class="text-muted small italic">
+                        <i class="bi bi-info-circle me-1"></i> Ghi chú xử lý: [[${refund.adminNote ?: 'Không có'}]]
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<footer class="text-center p-3 mt-4 shadow-sm" style="background: #212529; color: white;">
-    <small>© 2026 Smartphone Store | Admin Dashboard System</small>
+<footer class="text-center p-4 mt-5 bg-white border-top">
+    <small class="text-muted">© 2026 SmartZone Admin Dashboard | Managed by Vũ Ngọc Duy</small>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

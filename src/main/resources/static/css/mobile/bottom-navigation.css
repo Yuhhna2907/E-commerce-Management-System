@@ -1,0 +1,238 @@
+/**
+ * Bottom Navigation Bar - Mobile CSS
+ * 
+ * Provides a fixed bottom navigation bar for mobile devices with:
+ * - Glassmorphism styling (backdrop-filter blur, semi-transparent background)
+ * - 4 navigation items: Home, Search, Cart, Profile
+ * - Active state indication with aria-current selector
+ * - Cart badge with item count
+ * - 64px minimum height for touch targets
+ * - Only visible on mobile viewports (< 768px)
+ * 
+ * Requirements: 1.1, 1.2, 1.6, 1.7, 1.9
+ */
+
+/* ===== Bottom Navigation Container ===== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: none; /* Hidden by default */
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Show bottom nav only on mobile viewports */
+@media (max-width: 767px) {
+    .bottom-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    /* Prevent content overlap with bottom nav */
+    body {
+        padding-bottom: 64px;
+    }
+}
+
+/* ===== Navigation Items ===== */
+.bottom-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 8px;
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Hover state for desktop testing */
+.bottom-nav__item:hover {
+    color: #0d6efd;
+}
+
+/* Active state with aria-current selector */
+.bottom-nav__item[aria-current="page"] {
+    color: #0d6efd;
+}
+
+/* Active state visual indicator */
+.bottom-nav__item[aria-current="page"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: #0d6efd;
+    border-radius: 0 0 3px 3px;
+}
+
+/* Touch feedback */
+.bottom-nav__item:active {
+    transform: scale(0.95);
+}
+
+/* ===== Icons ===== */
+.bottom-nav__item i {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+/* ===== Text Labels ===== */
+.bottom-nav__item span {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ===== Cart Badge ===== */
+.bottom-nav__badge {
+    position: relative;
+}
+
+.bottom-nav__badge[data-count]::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -20px;
+    right: -12px;
+    background: #dc3545;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Hide badge when count is 0 */
+.bottom-nav__badge[data-count="0"]::after {
+    display: none;
+}
+
+/* ===== Accessibility ===== */
+
+/* Focus indicators for keyboard navigation */
+@media (max-width: 767px) {
+    .bottom-nav__item:focus-visible {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+        border-radius: 8px;
+    }
+}
+
+/* Screen reader text for better accessibility */
+.bottom-nav__item .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ===== Responsive Adjustments ===== */
+
+/* Extra small devices (< 375px) */
+@media (max-width: 374px) {
+    .bottom-nav__item span {
+        font-size: 11px;
+    }
+    
+    .bottom-nav__item i {
+        font-size: 22px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 767px) and (orientation: landscape) {
+    .bottom-nav {
+        height: 56px;
+    }
+    
+    body {
+        padding-bottom: 56px;
+    }
+    
+    .bottom-nav__item {
+        min-height: 44px;
+    }
+    
+    .bottom-nav__item i {
+        font-size: 20px;
+        margin-bottom: 2px;
+    }
+    
+    .bottom-nav__item span {
+        font-size: 10px;
+    }
+}
+
+/* ===== Dark Mode Support (Optional) ===== */
+@media (prefers-color-scheme: dark) {
+    .bottom-nav {
+        background: rgba(30, 30, 30, 0.9);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .bottom-nav__item {
+        color: #adb5bd;
+    }
+    
+    .bottom-nav__item:hover,
+    .bottom-nav__item[aria-current="page"] {
+        color: #4dabf7;
+    }
+    
+    .bottom-nav__item[aria-current="page"]::before {
+        background: #4dabf7;
+    }
+}
+
+/* ===== Animation for Initial Load ===== */
+@media (max-width: 767px) {
+    .bottom-nav {
+        animation: slideUpNav 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+@keyframes slideUpNav {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== Floating Action Button Adjustments ===== */
+/* Ensure floating buttons (back-to-top, wallet) appear above bottom nav */
+@media (max-width: 767px) {
+    .floating-action-button,
+    .back-to-top,
+    .wallet-button {
+        bottom: 80px !important; /* 64px nav + 16px spacing */
+    }
+}

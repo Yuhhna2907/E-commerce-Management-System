@@ -55,6 +55,8 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    private boolean enabled = true;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -73,8 +75,24 @@ public class User {
     @JsonIgnore
     private List<UserAddress> addresses;
 
+    // Account lockout fields
+    @Column
+    private LocalDateTime lockoutTime;
+
+    @Column
+    private Integer failedLoginAttempts = 0;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    /**
+     * Check if the account is currently locked
+     * @return true if locked, false otherwise
+     */
+    @Transient
+    public boolean isAccountLocked() {
+        return lockoutTime != null && lockoutTime.isAfter(LocalDateTime.now());
     }
 }

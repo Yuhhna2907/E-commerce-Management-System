@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "reviews",
@@ -52,9 +53,20 @@ public class Review {
     @JoinColumn(name = "order_id")
     private Order order;
 
+    // ====== Review Images ======
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ReviewImage> images;
+
     // ====== Trạng thái duyệt ======
     @Column(nullable = false)
     private Boolean approved = true;
+
+    // ====== Admin Reply ======
+    @Column(columnDefinition = "TEXT")
+    private String adminReply;
+
+    @Column
+    private LocalDateTime repliedAt;
 
     // ====== Thời gian ======
     @Column(nullable = false)

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Điểm Thưởng - SmartZone Enterprise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+            --sz-text-muted: #8E8E93;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            background-color: #f0f2f5;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.07) 0%, transparent 40%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+            min-height: 100vh;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 20px;
+            padding: 22px 24px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(0,0,0,0.07); }
+        .kpi-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; flex-shrink: 0;
+        }
+        .kpi-num { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
+        .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--sz-text-muted); }
+
+        /* Tier Dist mini cards */
+        .tier-chip {
+            padding: 10px 18px; border-radius: 14px;
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; font-size: 0.82rem;
+            background: white; border: 1px solid rgba(0,0,0,0.06);
+            cursor: pointer; transition: all 0.2s;
+            text-decoration: none; color: inherit;
+        }
+        .tier-chip:hover, .tier-chip.active-tier { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+        .tier-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Main Glass panel */
+        .glass-card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.04);
+        }
+
+        /* Search bar */
+        .search-bar {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-bar:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 4px rgba(251,189,5,0.12); }
+
+        /* User rows */
+        .user-row {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 20px; border-radius: 16px;
+            cursor: pointer; transition: all 0.22s;
+            text-decoration: none; color: inherit;
+            border: 1px solid transparent;
+        }
+        .user-row:hover {
+            background: rgba(251,189,5,0.06);
+            border-color: rgba(251,189,5,0.15);
+            transform: translateX(4px);
+        }
+        .user-avatar {
+            width: 46px; height: 46px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .badge-tier {
+            padding: 4px 12px; border-radius: 8px;
+            font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+            border: 1px solid transparent;
+        }
+        .pts-display { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+        /* Animations */
+        .fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-0">
+    <div class="row g-0 mx-3 my-3">
+        <!-- SIDEBAR -->
+        <div class="col-auto" style="width: 260px;">
+            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="col ps-4 pe-2">
+
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+                <div>
+                    <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">
+                        <i class="bi bi-star-fill me-2" style="color: #f59e0b;"></i>Quản lý Điểm Thưởng
+                    </h2>
+                    <p class="text-muted small fw-medium mb-0">Theo dõi hạng thành viên & điểm tích lũy của khách hàng</p>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="row g-3 mb-4 fade-up delay-1">
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="kpi-icon" style="background: rgba(245,158,11,0.1); color:#f59e0b;">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-num" th:text="${stats.totalAccounts}">0</div>
+                                <div class="kpi-label">Tổng thành viên</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="kpi-icon" style="background: rgba(99,102,241,0.1); color:#6366f1;">
+                                <i class="bi bi-coin"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-num" th:text="${#numbers.formatInteger(stats.totalPointsInCirculation, 3, 'COMMA')}">0</div>
+                                <div class="kpi-label">Điểm lưu hành</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="kpi-icon" style="background: rgba(16,185,129,0.1); color:#059669;">
+                                <i class="bi bi-gift-fill"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-num" th:text="${#numbers.formatInteger(stats.totalPointsRedeemed, 3, 'COMMA')}">0</div>
+                                <div class="kpi-label">Điểm đã đổi</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="kpi-icon" style="background: rgba(239,68,68,0.1); color:#dc2626;">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <div>
+                                <div class="kpi-num" th:text="${#numbers.formatDecimal(stats.circulationValue, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</div>
+                                <div class="kpi-label">Giá trị quy đổi</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier Distribution -->
+            <div class="d-flex gap-2 mb-4 flex-wrap fade-up delay-2">
+                <a th:href="@{/admin/loyalty}" class="tier-chip" th:classappend="${selectedTier == null ? 'active-tier' : ''}">
+                    <i class="bi bi-grid-fill text-muted" style="font-size:0.85rem;"></i>
+                    Tất cả <span class="badge bg-secondary rounded-pill ms-1" th:text="${stats.totalAccounts}">0</span>
+                </a>
+                <a th:href="@{/admin/loyalty(tier='BRONZE')}" class="tier-chip" th:classappend="${selectedTier == 'BRONZE' ? 'active-tier' : ''}">
+                    <span class="tier-dot" style="background:#cd7f32;"></span>
+                    🥉 Đồng <span class="ms-1 badge rounded-pill" style="background:#cd7f32;" th:text="${bronzeCount}">0</span>
+                </a>
+                <a th:href="@{/admin/loyalty(tier='SILVER')}" class="tier-chip" th:classappend="${selectedTier == 'SILVER' ? 'active-tier' : ''}">
+                    <span class="tier-dot" style="background:#94a3b8;"></span>
+                    🥈 Bạc <span class="ms-1 badge rounded-pill" style="background:#94a3b8;" th:text="${silverCount}">0</span>
+                </a>
+                <a th:href="@{/admin/loyalty(tier='GOLD')}" class="tier-chip" th:classappend="${selectedTier == 'GOLD' ? 'active-tier' : ''}">
+                    <span class="tier-dot" style="background:#f59e0b;"></span>
+                    🥇 Vàng <span class="ms-1 badge rounded-pill" style="background:#f59e0b;" th:text="${goldCount}">0</span>
+                </a>
+                <a th:href="@{/admin/loyalty(tier='DIAMOND')}" class="tier-chip" th:classappend="${selectedTier == 'DIAMOND' ? 'active-tier' : ''}">
+                    <span class="tier-dot" style="background:#6366f1;"></span>
+                    💎 Kim Cương <span class="ms-1 badge rounded-pill" style="background:#6366f1;" th:text="${diamondCount}">0</span>
+                </a>
+            </div>
+
+            <!-- Search + Table -->
+            <div class="glass-card fade-up delay-3">
+                <!-- Search bar -->
+                <form th:action="@{/admin/loyalty}" method="GET" class="d-flex gap-2 mb-4">
+                    <input type="hidden" name="tier" th:value="${selectedTier}">
+                    <div class="flex-grow-1 position-relative">
+                        <i class="bi bi-search position-absolute" style="top: 13px; left: 16px; color: #aaa; font-size: 0.9rem;"></i>
+                        <input type="text" name="search" class="search-bar w-100" style="padding-left: 42px;"
+                               placeholder="Tìm theo tên, email, username..."
+                               th:value="${search}">
+                    </div>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-3 px-4 border-0" style="background: var(--sz-orange);">
+                        <i class="bi bi-search me-1"></i> Tìm
+                    </button>
+                    <a th:href="@{/admin/loyalty}" class="btn btn-outline-secondary rounded-3 px-3">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </form>
+
+                <!-- Empty state -->
+                <div th:if="${#lists.isEmpty(accounts)}" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-5 d-block mb-3 opacity-25"></i>
+                    <h6 class="fw-bold">Không tìm thấy kết quả nào</h6>
+                    <p class="small mb-0">Thử tìm với từ khóa khác hoặc xóa bộ lọc.</p>
+                </div>
+
+                <!-- User list -->
+                <div th:each="acc : ${accounts}" class="border-bottom border-light-subtle">
+                    <a th:href="@{'/admin/loyalty/' + ${acc.userId ?: ''}}" class="user-row">
+
+                        <!-- Avatar -->
+                        <div class="user-avatar"
+                             th:style="'background: linear-gradient(135deg,' + ${acc.tierColor} + '33,' + ${acc.tierColor} + '66); color:' + ${acc.tierColor}">
+                            <i class="bi" th:classappend="${acc.tierIcon}"></i>
+                        </div>
+
+                        <!-- Name + Email -->
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="fw-bold text-truncate" th:text="${acc.username ?: 'N/A'}">Tên</div>
+                            <div class="small text-muted text-truncate" th:text="${acc.email ?: ''}">email</div>
+                        </div>
+
+                        <!-- Tier badge -->
+                        <div>
+                            <span class="badge-tier"
+                                  th:style="'background:' + ${acc.tierColor} + '22; color:' + ${acc.tierColor} + '; border-color:' + ${acc.tierColor} + '44'"
+                                  th:text="${acc.tierLabel}">Đồng</span>
+                        </div>
+
+                        <!-- Current points -->
+                        <div class="text-end" style="min-width: 110px;">
+                            <div class="pts-display" th:style="'color:' + ${acc.tierColor}"
+                                 th:text="${#numbers.formatInteger(acc.totalPoints, 3, 'COMMA')}">0</div>
+                            <div class="small text-muted fw-medium">pts hiện có</div>
+                        </div>
+
+                        <!-- Lifetime -->
+                        <div class="text-end d-none d-xl-block" style="min-width: 110px;">
+                            <div class="fw-bold text-muted" th:text="${#numbers.formatInteger(acc.lifetimePoints, 3, 'COMMA')}">0</div>
+                            <div class="small text-muted" style="font-size:0.7rem;">lifetime pts</div>
+                        </div>
+
+                        <!-- Progress to next tier -->
+                        <div class="d-none d-xl-block" style="min-width: 120px;">
+                            <div class="small fw-medium text-muted mb-1"
+                                 th:text="${acc.pointsToNextTier != null ? '+' + #numbers.formatInteger(acc.pointsToNextTier, 3, 'COMMA') + ' pts lên hạng' : '🏆 Cao nhất'}"
+                            ></div>
+                            <div class="progress" style="height: 5px; border-radius: 10px;">
+                                <div class="progress-bar" role="progressbar"
+                                     th:style="'width:' + ${acc.progressToNextTier} + '%; background:' + ${acc.tierColor}"
+                                     th:attr="aria-valuenow=${acc.progressToNextTier}"></div>
+                            </div>
+                        </div>
+
+                        <i class="bi bi-chevron-right text-muted opacity-50"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

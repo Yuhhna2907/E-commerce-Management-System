@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Điểm Tích Lũy | SmartZone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/mobile/bottom-navigation.css}">
+    <style>
+        :root {
+            --gold: #f59e0b;
+            --gold-deep: #d97706;
+            --gold-light: rgba(245,158,11,0.1);
+            --glass: rgba(255,255,255,0.65);
+            --shadow: 0 20px 40px -10px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,1);
+            --radius: 24px;
+        }
+        body {
+            background: #F1F3F5;
+            background-image:
+                radial-gradient(circle at 80% 10%, rgba(245,158,11,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 10% 90%, rgba(251,191,36,0.04) 0%, transparent 40%);
+            font-family: 'Outfit', sans-serif;
+            color: #0f172a;
+        }
+        .page-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+
+        /* ── Hero Points Card ── */
+        .points-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            border-radius: var(--radius);
+            padding: 40px 48px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -15px rgba(15,23,42,0.35);
+        }
+        .points-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.25), transparent 70%);
+            pointer-events: none;
+        }
+        .points-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -40px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(251,191,36,0.12), transparent 70%);
+            pointer-events: none;
+        }
+        .hero-label {
+            font-size: 0.8rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: rgba(245,158,11,0.85);
+            margin-bottom: 10px;
+        }
+        .hero-points {
+            font-size: 4.5rem; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+        .hero-points span { color: #f59e0b; }
+        .hero-subtitle { color: rgba(255,255,255,0.6); font-size: 1rem; font-weight: 500; margin-top: 8px; }
+        .hero-estimated {
+            background: rgba(245,158,11,0.15);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 50px;
+            padding: 6px 18px;
+            display: inline-flex; align-items: center; gap: 8px;
+            color: #fbbf24; font-weight: 700; font-size: 0.9rem;
+            margin-top: 16px;
+        }
+        .hero-lifetime {
+            color: rgba(255,255,255,0.45);
+            font-size: 0.85rem; font-weight: 500;
+            margin-top: 6px;
+        }
+
+        /* ── Glass Cards ── */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-weight: 800; font-size: 1.15rem;
+            letter-spacing: -0.02em; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* ── Redeem Widget ── */
+        .redeem-quick-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .redeem-preset {
+            padding: 8px 18px; border-radius: 50px;
+            border: 1.5px solid rgba(245,158,11,0.35);
+            background: var(--gold-light);
+            color: var(--gold-deep); font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .redeem-preset:hover, .redeem-preset.selected {
+            background: var(--gold); color: #fff;
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245,158,11,0.35);
+        }
+        .redeem-input-group {
+            display: flex; gap: 12px; align-items: center;
+        }
+        .redeem-input {
+            flex: 1; padding: 14px 20px; border-radius: 50px;
+            border: 1.5px solid rgba(245,158,11,0.3);
+            background: rgba(255,255,255,0.8);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem; font-weight: 700; color: #0f172a;
+            outline: none; transition: border-color 0.2s;
+        }
+        .redeem-input:focus { border-color: var(--gold); }
+        .btn-redeem {
+            padding: 14px 28px; border-radius: 50px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #fff; border: none; font-weight: 800;
+            font-size: 0.95rem; cursor: pointer; white-space: nowrap;
+            transition: all 0.3s; box-shadow: 0 8px 20px rgba(245,158,11,0.3);
+        }
+        .btn-redeem:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(245,158,11,0.45); color: #fff; }
+        .btn-redeem:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .redeem-info {
+            font-size: 0.82rem; color: #64748b; font-weight: 500;
+            margin-top: 12px; display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ── Coupon Result Toast ── */
+        .coupon-result {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.08));
+            border: 1.5px solid rgba(16,185,129,0.3);
+            border-radius: 16px; padding: 20px 24px;
+            margin-top: 16px; display: none;
+        }
+        .coupon-code-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem; font-weight: 800;
+            color: #059669; letter-spacing: 0.08em;
+            background: #fff; border: 2px dashed rgba(16,185,129,0.4);
+            border-radius: 12px; padding: 10px 20px;
+            display: inline-block; cursor: pointer;
+        }
+
+        /* ── Transaction History ── */
+        .tx-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: background 0.2s;
+        }
+        .tx-row:last-child { border-bottom: none; }
+        .tx-row:hover { background: rgba(245,158,11,0.03); margin: 0 -16px; padding: 14px 16px; border-radius: 12px; }
+        .tx-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .tx-icon.earned  { background: rgba(16,185,129,0.1); color: #059669; }
+        .tx-icon.redeemed { background: rgba(245,158,11,0.1); color: #d97706; }
+        .tx-icon.refund_deducted { background: rgba(239,68,68,0.1); color: #dc2626; }
+        .tx-icon.admin_adjust { background: rgba(99,102,241,0.1); color: #4f46e5; }
+        .tx-desc { flex: 1; min-width: 0; }
+        .tx-label { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
+        .tx-time  { font-size: 0.78rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+        .tx-points {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800; font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+        .tx-points.positive { color: #059669; }
+        .tx-points.negative { color: #dc2626; }
+        .tx-order-link {
+            font-size: 0.78rem; color: #f59e0b; font-weight: 600;
+            text-decoration: none;
+        }
+        .tx-order-link:hover { text-decoration: underline; }
+
+        /* ── How it works ── */
+        .how-step {
+            text-align: center; padding: 24px 16px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.9);
+            transition: transform 0.3s;
+        }
+        .how-step:hover { transform: translateY(-4px); }
+        .how-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; margin: 0 auto 14px;
+        }
+
+        /* ── Pagination ── */
+        .pagination-btn {
+            padding: 8px 18px; border-radius: 50px;
+            border: 1.5px solid rgba(0,0,0,0.08);
+            background: #fff; color: #475569; font-weight: 600;
+            text-decoration: none; transition: all 0.2s; font-size: 0.88rem;
+        }
+        .pagination-btn:hover, .pagination-btn.active {
+            background: var(--gold); color: #fff; border-color: var(--gold);
+        }
+
+        .breadcrumb-glass {
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 50px; padding: 10px 20px;
+            border: 1px solid rgba(255,255,255,0.9);
+            font-size: 0.9rem; font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .hero-points { font-size: 3rem; }
+            .points-hero { padding: 28px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container page-wrapper mt-4">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-4" aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-glass mb-0">
+            <li class="breadcrumb-item"><a th:href="@{/user/products}" class="text-decoration-none" style="color:#f59e0b">Trang chủ</a></li>
+            <li class="breadcrumb-item active text-dark" aria-current="page"><i class="bi bi-star-fill me-1" style="color:#f59e0b"></i> Điểm Tích Lũy</li>
+        </ol>
+    </nav>
+
+    <!-- Flash messages -->
+    <div id="successToast" class="alert alert-success alert-dismissible rounded-4 border-0 shadow-sm mb-3" style="display:none">
+        <i class="bi bi-check-circle-fill me-2"></i><span id="successMsg"></span>
+        <button type="button" class="btn-close" onclick="document.getElementById('successToast').style.display='none'"></button>
+    </div>
+    <div id="errorToast" class="alert alert-danger alert-dismissible rounded-4 border-0 shadow-sm mb-3" style="display:none">
+        <i class="bi bi-x-circle-fill me-2"></i><span id="errorMsg"></span>
+        <button type="button" class="btn-close" onclick="document.getElementById('errorToast').style.display='none'"></button>
+    </div>
+
+    <!-- ═══ HERO CARD ═══ -->
+    <div class="points-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <div class="hero-label"><i class="bi bi-star-fill me-2"></i>Tài Khoản Điểm Thưởng</div>
+                <div class="hero-points">
+                    <span th:text="${account.totalPoints}">0</span><span> pts</span>
+                </div>
+                <div class="hero-subtitle">Điểm tích lũy có thể đổi thành coupon ưu đãi</div>
+                <div class="hero-estimated">
+                    <i class="bi bi-currency-exchange"></i>
+                    Quy đổi ≈ <span th:text="${#numbers.formatDecimal(account.estimatedValue, 0, 'COMMA', 0, 'POINT')}">0</span>₫
+                </div>
+                <div class="hero-lifetime">
+                    Tổng điểm tích lũy vĩnh viễn: <strong style="color:rgba(255,255,255,0.7)"
+                    th:text="${account.lifetimePoints}">0</strong> pts
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div style="background:rgba(255,255,255,0.07); border-radius:16px; padding:18px; border:1px solid rgba(255,255,255,0.1); text-align:center;">
+                        <div style="color:rgba(255,255,255,0.5); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px">Tích điểm</div>
+                        <div style="color:#fbbf24; font-size:1.3rem; font-weight:800; font-family:'JetBrains Mono',monospace;">1.000₫</div>
+                        <div style="color:rgba(255,255,255,0.4); font-size:0.8rem;">= 1 điểm</div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.15); border-radius:16px; padding:18px; border:1px solid rgba(245,158,11,0.25); text-align:center;">
+                        <div style="color:rgba(245,158,11,0.85); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px">Đổi điểm</div>
+                        <div style="color:#fbbf24; font-size:1.3rem; font-weight:800; font-family:'JetBrains Mono',monospace;">10 pts</div>
+                        <div style="color:rgba(255,255,255,0.4); font-size:0.8rem;">= 1.000₫</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- LEFT: Redeem + Transactions -->
+        <div class="col-lg-8">
+
+            <!-- ─── REDEEM WIDGET ─── -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <div class="card-title-icon" style="background:rgba(245,158,11,0.12); color:#d97706"><i class="bi bi-gift-fill"></i></div>
+                    Đổi Điểm Lấy Ưu Đãi
+                </div>
+
+                <div class="redeem-quick-btns">
+                    <button class="redeem-preset" onclick="setRedeemPoints(100)">100 pts → 10.000₫</button>
+                    <button class="redeem-preset" onclick="setRedeemPoints(200)">200 pts → 20.000₫</button>
+                    <button class="redeem-preset" onclick="setRedeemPoints(500)">500 pts → 50.000₫</button>
+                    <button class="redeem-preset" onclick="setRedeemPoints(1000)">1.000 pts → 100.000₫</button>
+                </div>
+
+                <div class="redeem-input-group">
+                    <input type="number" id="redeemInput" class="redeem-input" placeholder="Nhập số điểm..."
+                           min="100" step="10" oninput="updateRedeemPreview()"
+                           th:value="${account.totalPoints > 0 ? 100 : 0}">
+                    <button class="btn-redeem" id="redeemBtn" onclick="submitRedeem()">
+                        <i class="bi bi-gift me-2"></i>Đổi Điểm
+                    </button>
+                </div>
+
+                <div class="redeem-info">
+                    <i class="bi bi-info-circle"></i>
+                    Tối thiểu 100 điểm &bull; Coupon có hiệu lực 30 ngày &bull; Điểm hiện có:
+                    <strong style="color:#d97706" th:text="${account.totalPoints}">0</strong> pts
+                    &bull; Quy đổi: <strong style="color:#059669" id="redeemPreview">0₫</strong>
+                </div>
+
+                <!-- Result box -->
+                <div class="coupon-result" id="couponResult">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div>
+                            <div style="font-weight:700; color:#059669; margin-bottom:6px"><i class="bi bi-check-circle-fill me-2"></i>Đổi điểm thành công!</div>
+                            <div style="font-size:0.88rem; color:#64748b; margin-bottom:10px">Sao chép mã coupon và dùng khi thanh toán:</div>
+                            <div class="coupon-code-display" id="couponCodeDisplay" onclick="copyCoupon()" title="Click để copy">
+                                REWARD-CODE
+                            </div>
+                            <div style="font-size:0.78rem; color:#94a3b8; margin-top:6px"><i class="bi bi-clipboard me-1"></i>Click để sao chép</div>
+                        </div>
+                        <div class="ms-auto text-end">
+                            <div style="font-size:0.8rem; color:#64748b;">Trị giá</div>
+                            <div id="couponValue" style="font-size:1.8rem; font-weight:800; color:#059669; font-family:'JetBrains Mono',monospace;">0₫</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── TRANSACTION HISTORY ─── -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <div class="card-title-icon" style="background:rgba(99,102,241,0.1); color:#4f46e5"><i class="bi bi-clock-history"></i></div>
+                    Lịch Sử Giao Dịch Điểm
+                </div>
+
+                <div th:if="${transactions.isEmpty()}" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-4 d-block mb-3" style="opacity:0.3"></i>
+                    <div class="fw-bold">Chưa có giao dịch nào</div>
+                    <div class="small mt-1">Mua hàng và hoàn thành đơn để tích điểm!</div>
+                </div>
+
+                <div th:each="tx : ${transactions.content}" class="tx-row">
+                    <div class="tx-icon" th:classappend="${tx.type.toLowerCase()}">
+                        <i th:classappend="${tx.typeIcon}" class="bi"></i>
+                    </div>
+                    <div class="tx-desc">
+                        <div class="tx-label" th:text="${tx.description}">Mô tả</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="tx-time" th:text="${#temporals.format(tx.createdAt, 'HH:mm - dd/MM/yyyy')}">00:00</span>
+                            <a th:if="${tx.orderId != null}" th:href="@{/user/order/detail/{id}(id=${tx.orderId})}"
+                               class="tx-order-link"><i class="bi bi-box-arrow-up-right me-1"></i>Đơn #<span th:text="${tx.orderId}"></span></a>
+                        </div>
+                    </div>
+                    <div class="tx-points" th:classappend="${tx.points > 0 ? 'positive' : 'negative'}">
+                        <span th:text="${tx.points > 0 ? '+' : ''}"></span><span th:text="${tx.points}"></span> pts
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="d-flex gap-2 flex-wrap justify-content-center mt-4">
+                    <a th:if="${currentPage > 0}"
+                       th:href="@{/user/loyalty(page=${currentPage - 1})}"
+                       class="pagination-btn"><i class="bi bi-chevron-left"></i> Trước</a>
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/user/loyalty(page=${i})}"
+                           class="pagination-btn" th:classappend="${i == currentPage ? 'active' : ''}"
+                           th:text="${i + 1}">1</a>
+                    </th:block>
+                    <a th:if="${currentPage < totalPages - 1}"
+                       th:href="@{/user/loyalty(page=${currentPage + 1})}"
+                       class="pagination-btn">Sau <i class="bi bi-chevron-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: How it works -->
+        <div class="col-lg-4">
+            <div class="glass-card">
+                <div class="card-title" style="margin-bottom:20px">
+                    <div class="card-title-icon" style="background:rgba(245,158,11,0.1); color:#d97706"><i class="bi bi-question-circle"></i></div>
+                    Cách Tích & Đổi Điểm
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    <div class="how-step">
+                        <div class="how-icon" style="background:rgba(245,158,11,0.1); color:#d97706">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </div>
+                        <div style="font-weight:700; margin-bottom:4px">Mua hàng</div>
+                        <div style="font-size:0.82rem; color:#64748b">Mỗi đơn hoàn thành (<em>Đã giao</em>) tự động tích điểm theo giá trị</div>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-icon" style="background:rgba(99,102,241,0.1); color:#4f46e5">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <div style="font-weight:700; margin-bottom:4px">Tích đầy điểm</div>
+                        <div style="font-size:0.82rem; color:#64748b">Cứ 1.000₫ giá trị đơn hàng = 1 điểm. Không giới hạn!</div>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-icon" style="background:rgba(16,185,129,0.1); color:#059669">
+                            <i class="bi bi-gift-fill"></i>
+                        </div>
+                        <div style="font-weight:700; margin-bottom:4px">Đổi ưu đãi</div>
+                        <div style="font-size:0.82rem; color:#64748b">10 điểm = 1.000₫. Tối thiểu 100 điểm. Nhận coupon ngay lập tức!</div>
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(251,191,36,0.06)); border:1.5px solid rgba(245,158,11,0.2); border-radius:16px; padding:16px; margin-top:20px;">
+                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px; color:#d97706"><i class="bi bi-lightbulb-fill me-2"></i>Mẹo</div>
+                    <div style="font-size:0.82rem; color:#64748b; line-height:1.6">
+                        Điểm không hết hạn — tích lũy bao nhiêu tùy thích.
+                        Coupon nhận được sau khi đổi điểm có hiệu lực <strong>30 ngày</strong>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}" class="mt-2"></div>
+
+<!-- Bottom Navigation Bar (Mobile Only) -->
+<div th:replace="~{fragments/bottom-nav :: bottom-nav}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const totalPoints = /*[[${account.totalPoints}]]*/ 0;
+
+    function updateRedeemPreview() {
+        const pts = parseInt(document.getElementById('redeemInput').value) || 0;
+        const vnd = Math.floor(pts / 10) * 1000;
+        document.getElementById('redeemPreview').textContent = vnd.toLocaleString('vi-VN') + '₫';
+    }
+
+    function setRedeemPoints(pts) {
+        document.getElementById('redeemInput').value = pts;
+        updateRedeemPreview();
+        document.querySelectorAll('.redeem-preset').forEach(b => b.classList.remove('selected'));
+        event.target.classList.add('selected');
+    }
+
+    async function submitRedeem() {
+        const pts = parseInt(document.getElementById('redeemInput').value);
+        if (!pts || pts < 100) { showError('Cần tối thiểu 100 điểm để đổi ưu đãi!'); return; }
+        if (pts > totalPoints)  { showError(`Điểm không đủ! Bạn có ${totalPoints} điểm.`); return; }
+
+        const btn = document.getElementById('redeemBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+
+        try {
+            const response = await fetch('/user/loyalty/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ points: pts })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('couponCodeDisplay').textContent = data.couponCode;
+                document.getElementById('couponValue').textContent = data.discountValue.toLocaleString('vi-VN') + '₫';
+                document.getElementById('couponResult').style.display = 'block';
+                showSuccess(data.message || 'Đổi điểm thành công!');
+                // Refresh page sau 3s để cập nhật số điểm
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showError(data.error || 'Đổi điểm thất bại!');
+            }
+        } catch (e) {
+            showError('Lỗi kết nối, vui lòng thử lại!');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-gift me-2"></i>Đổi Điểm';
+        }
+    }
+
+    function copyCoupon() {
+        const code = document.getElementById('couponCodeDisplay').textContent;
+        navigator.clipboard.writeText(code).then(() => showSuccess('Đã sao chép mã: ' + code));
+    }
+
+    function showSuccess(msg) {
+        document.getElementById('successMsg').textContent = msg;
+        document.getElementById('successToast').style.display = 'block';
+        setTimeout(() => document.getElementById('successToast').style.display = 'none', 5000);
+    }
+
+    function showError(msg) {
+        document.getElementById('errorMsg').textContent = msg;
+        document.getElementById('errorToast').style.display = 'block';
+        setTimeout(() => document.getElementById('errorToast').style.display = 'none', 5000);
+    }
+
+    // Init preview
+    updateRedeemPreview();
+</script>
+
+<!-- Mobile Bottom Navigation JavaScript -->
+<script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
+</body>
+</html>

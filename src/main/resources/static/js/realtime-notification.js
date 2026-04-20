@@ -134,12 +134,18 @@ function markNotificationAsRead(id, triggerElement) {
 // Initial fetch on page load
 function fetchInitialNotifications() {
     const username = document.getElementById("currentUsername")?.value;
-    if (!username) return;
     
-    fetch('/user/notifications/all-json')
-        .then(res => res.json())
+    // Bypass browser cache totally
+    fetch('/user/notifications/all-json', { cache: 'no-store' })
+        .then(async res => {
+            if (!res.ok) {
+                let text = await res.text();
+                throw new Error("HTTP " + res.status + " : " + (text.substring(0, 50)));
+            }
+            return res.json();
+        })
         .then(data => {
-            let unreadCount = data.filter(n => !n.isRead).length;
+            let unreadCount = data.filter(n => !(n.read || n.isRead)).length;
             updateNotificationBadgeCount(unreadCount);
             
             const list = document.getElementById("notificationList");
@@ -149,16 +155,28 @@ function fetchInitialNotifications() {
                 
                 let html = '';
                 data.forEach(notification => {
-                    const bgStr = notification.isRead ? '#fff' : 'rgba(245, 158, 11, 0.05)';
-                    const badgeStr = !notification.isRead ? '<span class="badge bg-warning ms-auto">Mới</span>' : '';
+                    const isRead = notification.read || notification.isRead;
+                    const bgStr = isRead ? '#fff' : 'rgba(245, 158, 11, 0.05)';
+                    const badgeStr = !isRead ? '<span class="badge bg-warning ms-auto">Mới</span>' : '';
                     
-                    // Format date roughly
-                    const dateObj = new Date(notification.createdAt);
-                    const timeStr = dateObj.toLocaleDateString('vi-VN') + " " + dateObj.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                    // Format date safely
+                    let timeStr = "Vừa xong";
+                    if (notification.createdAt) {
+                        let dateObj;
+                        if (Array.isArray(notification.createdAt)) { // Jackson serializes LocalDateTime to array
+                            const [y, m, d, h, min] = notification.createdAt;
+                            dateObj = new Date(y, m - 1, d, h || 0, min || 0);
+                        } else {
+                            dateObj = new Date(notification.createdAt);
+                        }
+                        if (!isNaN(dateObj.getTime())) {
+                            timeStr = dateObj.toLocaleDateString('vi-VN') + " " + dateObj.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                        }
+                    }
                     
                     html += `
                         <a href="${notification.relatedUrl || '#'}" class="text-decoration-none border-bottom p-3 d-flex flex-column gap-1 notification-item" style="transition: background 0.3s; color: #0f172a; background: ${bgStr};" onclick="markNotificationAsRead(${notification.id}, this)">
-                            <div class="${notification.isRead ? '' : 'fw-bold'}" style="font-size: 0.9rem;">${notification.message}</div>
+                            <div class="${isRead ? '' : 'fw-bold'}" style="font-size: 0.9rem;">${notification.message}</div>
                             <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.75rem;">
                                 <i class="bi bi-clock"></i> ${timeStr} 
                                 ${badgeStr}
@@ -168,9 +186,16 @@ function fetchInitialNotifications() {
                 });
                 
                 list.innerHTML = html;
+            } else {
+                const list = document.getElementById("notificationList");
+                list.innerHTML = '<div class="p-4 text-center text-muted fw-bold" id="noNotificationText">Không có thông báo mới (0 kết quả)</div>';
             }
         })
-        .catch(err => console.log('Error fetching notifications: ', err));
+        .catch(err => {
+            console.log('Error fetching notifications: ', err);
+            const list = document.getElementById("notificationList");
+            if (list) list.innerHTML = '<div class="p-4 text-center text-danger fw-bold">Lỗi tải dữ liệu: ' + err.message + '</div>';
+        });
 }
 
 document.addEventListener("DOMContentLoaded", function() {

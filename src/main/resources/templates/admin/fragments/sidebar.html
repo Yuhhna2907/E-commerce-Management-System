@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<!-- COMPONENT: ADMIN SIDEBAR -->
+<div th:fragment="sidebar" class="sidebar-container glass-panel p-3">
+<style>
+/* --- STYLES CHO SIDEBAR --- */
+.sidebar-container {
+    height: calc(100vh - 40px);
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 15px !important;
+}
+
+.sidebar-heading {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--sz-text-muted, #8E8E93);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 10px 0 10px 15px;
+}
+
+.sidebar-link {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    color: #48484a;
+    border-radius: 14px;
+    margin-bottom: 5px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sidebar-link .icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    background: rgba(0,0,0,0.03);
+    color: #8e8e93;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.sidebar-link span.link-text {
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(3px);
+}
+
+.sidebar-collapsed { width: 80px !important; padding-left: 10px !important; padding-right: 10px !important; }
+.sidebar-collapsed .link-text,
+.sidebar-collapsed .sidebar-heading,
+.sidebar-collapsed .brand-text { display: none !important; }
+.sidebar-collapsed .sidebar-link { justify-content: center; padding: 10px 0; }
+.sidebar-collapsed .sidebar-link .icon-box { margin-right: 0; }
+.sidebar-collapsed .brand-section { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; }
+.sidebar-collapsed .brand-section .icon-box-brand { margin-right: 0 !important; margin-left: 10px; }
+
+.toggle-btn {
+    position: absolute; top: 20px; right: -15px; width: 30px; height: 30px;
+    background: white; border: 1px solid var(--sz-glass-border); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; color: #1A1C20;
+    transition: transform 0.3s ease;
+}
+.sidebar-collapsed .toggle-btn { transform: rotate(180deg); }
+
+.sidebar-link.active {
+    background: white;
+    color: var(--sz-dark, #1A1C20);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    font-weight: 600;
+}
+
+.sidebar-link.active .icon-box {
+    background: var(--sz-orange, #fbbd05);
+    color: white;
+    box-shadow: 0 4px 10px rgba(251, 189, 5, 0.3);
+}
+
+.bg-gradient-orange { background: linear-gradient(135deg, #fbbd05, #f59e0b); }
+</style>
+    <!-- Brand Info -->
+    <a th:href="@{/admin/dashboard}" class="brand-section mb-4 d-flex align-items-center px-3 mt-2 text-decoration-none">
+        <div class="icon-box-brand bg-gradient-orange rounded-3 p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+            <i class="bi bi-apple text-white fs-5"></i>
+        </div>
+        <div class="brand-text">
+            <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">SmartZone</h6>
+            <small class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">ENTERPRISE ADMIN</small>
+        </div>
+    </a>
+
+    <!-- COLLAPSE TOGGLE -->
+    <div class="toggle-btn" id="sidebarToggle" title="Thu gọn sidebar">
+        <i class="bi bi-chevron-left small"></i>
+    </div>
+
+    <!-- CORE BUSINESS -->
+    <p class="sidebar-heading mt-4">CORE BUSINESS</p>
+    <a th:href="@{/admin/dashboard}" class="sidebar-link" th:classappend="${pageTitle == 'dashboard' ? 'active' : ''}" title="Master Dashboard">
+        <div class="icon-box"><i class="bi bi-grid-1x2-fill"></i></div> 
+        <span class="link-text">Master Dashboard</span>
+    </a>
+    <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product' ? 'active' : ''}" title="Sản phẩm & Tồn kho">
+        <div class="icon-box"><i class="bi bi-phone-vibrate-fill"></i></div> 
+        <span class="link-text">Sản phẩm & Tồn kho</span>
+    </a>
+    <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order' ? 'active' : ''}" title="Xử lý Đơn hàng">
+        <div class="icon-box"><i class="bi bi-box-seam-fill"></i></div> 
+        <span class="link-text">Xử lý Đơn hàng</span>
+    </a>
+    <a th:href="@{/admin/refunds}" class="sidebar-link" th:classappend="${pageTitle == 'refund' ? 'active' : ''}" title="Duyệt Hoàn tiền">
+        <div class="icon-box"><i class="bi bi-arrow-return-left"></i></div> 
+        <span class="link-text">Duyệt Hoàn tiền</span>
+    </a>
+    <a th:href="@{/admin/reviews}" class="sidebar-link" th:classappend="${pageTitle == 'review' ? 'active' : ''}" title="Đánh giá & Bình luận">
+        <div class="icon-box"><i class="bi bi-chat-square-heart-fill"></i></div> 
+        <span class="link-text">Đánh giá & Bình luận</span>
+    </a>
+    <a th:href="@{/admin/qa}" class="sidebar-link" th:classappend="${pageTitle == 'qa' ? 'active' : ''}" title="Hỏi & Đáp Sản Phẩm">
+        <div class="icon-box"><i class="bi bi-patch-question-fill"></i></div> 
+        <span class="link-text">Hỏi & Đáp Sản Phẩm</span>
+    </a>
+
+    <!-- CRM & HR -->
+    <p class="sidebar-heading mt-4">CRM & HR</p>
+    <a th:href="@{/admin/users}" class="sidebar-link" th:classappend="${pageTitle == 'user' ? 'active' : ''}" title="Quản lý Người dùng">
+        <div class="icon-box"><i class="bi bi-people-fill"></i></div> 
+        <span class="link-text">Quản lý Người dùng</span>
+    </a>
+    <a th:href="@{/admin/loyalty}" class="sidebar-link" th:classappend="${pageTitle == 'loyalty' ? 'active' : ''}" title="Hệ thống Loyalty">
+        <div class="icon-box"><i class="bi bi-star-fill"></i></div> 
+        <span class="link-text">Điểm Loyalty</span>
+    </a>
+    <a th:href="@{/admin/wallet}" class="sidebar-link" th:classappend="${pageTitle == 'wallet' ? 'active' : ''}" title="Ví SmartZone Xu">
+        <div class="icon-box"><i class="bi bi-coin"></i></div> 
+        <span class="link-text">Ví SmartZone Xu</span>
+    </a>
+
+    <!-- GROWTH & MARKETING -->
+    <p class="sidebar-heading mt-4">MARKETING</p>
+    <a th:href="@{/admin/coupons}" class="sidebar-link" th:classappend="${pageTitle == 'coupon' ? 'active' : ''}" title="Mã Khuyến mãi">
+        <div class="icon-box"><i class="bi bi-ticket-perforated-fill"></i></div> 
+        <span class="link-text">Mã Khuyến mãi</span>
+    </a>
+    <a href="#" class="sidebar-link text-muted" title="Broadcast Thông báo (Sắp ra mắt)">
+        <div class="icon-box opacity-50"><i class="bi bi-megaphone-fill"></i></div> 
+        <span class="link-text">Broadcast Thông báo</span>
+        <span class="badge bg-warning text-dark ms-auto rounded-pill link-text" style="font-size:0.65rem">Soon</span>
+    </a>
+
+    <!-- CẤU HÌNH -->
+    <hr class="my-4 border-secondary opacity-10">
+    <form th:action="@{/logout}" method="post" class="d-block mt-auto">
+        <button type="submit" class="sidebar-link text-danger w-100 text-start border-0 bg-transparent mt-2 logout-btn" onclick="return confirm('Bạn có chắc muốn đăng xuất?')" title="Sign Out">
+            <div class="icon-box text-danger bg-danger bg-opacity-10"><i class="bi bi-box-arrow-right"></i></div> 
+            <span class="fw-bold link-text">Sign Out</span>
+        </button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar-container');
+            
+            // Lấy trạng thái lưu từ localStorage
+            if(localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('sidebar-collapsed');
+            }
+
+            // Gán sự kiện click
+            if(toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
+                });
+            }
+        });
+    </script>
+</div>
+
+</body>
+</html>

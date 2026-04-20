@@ -1,15 +1,19 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
 import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.product.user.IUserProductService;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
 import com.codegym.smartphonemanagement.service.wishlist.IWishlistService;
 import com.codegym.smartphonemanagement.service.wishlist.DTO.WishlistRequestDTO;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,20 +25,82 @@ public class UserWishlistController {
 
     private final IWishlistService wishlistService;
     private final IUserProductService userProductService;
+    private final UserRepository userRepository;
 
-
-    private final Long USER_ID = 1L;
+    // Lấy userId từ SecurityContext
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     /**
      * Giao diện Xem Bộ sưu tập (Wishlist Dashboard)
      */
     @GetMapping("/user/wishlist")
     public String showWishlistPage(Model model) {
-        List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(USER_ID);
-        List<ProductResponseDTO> wishlistItems = wishlistProducts.stream()
-                .map(p -> userProductService.getProductById(p.getId()))
-                .collect(Collectors.toList());
-        model.addAttribute("wishlistItems", wishlistItems);
+        try {
+            List<Product> wishlistProducts = wishlistService.getWishlistProductsByUserId(getCurrentUserId());
+            System.out.println("=== DEBUG: Loading wishlist for user " + getCurrentUserId() + " ===");
+            
+            List<Product> rawWishlistProducts = wishlistService.getWishlistProductsByUserId(getCurrentUserId());
+            System.out.println("Raw wishlist products count: " + (rawWishlistProducts != null ? rawWishlistProducts.size() : "null"));
+            
+            if (rawWishlistProducts == null) {
+                System.out.println("WARNING: rawWishlistProducts is null!");
+                rawWishlistProducts = List.of();
+            }
+            
+            // Filter out null products and convert to DTO
+            List<ProductResponseDTO> wishlistItems = rawWishlistProducts.stream()
+                    .filter(p -> {
+                        if (p == null) {
+                            System.out.println("WARNING: Found null product in wishlist");
+                            return false;
+                        }
+                        if (p.getId() == null) {
+                            System.out.println("WARNING: Found product with null ID: " + p);
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(p -> {
+                        try {
+                            System.out.println("Converting product: " + p.getId() + " - " + p.getName());
+                            ProductResponseDTO dto = userProductService.getProductById(p.getId());
+                            System.out.println("Converted successfully: " + dto.getName());
+                            return dto;
+                        } catch (Exception e) {
+                            System.err.println("Error converting product " + p.getId() + ": " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+            
+            System.out.println("Final wishlist items count: " + wishlistItems.size());
+            model.addAttribute("wishlistItems", wishlistItems);
+            
+        } catch (Exception e) {
+            System.err.println("ERROR loading wishlist: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("wishlistItems", List.of());
+            model.addAttribute("errorMessage", "Không thể tải danh sách yêu thích: " + e.getMessage());
+        }
+        
+        // Add breadcrumb navigation
+        List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Trang chủ")
+                .url("/user/products")
+                .active(false)
+                .build());
+        breadcrumbs.add(BreadcrumbItem.builder()
+                .label("Danh sách yêu thích")
+                .url(null)
+                .active(true)
+                .build());
+        model.addAttribute("breadcrumbs", breadcrumbs);
+        
         return "user/wishlist/list";
     }
 
@@ -46,7 +112,7 @@ public class UserWishlistController {
     public Map<String, Object> toggleWishlist(@RequestBody WishlistRequestDTO requestDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            boolean isAdded = wishlistService.toggleWishlist(USER_ID, requestDTO.getProductId());
+            boolean isAdded = wishlistService.toggleWishlist(getCurrentUserId(), requestDTO.getProductId());
             response.put("success", true);
             response.put("isAdded", isAdded);
             response.put("message", isAdded ? "Đã thêm vào bộ sưu tập" : "Đã xoá khỏi bộ sưu tập");
@@ -65,7 +131,7 @@ public class UserWishlistController {
     public Map<String, Object> removeWishlist(@RequestBody WishlistRequestDTO requestDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            wishlistService.removeWishlistItem(USER_ID, requestDTO.getProductId());
+            wishlistService.removeWishlistItem(getCurrentUserId(), requestDTO.getProductId());
             response.put("success", true);
             response.put("message", "Đã xoá khỏi bộ sưu tập");
         } catch (Exception e) {
