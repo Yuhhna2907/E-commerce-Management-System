@@ -7,6 +7,7 @@ import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.coupon.CouponValidationResult;
 import com.codegym.smartphonemanagement.service.coupon.ICouponService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +28,24 @@ public class CouponController {
     private final ICartService cartService;
     private final UserRepository userRepository;
 
-    // Giả lập ID người dùng
-    private final Long USER_ID = 1L;
+    // Lấy userId từ SecurityContext
+    private Long getCurrentUserId() {
+        return SecurityUtil.getCurrentUserId(userRepository);
+    }
 
     @GetMapping("/wallet")
     public String showWalletPage(org.springframework.ui.Model model) {
-        userRepository.findById(USER_ID).ifPresent(user -> model.addAttribute("myWalletCoupons", couponService.getUserWallet(user)));
+        User user = userRepository.findById(getCurrentUserId()).orElse(null);
+        if (user != null) {
+            model.addAttribute("myWalletCoupons", couponService.getUserWallet(user));
+        }
         return "user/coupon/wallet";
     }
 
     @PostMapping("/save")
     public String saveToWallet(@RequestParam("code") String code, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         try {
-            User user = userRepository.findById(USER_ID).orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepository.findById(getCurrentUserId()).orElseThrow(() -> new RuntimeException("User not found"));
             couponService.saveToWallet(user, code);
             redirectAttributes.addFlashAttribute("successMessage", "Lưu mã giảm giá thành công: " + code);
         } catch (Exception e) {
@@ -59,13 +65,20 @@ public class CouponController {
             redirectUrl = "redirect:/user/cart";
         }
 
-        User user = userRepository.findById(USER_ID).orElse(null);
+        if (code == null || code.trim().isEmpty()) {
+            session.removeAttribute("APPLIED_COUPON");
+            session.removeAttribute("DISCOUNT_AMT");
+            redirectAttributes.addFlashAttribute("errorCoupon", "Vui lòng nhập hoặc hủy mã giảm giá.");
+            return redirectUrl;
+        }
+
+        User user = userRepository.findById(getCurrentUserId()).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("errorCoupon", "Vui lòng đăng nhập.");
             return redirectUrl;
         }
 
-        CartResponseDTO cart = cartService.getCart(USER_ID);
+        CartResponseDTO cart = cartService.getCart(getCurrentUserId());
         if (cart == null || cart.getItems().isEmpty()) {
             redirectAttributes.addFlashAttribute("errorCoupon", "Giỏ hàng trống.");
             return redirectUrl;

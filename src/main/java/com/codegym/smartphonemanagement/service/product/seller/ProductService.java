@@ -69,6 +69,7 @@ public class ProductService implements IProductService {
                 .price(request.getPrice())
                 .brand(request.getBrand())
                 .imageUrl(request.getImageUrl())
+                .stock(request.getStock())
                 .category(category)
                 .active(true)
                 .createdAt(LocalDateTime.now())
@@ -82,24 +83,28 @@ public class ProductService implements IProductService {
     }
 
     private ProductResponseDTO mapToResponse(Product product) {
-        // Map danh sách biến thể sang DTO
-        List<ProductVariantResponseDTO> variantDTOs = product.getVariants()
-                .stream()
-                .map(variant -> ProductVariantResponseDTO.builder()
-                        .variantId(variant.getVariantId())
-                        .productId(product.getId())
-                        .sku(variant.getSku())
-                        .variantName(variant.getVariantName())
-                        .color(variant.getColor())
-                        .storage(variant.getStorage())
-                        .ram(variant.getRam())
-                        .costPrice(variant.getCostPrice())
-                        .salePrice(variant.getSalePrice())
-                        .stockQuantity(variant.getStockQuantity())
-                        .active(variant.getIsActive())
-                        .build()
-                )
-                .toList();
+        // Map danh sách biến thể sang DTO - FIX NULL POINTER
+        List<ProductVariantResponseDTO> variantDTOs = new java.util.ArrayList<>();
+        
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            variantDTOs = product.getVariants()
+                    .stream()
+                    .map(variant -> ProductVariantResponseDTO.builder()
+                            .variantId(variant.getVariantId())
+                            .productId(product.getId())
+                            .sku(variant.getSku())
+                            .variantName(variant.getVariantName())
+                            .color(variant.getColor())
+                            .storage(variant.getStorage())
+                            .ram(variant.getRam())
+                            .costPrice(variant.getCostPrice())
+                            .salePrice(variant.getSalePrice())
+                            .stockQuantity(variant.getStockQuantity())
+                            .active(variant.getIsActive())
+                            .build()
+                    )
+                    .toList();
+        }
 
         // Map specification sang DTO
         ProductSpecificationDTO specDTO = null;
@@ -128,6 +133,7 @@ public class ProductService implements IProductService {
                 .brand(product.getBrand())
                 .price(product.getPrice())
                 .stock(totalStock)
+                .stock(product.getStock())
                 .imageUrl(product.getImageUrl())
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
@@ -171,6 +177,7 @@ public class ProductService implements IProductService {
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setImageUrl(request.getImageUrl());
+        product.setStock(request.getStock());
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());
 

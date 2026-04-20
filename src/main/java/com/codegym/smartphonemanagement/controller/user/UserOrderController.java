@@ -1,12 +1,14 @@
 package com.codegym.smartphonemanagement.controller.user;
 
 import com.codegym.smartphonemanagement.dto.BreadcrumbItem;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.cart.user.ICartService;
 import com.codegym.smartphonemanagement.service.cart.DTO.CartResponseDTO;
 import com.codegym.smartphonemanagement.service.order.RefundService;
 import com.codegym.smartphonemanagement.service.order.DTO.*;
 import com.codegym.smartphonemanagement.service.order.user.IOrderService;
 import com.codegym.smartphonemanagement.service.profile.IUserProfileService;
+import com.codegym.smartphonemanagement.util.SecurityUtil;
 import com.codegym.smartphonemanagement.model.PaymentMethod;
 import com.codegym.smartphonemanagement.service.payment.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +32,7 @@ public class UserOrderController {
     private final ICartService cartService;
     private final RefundService refundService;
     private final IUserProfileService userProfileService;
+    private final UserRepository userRepository;
     private final VNPayService vnPayService;
     private final com.codegym.smartphonemanagement.repository.user.UserRepository userRepository;
 
