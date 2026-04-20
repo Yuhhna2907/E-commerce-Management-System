@@ -429,6 +429,12 @@
                     </a>
                 </div>
             </div>
+            <div class="card-stat bg-gradient-orange">
+                <div class="stat-label">Sắp hết hàng</div>
+                <div class="stat-value" th:text="${stats.lowStockCount}"></div>
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+        </div>
 
             <!-- FINANCIAL SERVICES KPI ROW (Loyalty & Wallet) -->
             <div class="row g-3 mb-4 animate-fade-up delay-2">
