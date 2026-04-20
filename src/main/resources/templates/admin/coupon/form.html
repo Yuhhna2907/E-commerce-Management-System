@@ -3,69 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${coupon.id == null ? 'Thêm Khuyến Mãi - SmartZone' : 'Cập Nhật Khuyến Mãi - SmartZone'}">Thêm Khuyến Mãi - SmartZone</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --sz-orange: #fbbd05;
-            --sz-dark: #1d1d1f;
-            --sz-light: #f5f5f7;
-            --sz-white: #ffffff;
+            --sz-dark: #1A1C20;
+            --sz-gray: #f2f2f7;
+            --sz-text-muted: #8E8E93;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            --glass-blur: blur(20px);
         }
 
         body {
-            background-color: var(--sz-light);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f0f2f5;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
             color: var(--sz-dark);
+            min-height: 100vh;
         }
 
-        /* Header Trắng đồng bộ */
-        .header-sz {
-            background-color: var(--sz-white);
-            border-bottom: 1px solid #e5e5e5;
-            position: sticky;
-            top: 0;
-            z-index: 1050;
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
         }
 
-        /* Sidebar thiết kế dạng thẻ nổi */
-        .sidebar-container {
-            min-height: calc(100vh - 100px);
-            background: var(--sz-white);
-            border-radius: 16px;
-            margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
-        }
-
-        .sidebar-link {
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #6e6e73;
-            border-radius: 12px;
-            margin-bottom: 4px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
-        .sidebar-link i { font-size: 1.2rem; }
-
-        .sidebar-link:hover, .sidebar-link.active {
-            background-color: #fff9e6;
-            color: var(--sz-orange);
-        }
-
-        /* Form Card */
         .form-card {
-            background: var(--sz-white);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            border: 1px solid #e5e5e5;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.03);
         }
 
         .form-label {
@@ -79,8 +62,8 @@
         .form-control, .form-select {
             border-radius: 12px;
             padding: 12px 15px;
-            border: 1px solid #d2d2d7;
-            background-color: #fbfbfb;
+            border: 1px solid rgba(0,0,0,0.08);
+            background-color: rgba(255,255,255,0.8);
             transition: all 0.2s;
         }
 
@@ -104,68 +87,46 @@
             background-color: #e5ac04;
             transform: translateY(-2px);
             color: white;
+            box-shadow: 0 8px 20px rgba(251, 189, 5, 0.2);
         }
 
         .btn-sz-outline {
             border-radius: 12px;
             padding: 12px 20px;
             font-weight: 600;
-            border: 1px solid #d2d2d7;
+            border: 1px solid rgba(0,0,0,0.1);
             color: #1d1d1f;
             background: white;
+            transition: 0.2s;
         }
 
         .btn-sz-outline:hover {
             background: #f5f5f7;
+            transform: translateY(-2px);
         }
+
+        /* Animations */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg header-sz py-3">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center fw-bold text-dark" th:href="@{/admin/products}">
-            <div class="bg-warning rounded-3 p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                <i class="bi bi-phone-fill text-white"></i>
-            </div>
-            SmartZone <span class="text-warning ms-1">Admin</span>
-        </a>
-        <div class="text-dark fw-bold">Xin chào, <span class="text-warning">Admin Duy</span></div>
-    </div>
-</nav>
-
-<div class="container-fluid">
-    <div class="row px-2">
-        <div class="col-md-2 p-3">
-            <div class="sidebar-container p-3">
-                <p class="text-muted small fw-bold px-3 mb-3 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Danh mục quản lý</p>
-                <a th:href="@{/admin/dashboard}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'dashboard'} ? 'active' : ''">
-                    <i class="bi bi-grid-1x2-fill me-3"></i> Tổng quan
-                </a>
-                <a th:href="@{/admin/products}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'product'} ? 'active' : ''">
-                    <i class="bi bi-phone-vibrate-fill me-3"></i> Sản phẩm
-                </a>
-                <a th:href="@{/admin/categories}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'category'} ? 'active' : ''">
-                    <i class="bi bi-stack me-3"></i> Danh mục
-                </a>
-                <a th:href="@{/admin/orders}" class="sidebar-link mb-2" th:classappend="${pageTitle == 'order'} ? 'active' : ''">
-                    <i class="bi bi-cart-check-fill me-3"></i> Đơn hàng
-                </a>
-                <a th:href="@{/admin/coupons}" class="sidebar-link mb-2 active">
-                    <i class="bi bi-ticket-perforated-fill me-3"></i> Khuyến mãi
-                </a>
-                <hr class="my-4 opacity-25">
-                <a th:href="@{/admin/products}" class="sidebar-link text-danger">
-                    <i class="bi bi-box-arrow-left me-3"></i> Thoát
-                </a>
-            </div>
+<div class="container-fluid p-0">
+    <div class="row g-0 mx-3 my-3">
+        <!-- SIDEBAR -->
+        <div class="col-auto" style="width: 260px;">
+            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
         </div>
 
-        <div class="col-md-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- MAIN CONTENT -->
+        <div class="col ps-4 pe-2">
+            <!-- PAGE HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
                 <div>
-                    <h2 class="fw-bold text-dark mb-1" th:text="${coupon.id == null ? 'Thêm Khuyến Mãi Mới' : 'Cập Nhật Khuyến Mãi'}">Thêm Khuyến Mãi Mới</h2>
-                    <p class="text-muted small mb-0">Thiết lập các thông số giảm giá cho chiến dịch marketing</p>
+                    <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;" th:text="${coupon.id == null ? 'Thêm Khuyến Mãi Mới' : 'Cập Nhật Khuyến Mãi'}">Thêm Khuyến Mãi Mới</h2>
+                    <p class="text-muted small fw-medium mb-0">Thiết lập các thông số giảm giá cho chiến dịch marketing</p>
                 </div>
                 <a th:href="@{/admin/coupons}" class="btn btn-sz-outline shadow-sm text-decoration-none">
                     <i class="bi bi-arrow-left me-2"></i> Quay lại danh sách
@@ -180,44 +141,72 @@
                         <div class="col-md-8">
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Mã Voucher <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control text-uppercase fw-bold text-warning"
+                                    <label class="form-label fw-bold d-flex justify-content-between w-100 mb-1">
+                                        <span>Mã Voucher <span class="text-danger">*</span></span>
+                                        <span class="text-primary text-decoration-underline" style="cursor: pointer; font-size: 0.8rem;" onclick="generateCode()"><i class="bi bi-dice-5-fill me-1"></i>Tạo tự động</span>
+                                    </label>
+                                    <input type="text" id="code" class="form-control text-uppercase fw-bold text-warning"
                                            th:field="*{code}" required placeholder="VD: SMARTZONE2026">
                                 </div>
 
                                 <div class="col-md-3">
-                                    <label class="form-label fw-bold">Loại giảm <span class="text-danger">*</span></label>
-                                    <select class="form-select" th:field="*{discountType}" required>
-                                        <option value="PERCENTAGE">Giảm theo %</option>
-                                        <option value="FIXED_AMOUNT">Trừ tiền mặt (VNĐ)</option>
+                                    <label class="form-label fw-bold">Loại mã <span class="text-danger">*</span></label>
+                                    <select class="form-select" th:field="*{couponCategory}" id="couponCategory" required>
+                                        <option th:each="cat : ${allCouponCategories}" th:value="${cat.name()}" th:text="${cat.description}"></option>
                                     </select>
                                 </div>
 
                                 <div class="col-md-3">
+                                    <label class="form-label fw-bold">Kiểu giảm <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="discountType" th:field="*{discountType}" required>
+                                        <option value="PERCENTAGE">Giảm theo %</option>
+                                        <option value="FIXED_AMOUNT">Trừ tiền mặt</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-12">
                                     <label class="form-label fw-bold">Giá trị giảm <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control fw-bold" th:field="*{discountValue}" required min="1">
+                                    <input type="number" id="discountValue" class="form-control fw-bold" th:field="*{discountValue}" required min="1">
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Mô tả chương trình</label>
-                                    <textarea class="form-control" th:field="*{description}" rows="4"
+                                    <textarea class="form-control" th:field="*{description}" rows="2"
                                               placeholder="Nhập điều kiện áp dụng hoặc thông tin mã..."></textarea>
                                 </div>
                             </div>
 
-                            <div class="col-12">
-                                <label class="form-label fw-bold">
-                                    Áp dụng cho sản phẩm
-                                    <span class="text-muted small fw-normal">(Để trống = áp dụng toàn bộ sản phẩm)</span>
-                                </label>
-                                <select class="form-select" th:field="*{applicableProductIds}" multiple size="8">
-                                    <option th:each="p : ${allProducts}"
-                                            th:value="${p.id}"
-                                            th:text="${p.name + ' (' + #numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT') + ' ₫)'}">
-                                    </option>
-                                </select>
-                                <div class="form-text">
-                                    Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều sản phẩm.
+                            <div class="col-12 mt-4">
+                                <label class="form-label fw-bold text-orange"><i class="bi bi-funnel"></i> ĐỐI TƯỢNG ÁP DỤNG TRUNG KIÊN (CHỌN ĐỂ LỌC, ĐỂ TRỐNG = TẤT CẢ)</label>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted">A. Theo Sản Phẩm <span style="font-size:0.65rem">(Giữ Ctrl để chọn nhiều)</span></label>
+                                        <select class="form-select form-select-sm" th:field="*{applicableProductIds}" multiple size="6">
+                                            <option th:each="p : ${allProducts}" th:value="${p.id}" th:text="${p.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted">B. Theo Danh Mục</label>
+                                        <select class="form-select form-select-sm" th:field="*{applicableCategoryIds}" multiple size="6">
+                                            <option th:each="c : ${allCategories}" th:value="${c.id}" th:text="${c.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small text-muted">C. Theo Hãng (Brand)</label>
+                                        <select class="form-select form-select-sm" th:field="*{applicableBrands}" multiple size="6">
+                                            <option th:each="b : ${allBrands}" th:value="${b}" th:text="${b}"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-4 mb-3">
+                                <label class="form-label fw-bold text-orange"><i class="bi bi-credit-card"></i> ĐIỀU KIỆN THANH TOÁN (ĐỂ TRỐNG = TẤT CẢ)</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="form-check border rounded px-3 py-1 bg-white shadow-sm" style="display: flex; align-items: center;" th:each="pm : ${allPaymentMethods}">
+                                        <input class="form-check-input mt-0 me-2" type="checkbox" th:value="${pm.name()}" th:field="*{applicablePaymentMethods}" th:id="${'pm_' + pm.name()}">
+                                        <label class="form-check-label small fw-bold mt-1" th:for="${'pm_' + pm.name()}" th:text="${pm.name()}"></label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -289,5 +278,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function generateCode() {
+        const prefix = "SZ-";
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let code = prefix;
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('code').value = code;
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // validate dates
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        if (start && end && new Date(start) >= new Date(end)) {
+            e.preventDefault();
+            alert("Lỗi: Ngày bắt đầu phải nhỏ hơn ngày kết thúc!");
+            return;
+        }
+        
+        // validate percentage
+        const type = document.getElementById('discountType').value;
+        const value = parseInt(document.getElementById('discountValue').value);
+        if (type === 'PERCENTAGE' && value > 100) {
+            e.preventDefault();
+            alert("Lỗi: Giảm theo % không được vượt quá 100%!");
+            return;
+        }
+    });
+</script>
 </body>
 </html>

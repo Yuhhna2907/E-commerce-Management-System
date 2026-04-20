@@ -116,4 +116,39 @@ public interface ProductQuestionRepository extends JpaRepository<ProductQuestion
      * Kiểm tra xem user đã hỏi câu hỏi cho sản phẩm này chưa
      */
     boolean existsByProductIdAndUserId(Long productId, Long userId);
+
+    // --- DASHBOARD METRICS ---
+    @Query("SELECT COUNT(q) FROM ProductQuestion q WHERE q.answers IS EMPTY")
+    long countAllUnansweredQuestions();
+
+    @Query("SELECT COUNT(q) FROM ProductQuestion q")
+    long countAllQuestions();
+
+    @Query("SELECT COUNT(q) FROM ProductQuestion q WHERE q.answers IS NOT EMPTY")
+    long countAllAnsweredQuestions();
+
+    // --- ADMIN SEARCH ---
+    @Query("SELECT q FROM ProductQuestion q " +
+           "WHERE (:keyword IS NULL OR LOWER(q.questionText) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(q.user.username) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(q.product.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY q.createdAt DESC")
+    Page<ProductQuestion> findAllForAdmin(
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    @Query("SELECT q FROM ProductQuestion q " +
+           "WHERE q.answers IS EMPTY " +
+           "AND (:keyword IS NULL OR LOWER(q.questionText) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(q.user.username) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY q.createdAt DESC")
+    Page<ProductQuestion> findUnansweredForAdmin(
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    // Câu hỏi chưa trả lời đã chờ > 24h (overdue)
+    @Query("SELECT COUNT(q) FROM ProductQuestion q " +
+           "WHERE q.answers IS EMPTY " +
+           "AND q.createdAt < :threshold")
+    long countOverdueUnansweredQuestions(@Param("threshold") java.time.LocalDateTime threshold);
 }

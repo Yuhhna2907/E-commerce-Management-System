@@ -2141,12 +2141,70 @@
                                      class="review-image-thumbnail"
                                      loading="lazy" />
                             </div>
+
+                            <!-- Thẻ Phản hồi của Shop (Seller Reply) -->
+                            <div class="mt-3 p-3 rounded-3" style="background: rgba(13, 110, 253, 0.05); border-left: 3px solid #0d6efd;" th:if="${review.adminReply != null and !#strings.isEmpty(review.adminReply)}">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-person-badge-fill text-primary me-2"></i>
+                                    <span class="fw-bold text-dark" style="font-size: 0.9rem;">Shop Phản Hồi</span>
+                                </div>
+                                <div class="text-dark small lh-base ms-4" th:text="${review.adminReply}">Cảm ơn bạn đã mua hàng.</div>
+                            </div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>
+
+<!-- ===================== Q&A SECTION ===================== -->
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <div class="glass-panel p-5" id="qa-section">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 rounded-3" style="background: rgba(13,110,253,0.1);">
+                        <i class="bi bi-patch-question-fill text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bolder text-dark mb-0">Hỏi &amp; Đáp Sản Phẩm</h4>
+                        <p class="text-muted small mb-0">Câu hỏi từ cộng đồng khách hàng</p>
+                    </div>
+                </div>
+                <span id="qa-count-badge" class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-bold rounded-pill">...</span>
+            </div>
+
+            <!-- Form hỏi mới -->
+            <div class="mb-4 p-4 rounded-4" style="background: rgba(13,110,253,0.04); border: 1px dashed rgba(13,110,253,0.25);">
+                <label class="fw-bolder text-dark mb-2 d-block"><i class="bi bi-pencil-fill text-primary me-2"></i>Đặt câu hỏi của bạn</label>
+                <textarea id="qa-question-input" rows="3" class="form-control shadow-sm fw-medium mb-3"
+                          style="border:none; background: white; border-radius: 12px; resize: none;"
+                          placeholder="Nhập câu hỏi về sản phẩm này... (tối đa 500 ký tự)" maxlength="500"></textarea>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span id="qa-char-count" class="text-muted small">0 / 500</span>
+                    <button id="qa-submit-btn" class="btn btn-primary fw-bold rounded-pill px-4" onclick="submitQuestion()">
+                        <i class="bi bi-send-fill me-1"></i> Gửi Câu Hỏi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Danh sách câu hỏi -->
+            <div id="qa-list" class="vstack gap-3">
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    Đang tải câu hỏi...
+                </div>
+            </div>
+
+            <!-- Load more -->
+            <div id="qa-load-more-wrapper" class="text-center mt-4" style="display:none;">
+                <button id="qa-load-more-btn" class="btn btn-outline-primary fw-bold rounded-pill px-4" onclick="loadMoreQuestions()">
+                    <i class="bi bi-arrow-down-circle me-1"></i> Xem thêm câu hỏi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Recommendation Carousel Section -->
     <div class="row g-4 mb-5" id="recommendation-section-wrapper" th:style="${hasRecommendations} ? 'display: block;' : 'display: none;'">
@@ -3272,6 +3330,170 @@
 
 <!-- Mobile Bottom Navigation JavaScript -->
 <script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
+<!-- ===================== Q&A JavaScript ===================== -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const QA_PRODUCT_ID = /*[[${product.id}]]*/ 0;
+    let qaCurrentPage = 0;
+    const qaPageSize = 5;
+    let qaTotalPages = 1;
+
+    // Char counter
+    document.getElementById('qa-question-input').addEventListener('input', function() {
+        const len = this.value.length;
+        document.getElementById('qa-char-count').textContent = len + ' / 500';
+    });
+
+    function renderStars(count) {
+        return '★'.repeat(Math.max(0, Math.min(5, count)));
+    }
+
+    function renderQuestion(q) {
+        const hasAnswers = q.answers && q.answers.length > 0;
+        const displayName = q.userName || q.userId;
+        const initial = (displayName + '').charAt(0).toUpperCase();
+        const date = q.createdAt ? new Date(q.createdAt).toLocaleDateString('vi-VN') : '';
+
+        let answersHtml = '';
+        if (hasAnswers) {
+            answersHtml = q.answers.map(a => {
+                const isShop = a.userRole === 'ADMIN' || a.userRole === 'SELLER';
+                const badgeHtml = isShop
+                    ? '<span class="badge bg-primary text-white fw-bold ms-2" style="font-size:0.7rem;"><i class="bi bi-patch-check-fill me-1"></i>Nhân viên SmartZone</span>'
+                    : '';
+                return `<div class="mt-2 p-3 rounded-3" style="background:rgba(13,110,253,0.04); border-left:3px solid #0d6efd;">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="bi bi-reply-fill text-primary me-2"></i>
+                        <span class="fw-bold text-dark" style="font-size:0.88rem;">${a.userName || 'Staff'}</span>
+                        ${badgeHtml}
+                    </div>
+                    <p class="text-dark mb-0 ms-4 small lh-base">${a.answerText}</p>
+                </div>`;
+            }).join('');
+        } else {
+            answersHtml = '<p class="text-muted small mb-0 ms-1"><i class="bi bi-clock me-1"></i>Chưa có câu trả lời. Đội ngũ SmartZone sẽ phản hồi sớm!</p>';
+        }
+
+        return `
+        <div class="p-4 rounded-4" id="q-${q.id}" style="background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.06);">
+            <div class="d-flex align-items-start gap-3">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bolder flex-shrink-0"
+                     style="width:42px; height:42px; font-size:1.1rem;">${initial}</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <span class="fw-bolder text-dark">${displayName}</span>
+                        <span class="text-muted small">${date}</span>
+                    </div>
+                    <p class="text-dark fw-medium lh-base mb-2">${q.questionText}</p>
+                    <div class="ms-1">${answersHtml}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function loadQuestions(page, append = false) {
+        fetch(`/qa/products/${QA_PRODUCT_ID}/questions?page=${page}&size=${qaPageSize}&sortBy=recent`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+                qaTotalPages = data.totalPages;
+
+                const badge = document.getElementById('qa-count-badge');
+                if (badge) badge.textContent = data.totalElements + ' câu hỏi';
+
+                const list = document.getElementById('qa-list');
+                if (!append) list.innerHTML = '';
+
+                if (data.questions.length === 0 && !append) {
+                    list.innerHTML = `<div class="text-center py-5 text-muted">
+                        <i class="bi bi-chat-right-dots" style="font-size:2.5rem; opacity:0.3;"></i>
+                        <h6 class="mt-3 fw-bold">Chưa có câu hỏi nào!</h6>
+                        <p class="small">Hãy là người đầu tiên đặt câu hỏi về sản phẩm này.</p>
+                    </div>`;
+                } else {
+                    data.questions.forEach(q => {
+                        const div = document.createElement('div');
+                        div.innerHTML = renderQuestion(q);
+                        list.appendChild(div.firstElementChild);
+                    });
+                }
+
+                const loadMoreWrapper = document.getElementById('qa-load-more-wrapper');
+                if (loadMoreWrapper) {
+                    loadMoreWrapper.style.display = (page + 1 < qaTotalPages) ? '' : 'none';
+                }
+            })
+            .catch(() => {
+                document.getElementById('qa-list').innerHTML = '<p class="text-muted small text-center">Không thể tải câu hỏi lúc này.</p>';
+            });
+    }
+
+    function loadMoreQuestions() {
+        qaCurrentPage++;
+        loadQuestions(qaCurrentPage, true);
+    }
+
+    function submitQuestion() {
+        const input = document.getElementById('qa-question-input');
+        const text = input.value.trim();
+        if (!text || text.length < 10) {
+            if (typeof Toastify !== 'undefined') {
+                Toastify({ text: 'Câu hỏi phải có ít nhất 10 ký tự!', duration: 2500, style: { background: '#dc3545', borderRadius:'8px', fontWeight:'bold' }}).showToast();
+            }
+            input.focus();
+            return;
+        }
+
+        const btn = document.getElementById('qa-submit-btn');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
+        btn.disabled = true;
+
+        fetch(`/qa/products/${QA_PRODUCT_ID}/questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionText: text })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                input.value = '';
+                document.getElementById('qa-char-count').textContent = '0 / 500';
+                if (typeof Toastify !== 'undefined') {
+                    Toastify({ text: '✅ Câu hỏi đã được gửi! SmartZone sẽ phản hồi sớm.', duration: 3500, style: { background: '#198754', borderRadius:'8px', fontWeight:'bold' }}).showToast();
+                }
+                // Prepend new question to list
+                const list = document.getElementById('qa-list');
+                const emptyMsg = list.querySelector('.text-center');
+                if (emptyMsg) emptyMsg.remove();
+                const div = document.createElement('div');
+                div.innerHTML = renderQuestion(data.question);
+                list.insertBefore(div.firstElementChild, list.firstChild);
+
+                const badge = document.getElementById('qa-count-badge');
+                if (badge) {
+                    const count = parseInt(badge.textContent) || 0;
+                    badge.textContent = (count + 1) + ' câu hỏi';
+                }
+            } else {
+                if (typeof Toastify !== 'undefined') {
+                    Toastify({ text: '❌ ' + (data.message || 'Gửi thất bại!'), duration: 3000, style: { background: '#dc3545', borderRadius:'8px', fontWeight:'bold' }}).showToast();
+                }
+            }
+        })
+        .catch(() => {
+            if (typeof Toastify !== 'undefined') {
+                Toastify({ text: 'Lỗi kết nối, vui lòng thử lại!', duration: 3000, style: { background: '#dc3545' }}).showToast();
+            }
+        })
+        .finally(() => { btn.innerHTML = oldHtml; btn.disabled = false; });
+    }
+
+    // Init: load first page
+    document.addEventListener('DOMContentLoaded', () => loadQuestions(0));
+    /*]]>*/
+</script>
 
 </body>
 </html>

@@ -1,11 +1,13 @@
 package com.codegym.smartphonemanagement.service.profile;
 
+import com.codegym.smartphonemanagement.model.OrderStatus;
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.model.UserAddress;
 import com.codegym.smartphonemanagement.model.dto.*;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.exception.EntityNotFoundException;
 import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.util.UserProfileMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,20 +33,15 @@ public class UserProfileServiceImpl implements IUserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
-        // Stats
-        long totalOrders = orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).size();
-        long totalWishlists = wishlistRepository.findByUserIdOrderByAddedAtDesc(userId).size();
+        // Stats - optimized with aggregate queries
+        long totalOrders = orderRepository.countByUserId(userId);
+        long totalWishlists = wishlistRepository.countByUserId(userId);
 
-        // Review count
-        long reviewCount = reviewRepository.findAll().stream()
-                .filter(r -> r.getUser() != null && r.getUser().getId().equals(userId))
-                .count();
+        // Review count - optimized with aggregate query
+        long reviewCount = reviewRepository.countByUserId(userId);
 
-        // Total spent (non-cancelled)
-        BigDecimal totalSpent = orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
-                .filter(o -> o.getStatus() != com.codegym.smartphonemanagement.model.OrderStatus.CANCELLED)
-                .map(o -> o.getTotalPrice() != null ? o.getTotalPrice() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Total spent (non-cancelled) - optimized with aggregate query
+        BigDecimal totalSpent = orderRepository.sumTotalPriceByUserIdAndStatusNot(userId, OrderStatus.CANCELLED);
 
         return UserProfileDTO.builder()
                 .id(user.getId())
@@ -69,36 +66,25 @@ public class UserProfileServiceImpl implements IUserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
-        if (dto.getFullName() != null) user.setFullName(dto.getFullName());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getFullName() != null) {
+            validateFullName(dto.getFullName());
+            user.setFullName(dto.getFullName());
+        }
+        
+        if (dto.getEmail() != null) {
+            validateEmail(dto.getEmail());
+            user.setEmail(dto.getEmail());
+        }
+        
+        if (dto.getPhone() != null) {
+            validatePhone(dto.getPhone());
+            user.setPhone(dto.getPhone());
+        }
+        
         if (dto.getDateOfBirth() != null) user.setDateOfBirth(dto.getDateOfBirth());
         if (dto.getGender() != null) user.setGender(dto.getGender());
         if (dto.getAvatarUrl() != null) user.setAvatarUrl(dto.getAvatarUrl());
 
-        userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public void changePassword(Long userId, PasswordChangeRequestDTO dto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
-
-        // Vì chưa có Security (BCrypt), so sánh plain text tạm thời
-        if (!dto.getCurrentPassword().equals(user.getPassword())) {
-            throw new BadRequestException("Mật khẩu hiện tại không đúng");
-        }
-        
-        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
-            throw new BadRequestException("Mật khẩu mới và xác nhận không khớp");
-        }
-        
-        if (dto.getNewPassword().length() < 6) {
-            throw new BadRequestException("Mật khẩu mới phải có ít nhất 6 ký tự");
-        }
-
-        user.setPassword(dto.getNewPassword());
         userRepository.save(user);
     }
 
@@ -107,7 +93,9 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Override
     public List<UserAddressDTO> getAddresses(Long userId) {
         return userAddressRepository.findByUserIdOrderByIsDefaultDesc(userId)
-                .stream().map(this::mapToAddressDTO).collect(Collectors.toList());
+                .stream()
+                .map(UserProfileMapper::toAddressDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -116,8 +104,11 @@ public class UserProfileServiceImpl implements IUserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Người dùng không tồn tại"));
 
-        // GIỚI HẠN 5 ĐỊA CHỈ
-        long count = userAddressRepository.findByUserIdOrderByIsDefaultDesc(userId).size();
+        // Validate address input
+        validateAddressInput(dto);
+
+        // GIỚI HẠN 5 ĐỊA CHỈ - optimized with aggregate query
+        long count = userAddressRepository.countByUserId(userId);
         if (count >= 5) {
             throw new BadRequestException("Bạn chỉ được lưu tối đa 5 địa chỉ. Hãy xóa bớt địa chỉ cũ nhé!");
         }
@@ -140,7 +131,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
                 .isDefault(shouldSetDefault)
                 .build();
 
-        return mapToAddressDTO(userAddressRepository.save(address));
+        return UserProfileMapper.toAddressDTO(userAddressRepository.save(address));
     }
 
     @Override
@@ -148,6 +139,9 @@ public class UserProfileServiceImpl implements IUserProfileService {
     public void updateAddress(Long userId, Long addressId, UserAddressRequestDTO dto) {
         UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
+
+        // Validate address input
+        validateAddressInput(dto);
 
         address.setLabel(dto.getLabel() != null && !dto.getLabel().isBlank() ? dto.getLabel() : address.getLabel());
         address.setReceiverName(dto.getReceiverName());
@@ -169,12 +163,11 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Override
     @Transactional
     public void setDefaultAddress(Long userId, Long addressId) {
-        userAddressRepository.findByIdAndUserId(addressId, userId)
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Địa chỉ không tồn tại hoặc không thuộc về bạn"));
 
         userAddressRepository.clearDefaultByUserId(userId);
 
-        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId).get();
         address.setIsDefault(true);
         userAddressRepository.save(address);
     }
@@ -202,20 +195,96 @@ public class UserProfileServiceImpl implements IUserProfileService {
     @Override
     public UserAddressDTO getDefaultAddress(Long userId) {
         return userAddressRepository.findByUserIdAndIsDefaultTrue(userId)
-                .map(this::mapToAddressDTO).orElse(null);
+                .map(UserProfileMapper::toAddressDTO)
+                .orElse(null);
     }
 
-    private UserAddressDTO mapToAddressDTO(UserAddress a) {
-        return UserAddressDTO.builder()
-                .id(a.getId())
-                .label(a.getLabel())
-                .receiverName(a.getReceiverName())
-                .receiverPhone(a.getReceiverPhone())
-                .addressDetail(a.getAddressDetail())
-                .ward(a.getWard())
-                .district(a.getDistrict())
-                .province(a.getProvince())
-                .isDefault(a.getIsDefault())
-                .build();
+    // ===================== VALIDATION HELPERS =====================
+
+    private void validateFullName(String fullName) {
+        if (fullName.isBlank()) {
+            throw new BadRequestException("Họ tên không được để trống");
+        }
+        if (fullName.length() > 100) {
+            throw new BadRequestException("Họ tên không được quá 100 ký tự");
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (email.isBlank()) {
+            throw new BadRequestException("Email không được để trống");
+        }
+        // Simple email regex pattern
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new BadRequestException("Email không hợp lệ");
+        }
+        if (email.length() > 100) {
+            throw new BadRequestException("Email không được quá 100 ký tự");
+        }
+    }
+
+    private void validatePhone(String phone) {
+        if (phone.isBlank()) {
+            throw new BadRequestException("Số điện thoại không được để trống");
+        }
+        // Vietnamese phone number: starts with 0, followed by 9 digits
+        if (!phone.matches("^0\\d{9}$")) {
+            throw new BadRequestException("Số điện thoại không hợp lệ (phải có 10 số và bắt đầu bằng 0)");
+        }
+    }
+
+    private void validateAddressInput(UserAddressRequestDTO dto) {
+        // Validate receiver name
+        if (dto.getReceiverName() == null || dto.getReceiverName().isBlank()) {
+            throw new BadRequestException("Tên người nhận không được để trống");
+        }
+        if (dto.getReceiverName().length() > 100) {
+            throw new BadRequestException("Tên người nhận không được quá 100 ký tự");
+        }
+
+        // Validate receiver phone
+        if (dto.getReceiverPhone() == null || dto.getReceiverPhone().isBlank()) {
+            throw new BadRequestException("Số điện thoại người nhận không được để trống");
+        }
+        if (!dto.getReceiverPhone().matches("^0\\d{9}$")) {
+            throw new BadRequestException("Số điện thoại người nhận không hợp lệ (phải có 10 số và bắt đầu bằng 0)");
+        }
+
+        // Validate address detail
+        if (dto.getAddressDetail() == null || dto.getAddressDetail().isBlank()) {
+            throw new BadRequestException("Địa chỉ chi tiết không được để trống");
+        }
+        if (dto.getAddressDetail().length() > 255) {
+            throw new BadRequestException("Địa chỉ chi tiết không được quá 255 ký tự");
+        }
+
+        // Validate ward
+        if (dto.getWard() == null || dto.getWard().isBlank()) {
+            throw new BadRequestException("Phường/Xã không được để trống");
+        }
+        if (dto.getWard().length() > 100) {
+            throw new BadRequestException("Phường/Xã không được quá 100 ký tự");
+        }
+
+        // Validate district
+        if (dto.getDistrict() == null || dto.getDistrict().isBlank()) {
+            throw new BadRequestException("Quận/Huyện không được để trống");
+        }
+        if (dto.getDistrict().length() > 100) {
+            throw new BadRequestException("Quận/Huyện không được quá 100 ký tự");
+        }
+
+        // Validate province
+        if (dto.getProvince() == null || dto.getProvince().isBlank()) {
+            throw new BadRequestException("Tỉnh/Thành phố không được để trống");
+        }
+        if (dto.getProvince().length() > 100) {
+            throw new BadRequestException("Tỉnh/Thành phố không được quá 100 ký tự");
+        }
+
+        // Validate label (optional field)
+        if (dto.getLabel() != null && dto.getLabel().length() > 50) {
+            throw new BadRequestException("Nhãn địa chỉ không được quá 50 ký tự");
+        }
     }
 }

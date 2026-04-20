@@ -5,6 +5,7 @@ import com.codegym.smartphonemanagement.model.OrderStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -57,6 +58,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "GROUP BY DATE(created_at) ORDER BY date ASC", nativeQuery = true)
     List<Object[]> getRevenueLast7Days();
 
+    // D. Phân bổ nguồn tiền (VNPAY vs COD) của Mọi đơn hàng không Cancelled
+    @Query("SELECT o.paymentMethod, COUNT(o) FROM Order o WHERE o.status != 'CANCELLED' GROUP BY o.paymentMethod")
+    List<Object[]> getPaymentMethodDistribution();
+
     @Query("SELECT oi.product.name, SUM(oi.quantity) as totalSold " +
             "FROM OrderItem oi " +
             "JOIN oi.order o " +
@@ -67,4 +72,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
     List<Object[]> countOrdersByStatus();
+
+    // Performance optimization: Count orders by user without loading all orders
+    long countByUserId(Long userId);
+
+    // Performance optimization: Sum total price for non-cancelled orders without loading all orders
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.user.id = :userId AND o.status != :status")
+    BigDecimal sumTotalPriceByUserIdAndStatusNot(@Param("userId") Long userId, @Param("status") OrderStatus status);
+
+    // --- ADMIN ORDER CENTER: PAGINATED SEARCH + FILTER ---
+    @Query("SELECT o FROM Order o WHERE " +
+           "(:status IS NULL OR o.status = :status) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "   CAST(o.id AS string) LIKE %:keyword% OR " +
+           "   LOWER(o.receiverName) LIKE LOWER(CONCAT('%',:keyword,'%')) OR " +
+           "   o.receiverPhone LIKE %:keyword%) AND " +
+           "(:dateFrom IS NULL OR o.createdAt >= :dateFrom) AND " +
+           "(:dateTo IS NULL OR o.createdAt <= :dateTo) " +
+           "ORDER BY o.createdAt DESC")
+    org.springframework.data.domain.Page<Order> searchOrders(
+            @Param("status") OrderStatus status,
+            @Param("keyword") String keyword,
+            @Param("dateFrom") java.time.LocalDateTime dateFrom,
+            @Param("dateTo") java.time.LocalDateTime dateTo,
+            org.springframework.data.domain.Pageable pageable);
 }

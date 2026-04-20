@@ -23,6 +23,23 @@ public class GlobalModelController {
     private final UserRepository userRepository;
     private final IUserProfileService userProfileService;
     private final ILoyaltyPointService loyaltyPointService;
+    private final com.codegym.smartphonemanagement.service.wallet.WalletService walletService;
+
+    /**
+     * Helper method to get current authenticated user (returns null if not authenticated)
+     */
+    private User getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        try {
+            String username = authentication.getName();
+            return userRepository.findByUsername(username).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @ModelAttribute("GlobalVouchers")
     public List<CouponResponseDTO> globalVouchers() {
@@ -41,6 +58,9 @@ public class GlobalModelController {
     }
 
     @ModelAttribute("SavedVoucherCodes")
+    public List<String> savedVoucherCodes(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
     public List<String> savedVoucherCodes() {
         try {
             User user = SecurityUtil.getCurrentUser(userRepository);
@@ -53,20 +73,45 @@ public class GlobalModelController {
     }
 
     @ModelAttribute("currentUser")
-    public UserProfileDTO currentUser() {
-        try {
-            return userProfileService.getProfile(SecurityUtil.getCurrentUserId(userRepository));
-        } catch (Exception e) {
+    public UserProfileDTO currentUser(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
             return null;
         }
+       Long userId = SecurityUtil.getCurrentUserId(userRepository);
+        if (userId == null) {
+            return null;
+        }
+        return userProfileService.getProfile(userId);
+    } catch (Exception e) {
+        return null;
+    }
     }
 
     @ModelAttribute("loyaltyPoints")
-    public Integer loyaltyPoints() {
+    public Integer loyaltyPoints(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
+            return 0;
+        }
         try {
+            return loyaltyPointService.getAccountInfo(user.getId()).getTotalPoints();
             return loyaltyPointService.getAccountInfo(SecurityUtil.getCurrentUserId(userRepository)).getTotalPoints();
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    @ModelAttribute("walletBalance")
+    public java.math.BigDecimal walletBalance(org.springframework.security.core.Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        if (user == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        try {
+            return walletService.getWalletDTO(user.getId()).getBalance();
+        } catch (Exception e) {
+            return java.math.BigDecimal.ZERO;
         }
     }
 }

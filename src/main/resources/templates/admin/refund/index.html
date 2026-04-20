@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Center - SmartZone Enterprise</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255, 255, 255, 0.75);
+            --sz-glass-border: rgba(255, 255, 255, 0.4);
+            --sz-primary: #1A1C20;
+            --sz-orange: #fbbd05;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--sz-primary);
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            padding: 25px;
+            display: flex; flex-direction: column; justify-content: center;
+            position: relative; overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.06); }
+        .stat-icon-bg { position: absolute; right: -10px; bottom: -20px; font-size: 8rem; opacity: 0.05; transform: rotate(-15deg); }
+
+        /* Filter Pills */
+        .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-pill {
+            text-decoration: none; padding: 9px 18px; border-radius: 50px;
+            font-weight: 600; font-size: 0.82rem;
+            background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.06);
+            color: #6e6e73; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: inline-flex; align-items: center; gap: 6px; backdrop-filter: blur(5px);
+        }
+        .filter-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: var(--sz-primary); }
+        .filter-pill.active { background: var(--sz-primary); color: white; border-color: var(--sz-primary); box-shadow: 0 6px 20px rgba(26,28,32,0.2); }
+
+        /* Date Range */
+        .date-input {
+            border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px 14px;
+            font-size: 0.82rem; font-weight: 600; background: white; transition: all 0.2s;
+        }
+        .date-input:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 3px rgba(251,189,5,0.15); outline: none; }
+
+        /* Data Table */
+        .custom-table { border-collapse: separate; border-spacing: 0 10px; width: 100%; }
+        .custom-table thead th {
+            border: none; color: #6c757d; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 1px; padding: 10px 20px; font-weight: 700;
+        }
+        .custom-table tbody tr {
+            background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: all 0.25s;
+        }
+        .custom-table tbody tr:hover { transform: translateX(3px); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+        .custom-table tbody td { border: none; padding: 18px 20px; vertical-align: middle; }
+        .custom-table tbody tr td:first-child { border-radius: 15px 0 0 15px; }
+        .custom-table tbody tr td:last-child { border-radius: 0 15px 15px 0; }
+
+        /* Status Badges */
+        .status-badge { padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
+        .status-badge.PENDING { background: rgba(255, 193, 7, 0.1); color: #d39e00; }
+        .status-badge.APPROVED { background: rgba(25, 135, 84, 0.1); color: #198754; }
+        .status-badge.REJECTED { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+
+        /* Pagination */
+        .page-link { border-radius: 10px !important; border: none; font-weight: 600; margin: 0 3px; transition: all 0.2s; }
+        .page-item.active .page-link { background: var(--sz-primary); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .page-link:hover { background: rgba(0,0,0,0.06); }
+
+        /* Animations */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-0">
+    <div class="row g-0 mx-3 my-3">
+        <!-- SIDEBAR -->
+        <div class="col-auto" style="width: 260px;">
+            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="col ps-4 pe-2">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+                <div>
+                    <h2 class="fw-bolder mb-1" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.5px;">Refund Center</h2>
+                    <p class="text-muted mb-0 small fw-medium">Hệ thống bóc tách &amp; Xử lý Khiếu nại Hoàn tiền</p>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-dark bg-opacity-10 text-dark rounded-pill px-3 py-2 fw-bold">
+                        <i class="bi bi-stack me-1"></i> Tổng: <span th:text="${totalElements}">0</span> đơn
+                    </span>
+                    <a href="/admin/dashboard" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm border">
+                        <i class="bi bi-grid-fill me-2 text-primary"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- FLASH -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show glass-panel border-success border-opacity-25 py-3 mb-4 fade-up" role="alert" style="background: rgba(236, 253, 245, 0.9);">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i> <span class="fw-bold" th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show glass-panel border-danger border-opacity-25 py-3 mb-4 fade-up" role="alert" style="background: rgba(254, 242, 242, 0.9);">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> <span class="fw-bold" th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- DATE RANGE FILTER -->
+            <div class="glass-panel p-3 mb-4 fade-up delay-1">
+                <form method="get" action="/admin/refunds" class="d-flex align-items-center gap-3 flex-wrap">
+                    <input type="hidden" name="status" th:value="${currentStatus}" th:if="${currentStatus != null}">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-range text-primary"></i>
+                        <span class="fw-bold small text-muted">Thống kê từ</span>
+                        <input type="date" name="dateFrom" class="date-input" th:value="${dateFrom}" placeholder="Từ ngày">
+                        <span class="text-muted">→</span>
+                        <input type="date" name="dateTo" class="date-input" th:value="${dateTo}" placeholder="Đến ngày">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm rounded-pill px-4 fw-bold">
+                        <i class="bi bi-funnel-fill me-1"></i> Áp dụng
+                    </button>
+                    <a href="/admin/refunds" class="btn btn-light btn-sm rounded-pill px-3 fw-bold border">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                    </a>
+                    <span class="ms-auto small text-muted fw-medium" th:if="${stats.dateFrom != null}">
+                        📊 Đang xem: <strong th:text="${#temporals.format(stats.dateFrom, 'dd/MM/yyyy')}"></strong>
+                        → <strong th:text="${#temporals.format(stats.dateTo, 'dd/MM/yyyy')}"></strong>
+                    </span>
+                </form>
+            </div>
+
+            <!-- BENTO STATS -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4 fade-up delay-1">
+                    <div class="glass-panel stat-card h-100 border border-warning border-opacity-25" style="background: rgba(255,193,7,0.02)">
+                        <i class="bi bi-hourglass-split stat-icon-bg text-warning"></i>
+                        <h6 class="text-warning text-uppercase fw-bold mb-3 small">Đơn Đang Neo (Pending)</h6>
+                        <div class="d-flex align-items-end">
+                            <h1 class="display-5 fw-bolder mb-0 lh-1 me-3 text-dark" th:text="${stats.pendingCount}">0</h1>
+                            <span class="fs-5 fw-bold text-muted mb-1" th:text="${#numbers.formatDecimal(stats.pendingAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up delay-2">
+                    <div class="glass-panel stat-card h-100 border border-success border-opacity-25" style="background: rgba(25,135,84,0.02)">
+                        <i class="bi bi-check2-circle stat-icon-bg text-success"></i>
+                        <h6 class="text-success text-uppercase fw-bold mb-3 small">Tiền Đã Hoàn (Points)</h6>
+                        <div class="d-flex align-items-end">
+                            <h1 class="display-5 fw-bolder mb-0 lh-1 me-3 text-dark" th:text="${stats.approvedCount}">0</h1>
+                            <span class="fs-5 fw-bold text-muted mb-1" th:text="${#numbers.formatDecimal(stats.approvedAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up delay-3">
+                    <div class="glass-panel stat-card h-100 bg-dark text-white border-0 shadow-lg">
+                        <i class="bi bi-shield-x stat-icon-bg text-white"></i>
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-3 small">Tỷ lệ Bảo vệ Nền tảng</h6>
+                        <h1 class="display-5 fw-bolder mb-2 lh-1 text-white" th:text="${stats.rejectedCount}">0</h1>
+                        <span class="small text-white-50">Đơn từ chối (Sai quy định / Gian lận)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATUS FILTER PILLS -->
+            <div class="filter-pills mb-4 fade-up delay-2">
+                <a th:href="@{/admin/refunds(dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus == null} ? 'active'">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Tất cả
+                </a>
+                <a th:href="@{/admin/refunds(status='PENDING', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
+                    <i class="bi bi-hourglass-split"></i> Chờ duyệt
+                </a>
+                <a th:href="@{/admin/refunds(status='APPROVED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'APPROVED'} ? 'active'">
+                    <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                </a>
+                <a th:href="@{/admin/refunds(status='REJECTED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'REJECTED'} ? 'active'">
+                    <i class="bi bi-x-circle-fill"></i> Đã từ chối
+                </a>
+            </div>
+
+            <!-- DATA TABLE -->
+            <div class="glass-panel p-4 fade-up delay-3">
+                <h5 class="fw-bold mb-4"><i class="bi bi-list-columns-reverse me-2 text-primary"></i> Danh sách Xét duyệt</h5>
+                
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Mã Đơn / Ngày tạo</th>
+                                <th>Người Yêu Cầu</th>
+                                <th>Lý do (Trích lục)</th>
+                                <th>Tiền cần Hoàn</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${refunds}">
+                                <td>
+                                    <div class="fw-bold text-primary">#[[${r.orderId}]]</div>
+                                    <div class="small text-muted" th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}">Time</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">[[${r.username}]]</div>
+                                    <div class="small text-muted">[[${r.userEmail}]]</div>
+                                </td>
+                                <td style="max-width: 250px;">
+                                    <div class="text-truncate text-muted" th:title="${r.reason}">[[${r.reason}]]</div>
+                                    <div th:if="${r.adminNote}" class="small text-primary mt-1 fw-bold"><i class="bi bi-chat-left-text me-1"></i> [[${r.adminNote}]]</div>
+                                </td>
+                                <td>
+                                    <span class="fw-bolder fs-6 text-danger" th:text="${#numbers.formatDecimal(r.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                                </td>
+                                <td>
+                                    <span th:class="'status-badge ' + ${r.status}" th:text="${r.status}"></span>
+                                </td>
+                                <td class="text-end">
+                                    <th:block th:if="${r.status == 'PENDING'}">
+                                        <button class="btn btn-sm btn-success rounded-pill fw-bold px-3 me-2" th:onclick="'openApproveModal(' + ${r.id} + ')'">
+                                            <i class="bi bi-check-lg me-1"></i> Duyệt
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3" th:onclick="'openRejectModal(' + ${r.id} + ')'">
+                                            <i class="bi bi-x-lg me-1"></i> Từ chối
+                                        </button>
+                                    </th:block>
+                                    <th:block th:unless="${r.status == 'PENDING'}">
+                                        <span class="btn btn-sm btn-light rounded-pill px-3 opacity-50"><i class="bi bi-lock-fill me-1"></i> Đã đóng</span>
+                                    </th:block>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(refunds)}">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+                                    <h6 class="fw-bold">Không có yêu cầu hoàn tiền nào</h6>
+                                    <p class="small mb-0">Thử thay đổi bộ lọc trạng thái hoặc khoảng thời gian.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINATION -->
+                <nav th:if="${totalPages > 1}" class="mt-4">
+                    <ul class="pagination justify-content-center gap-1 mb-0">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/refunds(page=${currentPage - 1}, status=${currentStatus}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:text="${i + 1}" th:href="@{/admin/refunds(page=${i}, status=${currentStatus}, dateFrom=${dateFrom}, dateTo=${dateTo})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/refunds(page=${currentPage + 1}, status=${currentStatus}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="text-center mt-2">
+                        <span class="small text-muted fw-medium">
+                            Trang <strong th:text="${currentPage + 1}">1</strong> / <strong th:text="${totalPages}">1</strong>
+                            — <span th:text="${totalElements}">0</span> kết quả
+                        </span>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- APPROVE MODAL -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-success bg-opacity-10 py-3 border-0">
+                <h5 class="modal-title text-success fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Xác nhận Duyệt tiền</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveForm" method="POST">
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-start gap-3 mb-4 p-3 bg-success bg-opacity-10 rounded-3">
+                        <i class="bi bi-envelope-check text-success fs-4"></i>
+                        <p class="mb-0 small fw-medium">Hệ thống sẽ chuyển tiền hoàn thành <strong>Điểm Thưởng (Loyalty Points)</strong> và <strong>gửi email thông báo</strong> tự động cho khách hàng.</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú duyệt đơn (Optional)</label>
+                        <textarea name="adminNote" class="form-control rounded-3" rows="2" placeholder="VD: Gửi bạn điểm đền bù, mong bạn thứ lỗi..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm"><i class="bi bi-check2 me-1"></i> Chấp Nhận Hoàn Tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-danger bg-opacity-10 py-3 border-0">
+                <h5 class="modal-title text-danger fw-bold"><i class="bi bi-x-circle-fill me-2"></i> Xác nhận Từ chối</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-start gap-3 mb-4 p-3 bg-danger bg-opacity-10 rounded-3">
+                        <i class="bi bi-envelope-x text-danger fs-4"></i>
+                        <p class="mb-0 small fw-medium">Hệ thống sẽ <strong>gửi email thông báo từ chối</strong> tự động cho khách hàng kèm theo lý do bạn ghi bên dưới.</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lý do từ chối (Bắt buộc) <span class="text-danger">*</span></label>
+                        <textarea name="adminNote" class="form-control rounded-3" rows="3" placeholder="Ghi rõ lý do tại sao không hoàn tiền để gửi cho khách..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm"><i class="bi bi-x-lg me-1"></i> Thực thi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openApproveModal(id) {
+        document.getElementById('approveForm').action = '/admin/refunds/' + id + '/approve';
+        new bootstrap.Modal(document.getElementById('approveModal')).show();
+    }
+    
+    function openRejectModal(id) {
+        document.getElementById('rejectForm').action = '/admin/refunds/' + id + '/reject';
+        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+    }
+</script>
+</body>
+</html>

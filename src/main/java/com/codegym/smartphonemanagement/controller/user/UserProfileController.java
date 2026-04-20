@@ -57,7 +57,6 @@ public class UserProfileController {
 
         model.addAttribute("profile", profileService.getProfile(userId));
         model.addAttribute("profileForm", new ProfileUpdateRequestDTO());
-        model.addAttribute("passwordForm", new PasswordChangeRequestDTO());
         model.addAttribute("addresses", profileService.getAddresses(userId));
         model.addAttribute("newAddressForm", new UserAddressRequestDTO());
         model.addAttribute("orders", orderService.getOrderHistory(userId));
@@ -91,26 +90,7 @@ public class UserProfileController {
         return "redirect:/user/profile?tab=info";
     }
 
-    // =========================================================
-    // POST: Đổi mật khẩu
-    // =========================================================
-    @PostMapping("/change-password")
-    public String changePassword(@ModelAttribute PasswordChangeRequestDTO dto,
-                                 RedirectAttributes redirectAttributes,
-                                 Authentication authentication) {
-        Long userId = getCurrentUserId(authentication);
-        if (userId == null) {
-            return "redirect:/login";
-        }
 
-        try {
-            profileService.changePassword(userId, dto);
-            redirectAttributes.addFlashAttribute("successMsg", "Đổi mật khẩu thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", e.getMessage());
-        }
-        return "redirect:/user/profile?tab=security";
-    }
 
     // =========================================================
     // POST: Thêm địa chỉ mới

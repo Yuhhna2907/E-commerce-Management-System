@@ -5,9 +5,10 @@ import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.model.dto.NotificationResponseDTO;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.NotificationService;
-import com.codegym.smartphonemanagement.util.SecurityUtil;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,8 @@ public class lUserNotificationController {
 
     @GetMapping("/unread")
     @ResponseBody
-    public ResponseEntity<List<NotificationResponseDTO>> getUnreadNotifications() {
-        User user = SecurityUtil.getCurrentUser(userRepository);
+    public ResponseEntity<List<NotificationResponseDTO>> getUnreadNotifications(Authentication authentication) {
+        User user = getCurrentUser(authentication);
         List<NotificationResponseDTO> notifications = notificationService.getUnreadNotifications(user)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(notifications);
@@ -33,8 +34,8 @@ public class lUserNotificationController {
 
     @GetMapping("/all-json")
     @ResponseBody
-    public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsJson() {
-        User user = SecurityUtil.getCurrentUser(userRepository);
+    public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsJson(Authentication authentication) {
+        User user = getCurrentUser(authentication);
         List<NotificationResponseDTO> notifications = notificationService.getAllNotifications(user)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
         return ResponseEntity.ok(notifications);
@@ -49,10 +50,22 @@ public class lUserNotificationController {
 
     @PostMapping("/mark-all-read")
     @ResponseBody
-    public ResponseEntity<Void> markAllAsRead() {
-        User user = SecurityUtil.getCurrentUser(userRepository);
+    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
+        User user = getCurrentUser(authentication);
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Helper method to get current user from authentication
+     */
+    private User getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("User not authenticated");
+        }
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
     }
 
     private NotificationResponseDTO mapToDTO(Notification notif) {

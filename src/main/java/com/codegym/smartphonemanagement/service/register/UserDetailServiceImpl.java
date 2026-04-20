@@ -2,7 +2,10 @@ package com.codegym.smartphonemanagement.service.register;
 
 import com.codegym.smartphonemanagement.model.User;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
+import com.codegym.smartphonemanagement.service.security.LoginAttemptService;
+import com.codegym.smartphonemanagement.util.SecurityAuditLogger;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,29 +16,39 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserDetailServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final LoginAttemptService loginAttemptService;
+    private final SecurityAuditLogger securityAuditLogger;
 
-    // Sửa trong UserDetailServiceImpl.java
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("===> Spring Security đang kiểm tra username: " + username); // THÊM DÒNG NÀY
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        log.debug("Loading user details for username or email: {}", usernameOrEmail);
 
-        User user = userRepository.findByUsername(username)
+        // Check if account is locked before loading user
+        if (loginAttemptService.isAccountLocked(usernameOrEmail)) {
+            log.warn("Login attempt for locked account: {}", usernameOrEmail);
+            throw new UsernameNotFoundException("Account is temporarily locked due to multiple failed login attempts");
+        }
+
+        // Try to find user by username first, then by email
+        User user = userRepository.findByUsername(usernameOrEmail)
+                .or(() -> userRepository.findByEmail(usernameOrEmail))
                 .orElseThrow(() -> {
-                    System.out.println("===> KHÔNG TÌM THẤY USER: " + username); // THÊM DÒNG NÀY
-                    return new UsernameNotFoundException("User không tồn tại: " + username);
+                    log.warn("User not found: {}", usernameOrEmail);
+                    return new UsernameNotFoundException("User không tồn tại: " + usernameOrEmail);
                 });
 
-        System.out.println("===> Mật khẩu trong DB: " + user.getPassword()); // THÊM DÒNG NÀY
+        log.debug("User found: {}, enabled: {}", user.getUsername(), user.isEnabled());
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .disabled(!user.isEnabled()) // false nghĩa là tài khoản ĐANG HOẠT ĐỘNG
+                .disabled(!user.isEnabled())
                 .accountExpired(false)
-                .accountLocked(false)
+                .accountLocked(user.isAccountLocked())
                 .credentialsExpired(false)
                 .authorities(user.getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getName()))

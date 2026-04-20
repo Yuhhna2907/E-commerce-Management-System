@@ -1,16 +1,20 @@
 package com.codegym.smartphonemanagement.controller.user;
 
+import com.codegym.smartphonemanagement.model.User;
+import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
 import com.codegym.smartphonemanagement.service.loyalty.dto.LoyaltyAccountDTO;
 import com.codegym.smartphonemanagement.service.loyalty.dto.PointTransactionDTO;
 import com.codegym.smartphonemanagement.service.loyalty.dto.RedeemRequestDTO;
 import com.codegym.smartphonemanagement.service.loyalty.dto.RedeemResultDTO;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,20 +28,20 @@ import java.util.Map;
 public class UserLoyaltyController {
 
     private final ILoyaltyPointService loyaltyPointService;
-
-    // Hardcode mock — thay bằng Spring Security sau
-    private static final Long MOCK_USER_ID = 1L;
+    private final UserRepository userRepository;
 
     /**
      * GET /user/loyalty — Trang Loyalty Dashboard (Thymeleaf)
      */
     @GetMapping
     public String loyaltyDashboard(Model model,
+                                   Authentication authentication,
                                    @RequestParam(defaultValue = "0") int page,
                                    @RequestParam(defaultValue = "10") int size) {
-        LoyaltyAccountDTO account = loyaltyPointService.getOrCreateAccount(MOCK_USER_ID);
+        Long userId = getCurrentUserId(authentication);
+        LoyaltyAccountDTO account = loyaltyPointService.getOrCreateAccount(userId);
         Page<PointTransactionDTO> transactions = loyaltyPointService
-                .getTransactionHistory(MOCK_USER_ID, PageRequest.of(page, size));
+                .getTransactionHistory(userId, PageRequest.of(page, size));
 
         model.addAttribute("account", account);
         model.addAttribute("transactions", transactions);
@@ -52,8 +56,9 @@ public class UserLoyaltyController {
      */
     @GetMapping("/account")
     @ResponseBody
-    public ResponseEntity<LoyaltyAccountDTO> getAccount() {
-        return ResponseEntity.ok(loyaltyPointService.getAccountInfo(MOCK_USER_ID));
+    public ResponseEntity<LoyaltyAccountDTO> getAccount(Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
+        return ResponseEntity.ok(loyaltyPointService.getAccountInfo(userId));
     }
 
     /**
@@ -62,10 +67,12 @@ public class UserLoyaltyController {
     @GetMapping("/transactions")
     @ResponseBody
     public ResponseEntity<Page<PointTransactionDTO>> getTransactions(
+            Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        Long userId = getCurrentUserId(authentication);
         return ResponseEntity.ok(
-                loyaltyPointService.getTransactionHistory(MOCK_USER_ID, PageRequest.of(page, size)));
+                loyaltyPointService.getTransactionHistory(userId, PageRequest.of(page, size)));
     }
 
     /**
@@ -73,13 +80,28 @@ public class UserLoyaltyController {
      */
     @PostMapping("/redeem")
     @ResponseBody
-    public ResponseEntity<?> redeemPoints(@Valid @RequestBody RedeemRequestDTO request) {
+    public ResponseEntity<?> redeemPoints(@Valid @RequestBody RedeemRequestDTO request,
+                                         Authentication authentication) {
+        Long userId = getCurrentUserId(authentication);
         try {
-            RedeemResultDTO result = loyaltyPointService.redeemPoints(MOCK_USER_ID, request.getPoints());
+            RedeemResultDTO result = loyaltyPointService.redeemPoints(userId, request.getPoints());
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
-            log.warn("Redeem points failed for user {}: {}", MOCK_USER_ID, e.getMessage());
+            log.warn("Redeem points failed for user {}: {}", userId, e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /**
+     * Helper method to get current user ID from authentication
+     */
+    private Long getCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("User not authenticated");
+        }
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+        return user.getId();
     }
 }

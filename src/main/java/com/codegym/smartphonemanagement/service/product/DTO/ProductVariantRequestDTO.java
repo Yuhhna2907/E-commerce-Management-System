@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class ProductVariantRequestDTO {
+    private Long variantId;
+
     @NotNull(message = "ProductId không được null")
     private Long productId;
 

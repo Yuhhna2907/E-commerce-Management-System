@@ -3,6 +3,8 @@ package com.codegym.smartphonemanagement.controller.seller;
 import com.codegym.smartphonemanagement.repository.user.CategoryRepository;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductRequestDTO;
 import com.codegym.smartphonemanagement.service.product.DTO.ProductResponseDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductSpecificationDTO;
+import com.codegym.smartphonemanagement.service.product.DTO.ProductVariantRequestDTO;
 import com.codegym.smartphonemanagement.service.product.seller.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -54,6 +56,8 @@ public class ProductController {
 
         // 4. Đổ dữ liệu thống kê ra giao diện
         model.addAttribute("totalProducts", stats.get("totalProducts"));
+        model.addAttribute("activeProducts", stats.get("activeProducts"));
+        model.addAttribute("hiddenProducts", stats.get("hiddenProducts"));
         model.addAttribute("lowStockCount", stats.get("lowStockCount"));
         model.addAttribute("inventoryValue", stats.get("inventoryValue"));
 
@@ -283,6 +287,78 @@ public class ProductController {
             response.put("newStatus", newStatus);
             response.put("message", "Đã cập nhật trạng thái!");
         } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    // ===============================
+    // 6. PRODUCT 360 WORKSPACE
+    // ===============================
+    @GetMapping("/{id}/detail")
+    public String viewProductDetail(@PathVariable Long id, Model model) {
+        ProductResponseDTO product = productService.getById(id);
+        model.addAttribute("product", product);
+        model.addAttribute("pageTitle", "product");
+        return "admin/product/detail";
+    }
+
+    @PostMapping("/{id}/specs")
+    @ResponseBody
+    public Map<String, Object> saveSpecification(@PathVariable Long id, @RequestBody ProductSpecificationDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.saveSpecification(id, dto);
+            response.put("status", "success");
+            response.put("message", "Cập nhật cấu hình thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/{id}/variants/save")
+    @ResponseBody
+    public Map<String, Object> saveVariant(@PathVariable Long id, @RequestBody ProductVariantRequestDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.saveVariant(id, dto);
+            response.put("status", "success");
+            response.put("message", "Lưu biến thể thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/variants/{variantId}/toggle")
+    @ResponseBody
+    public Map<String, Object> toggleVariantStatus(@PathVariable Long variantId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean newStatus = productService.toggleVariantStatus(variantId);
+            response.put("status", "success");
+            response.put("newStatus", newStatus);
+            response.put("message", "Đã khóa/mở cấu hình thành công!");
+        } catch(Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    @DeleteMapping("/variants/{variantId}")
+    @ResponseBody
+    public Map<String, Object> deleteVariant(@PathVariable Long variantId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            productService.deleteVariant(variantId);
+            response.put("status", "success");
+            response.put("message", "Xóa biến thể thành công! Giao diện sẽ cập nhật...");
+        } catch(Exception e) {
             response.put("status", "error");
             response.put("message", e.getMessage());
         }

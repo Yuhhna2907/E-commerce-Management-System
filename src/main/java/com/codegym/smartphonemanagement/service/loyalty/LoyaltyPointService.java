@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.service.loyalty;
 
 import com.codegym.smartphonemanagement.model.*;
+import com.codegym.smartphonemanagement.service.loyalty.dto.LoyaltyStatsDTO;
 import com.codegym.smartphonemanagement.repository.CouponRepository;
 import com.codegym.smartphonemanagement.repository.user.*;
 import com.codegym.smartphonemanagement.service.loyalty.dto.*;
@@ -73,6 +74,17 @@ public class LoyaltyPointService implements ILoyaltyPointService {
         }
 
         LoyaltyAccount account = getOrCreateAccountEntity(userId);
+
+        // === TIER BONUS: Nhân hệ số theo hạng thành viên ===
+        MemberTier tier = MemberTier.fromLifetimePoints(account.getLifetimePoints());
+        int bonusPoints = (int) Math.floor(points * tier.getBonusMultiplier());
+        if (bonusPoints != points) {
+            log.info("Tier [{}] bonus applied: base={} pts → after bonus={} pts (x{})",
+                    tier.getLabel(), points, bonusPoints, tier.getBonusMultiplier());
+        }
+        points = bonusPoints;
+        // =====================================================
+
         account.setTotalPoints(account.getTotalPoints() + points);
         account.setLifetimePoints(account.getLifetimePoints() + points);
         loyaltyAccountRepository.save(account);
@@ -83,10 +95,11 @@ public class LoyaltyPointService implements ILoyaltyPointService {
         // Ghi log giao dịch
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User không tồn tại: " + userId));
+        String tierNote = tier != MemberTier.BRONZE ? String.format(" (Bonus hạng %s x%.2f)", tier.getLabel(), tier.getBonusMultiplier()) : "";
         saveTransaction(user, order, PointTransactionType.EARNED, points,
-                String.format("Tích %d điểm từ đơn hàng #%d", points, order.getId()));
+                String.format("Tích %d điểm từ đơn hàng #%d%s", points, order.getId(), tierNote));
 
-        log.info("Earned {} points for user {} from order #{}", points, userId, order.getId());
+        log.info("Earned {} points (tier bonus={}) for user {} from order #{}", points, tier.getLabel(), userId, order.getId());
     }
 
     @Override
@@ -182,11 +195,28 @@ public class LoyaltyPointService implements ILoyaltyPointService {
     public LoyaltyAccountDTO getAccountInfo(Long userId) {
         LoyaltyAccount account = loyaltyAccountRepository.findByUserId(userId)
                 .orElse(null);
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User không tồn tại: " + userId));
+
         if (account == null) {
+            String displayName = (u.getFullName() != null && !u.getFullName().isBlank())
+                    ? u.getFullName() : u.getUsername();
+
             return LoyaltyAccountDTO.builder()
+                    .userId(u.getId())
+                    .username(displayName)
+                    .email(u.getEmail())
+                    .fullName(u.getFullName())
                     .totalPoints(0)
                     .lifetimePoints(0)
                     .estimatedValue(BigDecimal.ZERO)
+                    .tier(MemberTier.BRONZE)
+                    .tierLabel(MemberTier.BRONZE.getLabel())
+                    .tierColor(MemberTier.BRONZE.getColor())
+                    .tierIcon(MemberTier.BRONZE.getIcon())
+                    .bonusMultiplier(MemberTier.BRONZE.getBonusMultiplier())
+                    .progressToNextTier(MemberTier.progressToNextTier(0))
+                    .pointsToNextTier(MemberTier.pointsToNextTier(0))
                     .build();
         }
         return toDTO(account);
@@ -273,11 +303,68 @@ public class LoyaltyPointService implements ILoyaltyPointService {
         // Giá trị quy đổi: 10 điểm = 1.000đ
         BigDecimal estimatedValue = BigDecimal.valueOf(
                 (long) account.getTotalPoints() / REDEEM_POINTS_PER_1000VND * 1_000L);
+
+        // Tier enrichment
+        MemberTier tier = MemberTier.fromLifetimePoints(account.getLifetimePoints());
+        Integer pointsToNext = MemberTier.pointsToNextTier(account.getLifetimePoints());
+        int progress = MemberTier.progressToNextTier(account.getLifetimePoints());
+
+        // User info (populate for admin views)
+        User u = account.getUser();
+        String displayName = (u.getFullName() != null && !u.getFullName().isBlank())
+                ? u.getFullName() : u.getUsername();
+
         return LoyaltyAccountDTO.builder()
                 .totalPoints(account.getTotalPoints())
                 .lifetimePoints(account.getLifetimePoints())
                 .estimatedValue(estimatedValue)
                 .updatedAt(account.getUpdatedAt())
+                // user identity
+                .userId(u.getId())
+                .username(displayName)
+                .email(u.getEmail())
+                .fullName(u.getFullName())
+                // tier
+                .tier(tier)
+                .tierLabel(tier.getLabel())
+                .tierColor(tier.getColor())
+                .tierIcon(tier.getIcon())
+                .bonusMultiplier(tier.getBonusMultiplier())
+                .pointsToNextTier(pointsToNext)
+                .progressToNextTier(progress)
+                .build();
+    }
+
+    /**
+     * Aggregate stats cho Admin Dashboard Loyalty.
+     */
+    public LoyaltyStatsDTO getLoyaltyStats() {
+        long totalAccounts = userRepository.countStandardUsers();
+
+        // Tổng điểm đang lưu hành
+        long totalPointsInCirculation = loyaltyAccountRepository.findAll()
+                .stream().mapToLong(a -> a.getTotalPoints()).sum();
+
+        // Tổng lifetime points
+        long totalLifetimePoints = loyaltyAccountRepository.findAll()
+                .stream().mapToLong(a -> a.getLifetimePoints()).sum();
+
+        // Điểm đã đổi (REDEEMED) — tất cả thời gian
+        long totalPointsRedeemed = pointTransactionRepository.findAll()
+                .stream()
+                .filter(t -> t.getType() == PointTransactionType.REDEEMED)
+                .mapToLong(t -> Math.abs(t.getPoints()))
+                .sum();
+
+        // Giá trị điểm đang lưu hành quy ra tiền
+        BigDecimal circulationValue = BigDecimal.valueOf(totalPointsInCirculation / REDEEM_POINTS_PER_1000VND * 1_000L);
+
+        return LoyaltyStatsDTO.builder()
+                .totalAccounts(totalAccounts)
+                .totalPointsInCirculation(totalPointsInCirculation)
+                .totalLifetimePoints(totalLifetimePoints)
+                .totalPointsRedeemed(totalPointsRedeemed)
+                .circulationValue(circulationValue)
                 .build();
     }
 

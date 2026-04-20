@@ -205,6 +205,8 @@ public class UserProductService implements IUserProductService {
                         .comment(review.getComment())
                         .createdAt(review.getCreatedAt())
                         .images(review.getImages())
+                        .adminReply(review.getAdminReply())
+                        .repliedAt(review.getRepliedAt())
                         .build()
                 )
                 .toList();

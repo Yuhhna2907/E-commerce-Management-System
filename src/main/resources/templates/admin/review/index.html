@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trung tâm Kiểm Duyệt Đánh Giá - Admin</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- CSS Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Toastify cho thông báo đẹp hơn -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255, 255, 255, 0.7);
+            --sz-glass-border: rgba(255, 255, 255, 0.4);
+            --sz-primary: #1A1C20;
+            --sz-text-muted: #86868b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f7;
+            color: var(--sz-primary);
+            background-image: radial-gradient(circle at 0% 0%, rgba(255, 193, 7, 0.05) 0%, transparent 50%),
+                              radial-gradient(circle at 100% 100%, rgba(13, 110, 253, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content {
+            flex-grow: 1; padding: 40px 50px;
+            height: 100vh; overflow-y: auto;
+        }
+
+        /* Tùy chỉnh Font tiêu đề */
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
+
+        /* BENTO CARDS */
+        .bento-card {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-card {
+            background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%);
+            color: white; border: none;
+        }
+        
+        /* DATA TABLE BENTO */
+        .glass-table-container {
+            background: white; border-radius: 24px; padding: 20px 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+        .custom-table thead th {
+            border: none; color: var(--sz-text-muted); font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 1px; padding: 0 20px 10px 20px; font-weight: 700;
+        }
+        .custom-table tbody tr {
+            background: #f8f9fa; transition: all 0.2s;
+        }
+        .custom-table tbody tr:hover { transform: scale(1.005); box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: white;}
+        .custom-table tbody td { border: none; padding: 20px; vertical-align: middle; }
+        .custom-table tbody tr td:first-child { border-radius: 16px 0 0 16px; }
+        .custom-table tbody tr td:last-child { border-radius: 0 16px 16px 0; }
+
+        .star-rating i { color: #FFC107; font-size: 0.9rem; }
+        .star-rating-empty i { color: #e9ecef; font-size: 0.9rem; }
+
+        /* TOGGLE SWITCH LỚN */
+        .form-switch .form-check-input { width: 3em; height: 1.5em; cursor: pointer; }
+        .form-switch .form-check-input:checked { background-color: #198754; border-color: #198754; }
+
+        /* REVIEW IMAGES */
+        .review-img { width: 45px; height: 45px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;}
+        .review-img:hover { opacity: 0.8; transform: scale(1.1); transition: all 0.2s; }
+        
+        .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+            <div>
+                <a th:href="@{/admin/dashboard}" class="text-decoration-none fw-bold text-muted mb-2 d-block"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
+                <h1 class="fw-bolder mb-0 text-dark">Kiểm Duyệt Nội Dung</h1>
+            </div>
+            <div>
+                 <span class="badge bg-white text-dark border px-3 py-2 rounded-pill fw-bold shadow-sm"><i class="bi bi-shield-check text-success me-1"></i> Không gian an toàn</span>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 fade-up" style="animation-delay: 0.1s;">
+                <div class="bento-card bg-white d-flex flex-column justify-content-between p-4">
+                    <div class="d-flex justify-content-between">
+                        <i class="bi bi-stars fs-3 text-warning mb-2"></i>
+                        <span class="badge bg-light text-dark fw-bold border">Rating Hệ Thống</span>
+                    </div>
+                    <div class="mt-2">
+                        <h1 class="display-5 fw-bolder mb-0 text-dark">
+                            <span th:text="${avgRating != null ? #numbers.formatDecimal(avgRating, 1, 1, 'POINT') : '0.0'}">0.0</span> <span class="fs-4 text-warning">⭐</span>
+                        </h1>
+                        <span class="fw-medium text-muted">Dựa trên <span class="fw-bold text-dark" th:text="${totalReviews}">0</span> đánh giá</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-5 fade-up" style="animation-delay: 0.2s;">
+                <div class="bento-card bg-white p-4">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="letter-spacing: 1px;"><i class="bi bi-bar-chart-fill me-1"></i> Phân Bổ Chất Lượng</h6>
+                    <div class="d-flex flex-column gap-2 mt-2">
+                        <div class="d-flex align-items-center">
+                            <span class="text-secondary fw-bold" style="width: 50px;">5 ⭐</span>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar bg-success rounded-pill" th:style="'width: ' + (${totalReviews > 0 ? (fiveStarReviews * 100 / totalReviews) : 0}) + '%'"></div>
+                            </div>
+                            <span class="ms-3 fw-bold text-dark" th:text="${fiveStarReviews}">0</span>
+                        </div>
+                        <div class="d-flex align-items-center mt-1">
+                            <span class="text-secondary fw-bold" style="width: 50px;">1 ⭐</span>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar bg-danger rounded-pill" th:style="'width: ' + (${totalReviews > 0 ? (oneStarReviews * 100 / totalReviews) : 0}) + '%'"></div>
+                            </div>
+                            <span class="ms-3 fw-bold text-dark" th:text="${oneStarReviews}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 fade-up" style="animation-delay: 0.3s;">
+                <div class="bento-card bg-danger bg-opacity-10 border-danger border-opacity-25 d-flex flex-column justify-content-center align-items-center text-center p-4">
+                    <i class="bi bi-shield-x display-4 text-danger opacity-75 mb-2"></i>
+                    <h2 class="fw-bolder text-danger mb-0" th:text="${blockedReviews}">0</h2>
+                    <span class="fw-bold text-danger opacity-75 small text-uppercase">Bình luận bị khóa</span>
+                </div>
+            </div>
+            <div class="col-md-8 fade-up" style="animation-delay: 0.2s;">
+                <!-- Filter Bento -->
+                <div class="bento-card bg-white p-4 d-flex flex-column justify-content-center">
+                    <h6 class="fw-bold text-muted mb-3 text-uppercase" style="letter-spacing: 1px;"><i class="bi bi-funnel-fill me-1"></i> Bộ Lọc Kép</h6>
+                    <form method="get" th:action="@{/admin/reviews}" class="row g-3 align-items-center">
+                        <div class="col-md-5">
+                            <div class="position-relative">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                <input type="text" name="keyword" class="form-control bg-light border-0 rounded-pill ps-5 fw-bold py-2 shadow-none" placeholder="Tìm theo tên SP, User, hoặc Nội dung..." th:value="${keyword}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="rating" class="form-select bg-light border-0 fw-bold rounded-pill text-secondary py-2 shadow-none" onchange="this.form.submit()">
+                                <option value="" class="fw-bold">Tất cả sao</option>
+                                <option value="5" th:selected="${rating == 5}">⭐⭐⭐⭐⭐ (5 Tuyệt vời)</option>
+                                <option value="4" th:selected="${rating == 4}">⭐⭐⭐⭐ (4 Tốt)</option>
+                                <option value="3" th:selected="${rating == 3}">⭐⭐⭐ (3 Tạm ổn)</option>
+                                <option value="2" th:selected="${rating == 2}">⭐⭐ (2 Kém)</option>
+                                <option value="1" th:selected="${rating == 1}">⭐ (1 Tệ hại)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold w-100 py-2">Quét Dữ Liệu <i class="bi bi-radar ms-1"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-table-container fade-up" style="animation-delay: 0.3s;">
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Khách Hàng</th>
+                            <th>Mặt Hàng Đánh Giá</th>
+                            <th style="min-width: 250px;">Nội Dung Bình Luận</th>
+                            <th class="text-center">Minh Chứng</th>
+                            <th class="text-center">Phê Duyệt Hiện Thị</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="r : ${reviews}">
+                            <tr th:id="'reviewRow-' + ${r.id}" th:classappend="${!r.approved} ? 'opacity-50' : ''">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                            [[${#strings.substring(r.user.username,0,1).toUpperCase()}]]
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark fs-6">[[${r.user.username}]]</div>
+                                            <div class="text-muted small">[[${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}]]</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bolder text-dark" style="font-size: 0.9rem;">[[${r.product.name}]]</div>
+                                    <div class="small text-muted mt-1">ID: #[[${r.product.id}]]</div>
+                                </td>
+                                <td>
+                                    <!-- Render Stars -->
+                                    <div class="mb-1">
+                                        <span class="star-rating">
+                                            <i class="bi bi-star-fill" th:each="i : ${#numbers.sequence(1, r.rating)}"></i>
+                                        </span>
+                                        <span class="star-rating-empty" th:if="${r.rating < 5}">
+                                            <i class="bi bi-star-fill" th:each="i : ${#numbers.sequence(1, 5 - r.rating)}"></i>
+                                        </span>
+                                    </div>
+                                    <div class="fw-medium text-dark text-break" style="font-size: 0.95rem; max-width: 300px;">
+                                        "[[${r.comment}]]"
+                                    </div>
+                                    
+                                    <!-- Trigger Reply Button -->
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm text-primary fw-bold p-0 border-0 bg-transparent" type="button" data-bs-toggle="collapse" th:data-bs-target="'#replyBox-' + ${r.id}" aria-expanded="false">
+                                            <i class="bi bi-reply-fill"></i> [[${r.adminReply != null ? 'Xem / Sửa phản hồi' : 'Phản hồi khách hàng'}]]
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center flex-wrap" style="max-width: 100px;">
+                                        <img th:each="img : ${r.images}" th:src="${img.imageUrl}" class="review-img" onclick="window.open(this.src)">
+                                        <span th:if="${#lists.isEmpty(r.images)}" class="text-muted small fw-bold bg-light px-2 py-1 rounded">Không có</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-flex justify-content-center align-items-center h-100 flex-column mt-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" th:checked="${r.approved}" onchange="toggleReview(this, [[${r.id}]])">
+                                        <span class="badge fw-bold mt-2" th:classappend="${r.approved} ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'" th:text="${r.approved} ? 'Hiển thị Web' : 'Đã Ẩn / Khóa'" th:id="'badge-' + ${r.id}">Hiển thị</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Hộp Phản hồi (Collapse) -->
+                            <tr>
+                                <td colspan="5" class="p-0 border-0">
+                                    <div class="collapse bg-light rounded-bottom-4 mb-3" th:id="'replyBox-' + ${r.id}">
+                                        <div class="p-3 ps-5 border-start border-3 border-primary ms-4 my-2">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="fw-bold text-primary"><i class="bi bi-person-workspace me-1"></i> Shop Phản Hồi:</span>
+                                                <span class="badge bg-warning text-dark fw-bold" th:if="${r.repliedAt != null}"><i class="bi bi-check2-circle"></i> Đã trả lời</span>
+                                            </div>
+                                            <form th:id="'replyForm-' + ${r.id}" onsubmit="submitReply(event, [[${r.id}]])">
+                                                <textarea class="form-control bg-white shadow-sm border-0 mb-2 fw-medium" rows="2" placeholder="Nhập câu trả lời xoa dịu khách hàng..." required name="replyMessage">[[${r.adminReply}]]</textarea>
+                                                <div class="text-end">
+                                                    <button type="submit" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm rounded-pill"><i class="bi bi-send me-1"></i> Gửi Đi</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </th:block>
+                        <tr th:if="${#lists.isEmpty(reviews)}">
+                            <td colspan="5" class="text-center py-5">
+                                <i class="bi bi-chat-heart text-muted opacity-25" style="font-size: 3rem;"></i>
+                                <h6 class="text-muted fw-bold mt-3">Khu vực này hiện tại trống vắng!</h6>
+                                <p class="small text-muted mb-0">Rất có thể chưa ai đánh giá hoặc sếp lọc quá kỹ.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHÂN TRANG -->
+            <nav class="mt-4" th:if="${reviewPage.totalPages > 1}">
+                <ul class="pagination justify-content-center border-0">
+                    <li class="page-item" th:classappend="${reviewPage.first} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 fw-bold me-1 text-dark bg-light shadow-sm" th:href="@{/admin/reviews(page=${reviewPage.number - 1}, keyword=${keyword}, rating=${rating})}"><i class="bi bi-chevron-left"></i> Lui Lại</a>
+                    </li>
+                    <li class="page-item" th:classappend="${reviewPage.last} ? 'disabled'">
+                        <a class="page-link rounded-pill border-0 fw-bold ms-1 text-dark bg-light shadow-sm" th:href="@{/admin/reviews(page=${reviewPage.number + 1}, keyword=${keyword}, rating=${rating})}">Đi Tới <i class="bi bi-chevron-right"></i></a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+    function toggleReview(checkbox, reviewId) {
+        // Disable box để không bị bấm double
+        checkbox.disabled = true;
+        let isChecked = checkbox.checked;
+        
+        fetch(`/admin/reviews/${reviewId}/toggle`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                Toastify({
+                  text: data.message,
+                  duration: 3000,
+                  gravity: "bottom", position: "right",
+                  style: { background: isChecked ? "#198754" : "#6c757d", borderRadius: "8px", fontWeight: "bold" },
+                }).showToast();
+                
+                // Mở lại nút
+                checkbox.disabled = false;
+                
+                // Đổi badge & độ mờ
+                const badge = document.getElementById('badge-' + reviewId);
+                const row = document.getElementById('reviewRow-' + reviewId);
+                
+                if(data.newStatus) { // Approved = true
+                    badge.className = "badge fw-bold mt-2 bg-success bg-opacity-10 text-success";
+                    badge.innerText = "Hiển thị Web";
+                    row.classList.remove('opacity-50');
+                } else { // Approved = false
+                    badge.className = "badge fw-bold mt-2 bg-secondary bg-opacity-10 text-secondary";
+                    badge.innerText = "Đã Ẩn / Khóa";
+                    row.classList.add('opacity-50');
+                }
+                
+                checkbox.checked = data.newStatus; 
+            } else {
+                Toastify({ text: data.message, duration: 3000, style: { background: "#dc3545" } }).showToast();
+                checkbox.checked = !isChecked; // Revert
+                checkbox.disabled = false;
+            }
+        })
+        .catch(err => {
+            checkbox.checked = !isChecked;
+            checkbox.disabled = false;
+        });
+    }
+
+    function submitReply(e, reviewId) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch(`/admin/reviews/${reviewId}/reply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if(resData.status === 'success') {
+                Toastify({ text: resData.message, duration: 3000, style: { background: "#198754" } }).showToast();
+                setTimeout(() => location.reload(), 800); // Reload to update "Đã trả lời" badge and analytics if any
+            } else {
+                Toastify({ text: resData.message, duration: 3000, style: { background: "#dc3545" } }).showToast();
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = oldHtml;
+            btn.disabled = false;
+        });
+    }
+</script>
+</body>
+</html>

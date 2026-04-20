@@ -1070,21 +1070,41 @@
                             <form id="couponApplyForm" th:action="@{/user/coupons/apply}" method="POST"
                                   style="display: none;">
                                 <input type="hidden" name="couponCode" id="submitCouponCode">
+                                <input type="hidden" name="shippingCouponCode" id="submitShippingCouponCode">
                             </form>
 
                             <!-- Mã Giảm Giá Khuyến Mãi -->
                             <div class="coupon-section pb-3 border-bottom border-light">
-                                <label class="form-label fw-bold small text-muted">MÃ GIẢM GIÁ / VOUCHER</label>
+                                <label class="form-label fw-bold small text-muted"><i class="bi bi-truck text-info"></i> MÃ MIỄN PHÍ VẬN CHUYỂN</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="shippingCouponCodeInput" id="shippingCouponCodeInput"
+                                           th:value="${appliedShippingCouponCode}" placeholder="Nhập mã Freeship..."
+                                           style="border-radius: 8px 0 0 8px;">
+                                    <button class="btn btn-info fw-bold text-white px-3" type="button"
+                                            onclick="applyBothCoupons()"
+                                            style="border-radius: 0 8px 8px 0;">Áp dụng
+                                    </button>
+                                </div>
+
+                                <label class="form-label fw-bold small text-muted"><i class="bi bi-tags text-warning"></i> MÃ GIẢM GIÁ SẢN PHẨM / ĐƠN HÀNG</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" name="couponCode" id="couponCodeInput"
                                            th:value="${appliedCouponCode}" placeholder="Nhập mã ưu đãi..."
                                            style="border-radius: 8px 0 0 8px;">
                                     <button class="btn btn-warning fw-bold text-dark px-3" type="button"
                                             id="btnApplyCoupon"
-                                            onclick="document.getElementById('submitCouponCode').value = document.getElementById('couponCodeInput').value; document.getElementById('couponApplyForm').submit();"
+                                            onclick="applyBothCoupons()"
                                             style="border-radius: 0 8px 8px 0;">Áp dụng
                                     </button>
                                 </div>
+
+                                <script>
+                                    function applyBothCoupons() {
+                                        document.getElementById('submitCouponCode').value = document.getElementById('couponCodeInput').value;
+                                        document.getElementById('submitShippingCouponCode').value = document.getElementById('shippingCouponCodeInput').value;
+                                        document.getElementById('couponApplyForm').submit();
+                                    }
+                                </script>
 
                                 <!-- Thông báo kết quả từ SSR -->
                                 <div th:if="${successCoupon != null}" class="small mt-2 text-success"
@@ -1098,6 +1118,7 @@
 
                                 <!-- Hidden Field để gửi kèm form checkout tổng (đặt hàng) -->
                                 <input type="hidden" th:field="*{couponCode}">
+                                <input type="hidden" th:field="*{shippingCouponCode}">
                             </div>
 
                             <div class="summary-row mt-3">
@@ -1114,8 +1135,16 @@
                                 <span id="shippingFeeText" class="fw-bold text-success">Tính sau khi chọn địa chỉ</span>
                             </div>
 
-                            <div class="summary-row" id="discountRow" th:if="${discountAmt != null}">
-                                <span class="text-warning fw-bold"><i class="bi bi-tag-fill"></i> Giảm giá</span>
+                            <div class="summary-row" id="shippingDiscountRow" th:if="${shippingDiscountAmt != null && shippingDiscountAmt > 0}">
+                                <span class="text-info fw-bold"><i class="bi bi-truck"></i> Giảm giá vận chuyển</span>
+                                <span class="fw-bold text-info d-inline-flex align-items-baseline gap-1">
+                                -<span th:text="${#numbers.formatDecimal(shippingDiscountAmt, 0, 'COMMA', 0, 'POINT')}"></span>
+                                <span class="opacity-75" style="font-size: 0.82em;">₫</span>
+                            </span>
+                            </div>
+
+                            <div class="summary-row" id="discountRow" th:if="${discountAmt != null && discountAmt > 0}">
+                                <span class="text-warning fw-bold"><i class="bi bi-tag-fill"></i> Giảm giá đơn hàng</span>
                                 <span class="fw-bold text-warning d-inline-flex align-items-baseline gap-1"
                                       id="discountValue">
                                 -<span th:text="${#numbers.formatDecimal(discountAmt, 0, 'COMMA', 0, 'POINT')}">0</span> <span

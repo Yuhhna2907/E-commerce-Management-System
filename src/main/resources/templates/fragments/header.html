@@ -540,6 +540,16 @@
                           th:text="${(loyaltyPoints != null ? loyaltyPoints : 0) + ' pts'}">0 pts</span>
                 </a>
 
+                <!-- 🪙 SmartZone Xu (Wallet) -->
+                <a th:href="@{/user/wallet}"
+                   class="icon-action-btn nav-interactive-glow position-relative"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="bottom"
+                   th:title="|Ví SmartZone Xu — Số dư: ${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : 0}₫|"
+                   aria-label="Ví SmartZone Xu">
+                    <i class="bi bi-coin" style="color: #f59e0b; font-size: 1.4rem;"></i>
+                </a>
+
 
                 <div class="nav-item dropdown position-relative">
                     <a href="#" class="icon-action-btn nav-interactive-glow position-relative"

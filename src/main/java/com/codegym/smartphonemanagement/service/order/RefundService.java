@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
+@Service("orderRefundService")
 @RequiredArgsConstructor
 public class RefundService {
 
@@ -114,7 +114,7 @@ public class RefundService {
             // Calculate already refunded quantity for this item
             int alreadyRefundedQty = refundRequestRepository.findByOrderId(order.getId())
                     .stream()
-                    .filter(r -> r.getStatus() == RefundStatus.APPROVED)
+                    .filter(r -> r.getStatus() == RefundStatus.COMPLETED )
                     .flatMap(r -> r.getItems().stream())
                     .filter(ri -> ri.getOrderItem().getId().equals(orderItem.getId()))
                     .mapToInt(RefundItem::getQuantity)
@@ -168,7 +168,7 @@ public class RefundService {
         for (OrderItem oi : order.getItems()) {
             int alreadyRefundedQty = refundRequestRepository.findByOrderId(order.getId())
                     .stream()
-                    .filter(r -> r.getStatus() == RefundStatus.APPROVED || r.getStatus() == RefundStatus.PENDING)
+                    .filter(r -> r.getStatus() == RefundStatus.COMPLETED || r.getStatus() == RefundStatus.PENDING)
                     .flatMap(r -> r.getItems().stream())
                     .filter(ri -> ri.getOrderItem().getId().equals(oi.getId()))
                     .mapToInt(RefundItem::getQuantity)
@@ -217,7 +217,7 @@ public class RefundService {
             throw new BadRequestException("Yêu cầu hoàn trả này đã được xử lý.");
         }
 
-        req.setStatus(RefundStatus.APPROVED);
+        req.setStatus(RefundStatus.COMPLETED);
         req.setAdminNote(adminNote);
         refundRequestRepository.save(req);
 
@@ -296,7 +296,7 @@ public class RefundService {
             throw new BadRequestException("Yêu cầu hoàn trả này đã được xử lý.");
         }
 
-        req.setStatus(RefundStatus.REJECTED);
+        req.setStatus(RefundStatus.FAILED);
         req.setAdminNote(adminNote);
         refundRequestRepository.save(req);
 
@@ -346,7 +346,7 @@ public class RefundService {
         // Lấy tất cả approved refunds + current request
         List<RefundRequest> approvedReqs = refundRequestRepository.findByOrderId(order.getId())
                 .stream()
-                .filter(r -> r.getStatus() == RefundStatus.APPROVED || r.getId().equals(currentReq.getId()))
+                .filter(r -> r.getStatus() == RefundStatus.COMPLETED || r.getId().equals(currentReq.getId()))
                 .collect(Collectors.toList());
 
         // Tổng hợp quantity đã refund cho mỗi orderItem

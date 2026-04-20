@@ -32,4 +32,21 @@ public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> 
      * Xóa tất cả ảnh của một review
      */
     void deleteByReviewId(Long reviewId);
+    
+    /**
+     * Check if file exists in database by image path or thumbnail path
+     */
+    @Query("SELECT COUNT(ri) > 0 FROM ReviewImage ri WHERE ri.imagePath = :imagePath OR ri.thumbnailPath = :thumbnailPath")
+    boolean existsByImagePathOrThumbnailPath(@Param("imagePath") String imagePath, @Param("thumbnailPath") String thumbnailPath);
+    
+    /**
+     * Find images by processing status
+     */
+    List<ReviewImage> findByProcessingStatus(ReviewImage.ProcessingStatus status);
+    
+    /**
+     * Find images that need cleanup (orphaned files)
+     */
+    @Query("SELECT ri FROM ReviewImage ri WHERE ri.processingStatus = 'FAILED' AND ri.uploadDate < :cutoffDate")
+    List<ReviewImage> findFailedImagesOlderThan(@Param("cutoffDate") java.time.LocalDateTime cutoffDate);
 }

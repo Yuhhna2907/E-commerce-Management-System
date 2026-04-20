@@ -25,4 +25,9 @@ public class ReviewResponseDTO {
     private LocalDateTime createdAt;
     
     private List<ReviewImage> images;
+
+    private String adminReply;
+
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    private LocalDateTime repliedAt;
 }

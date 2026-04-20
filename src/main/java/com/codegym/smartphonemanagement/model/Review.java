@@ -61,6 +61,13 @@ public class Review {
     @Column(nullable = false)
     private Boolean approved = true;
 
+    // ====== Admin Reply ======
+    @Column(columnDefinition = "TEXT")
+    private String adminReply;
+
+    @Column
+    private LocalDateTime repliedAt;
+
     // ====== Thời gian ======
     @Column(nullable = false)
     private LocalDateTime createdAt;
