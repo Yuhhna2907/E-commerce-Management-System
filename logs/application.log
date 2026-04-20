@@ -38148,3 +38148,121 @@ Caused by: jakarta.persistence.TransactionRequiredException: Executing an update
     where
         c1_0.status=?
 2026-04-20 08:45:00.007 [MessageBroker-6] TRACE org.hibernate.orm.jdbc.bind - binding parameter (1:ENUM) <- [ACTIVE]
+2026-04-20 08:46:00.011 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        c1_0.id,
+        c1_0.code,
+        c1_0.coupon_category,
+        c1_0.current_usage_global,
+        c1_0.description,
+        c1_0.discount_type,
+        c1_0.discount_value,
+        c1_0.end_date,
+        c1_0.max_discount_amount,
+        c1_0.max_usage_global,
+        c1_0.min_order_value,
+        c1_0.per_user_limit,
+        c1_0.start_date,
+        c1_0.status,
+        c1_0.version 
+    from
+        coupons c1_0 
+    where
+        c1_0.status=?
+2026-04-20 08:46:00.011 [MessageBroker-2] TRACE org.hibernate.orm.jdbc.bind - binding parameter (1:ENUM) <- [ACTIVE]
+2026-04-20 08:47:00.037 [MessageBroker-2] DEBUG org.hibernate.SQL - 
+    select
+        c1_0.id,
+        c1_0.code,
+        c1_0.coupon_category,
+        c1_0.current_usage_global,
+        c1_0.description,
+        c1_0.discount_type,
+        c1_0.discount_value,
+        c1_0.end_date,
+        c1_0.max_discount_amount,
+        c1_0.max_usage_global,
+        c1_0.min_order_value,
+        c1_0.per_user_limit,
+        c1_0.start_date,
+        c1_0.status,
+        c1_0.version 
+    from
+        coupons c1_0 
+    where
+        c1_0.status=?
+2026-04-20 08:47:00.037 [MessageBroker-2] TRACE org.hibernate.orm.jdbc.bind - binding parameter (1:ENUM) <- [ACTIVE]
+2026-04-20 08:48:00.033 [MessageBroker-9] DEBUG org.hibernate.SQL - 
+    select
+        c1_0.id,
+        c1_0.code,
+        c1_0.coupon_category,
+        c1_0.current_usage_global,
+        c1_0.description,
+        c1_0.discount_type,
+        c1_0.discount_value,
+        c1_0.end_date,
+        c1_0.max_discount_amount,
+        c1_0.max_usage_global,
+        c1_0.min_order_value,
+        c1_0.per_user_limit,
+        c1_0.start_date,
+        c1_0.status,
+        c1_0.version 
+    from
+        coupons c1_0 
+    where
+        c1_0.status=?
+2026-04-20 08:48:00.033 [MessageBroker-9] TRACE org.hibernate.orm.jdbc.bind - binding parameter (1:ENUM) <- [ACTIVE]
+2026-04-20 08:48:35.881 [File Watcher] INFO  o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 18 class path changes (6 additions, 0 deletions, 12 modifications)
+2026-04-20 08:48:36.105 [Thread-5] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-04-20 08:48:36.160 [tomcat-shutdown] INFO  o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-04-20 08:48:39.718 [tomcat-shutdown] INFO  o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-04-20 08:48:39.741 [Thread-5] INFO  o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-04-20 08:48:39.888 [Thread-5] DEBUG org.springframework.web.SimpLogging - clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2026-04-20 08:48:39.901 [Thread-5] DEBUG org.springframework.web.SimpLogging - clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2026-04-20 08:48:39.903 [Thread-5] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopping...
+2026-04-20 08:48:39.926 [Thread-5] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@2298aae8]]
+2026-04-20 08:48:39.926 [Thread-5] DEBUG org.springframework.web.SimpLogging - clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@2298aae8]
+2026-04-20 08:48:39.926 [Thread-5] DEBUG org.springframework.web.SimpLogging - brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@2298aae8]
+2026-04-20 08:48:39.929 [Thread-5] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Stopped.
+2026-04-20 08:48:39.932 [Thread-5] DEBUG org.springframework.web.SimpLogging - clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2026-04-20 08:48:39.932 [Thread-5] DEBUG org.springframework.web.SimpLogging - brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2026-04-20 08:48:40.541 [Thread-5] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-20 08:48:42.410 [Thread-5] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-04-20 08:48:42.653 [Thread-5] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-04-20 08:48:45.062 [restartedMain] INFO  c.c.s.SmartphoneManagementApplication - Starting SmartphoneManagementApplication using Java 17.0.18 with PID 32688 (C:\Users\Luong Anh Huy\IdeaProjects\E-commerce-Management-System\out\production\classes started by Luong Anh Huy in C:\Users\Luong Anh Huy\IdeaProjects\E-commerce-Management-System)
+2026-04-20 08:48:45.062 [restartedMain] INFO  c.c.s.SmartphoneManagementApplication - The following 1 profile is active: "local"
+2026-04-20 08:48:51.047 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-20 08:48:52.684 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 1632 ms. Found 38 JPA repository interfaces.
+2026-04-20 08:48:55.507 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-04-20 08:48:55.515 [restartedMain] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-04-20 08:48:55.517 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-04-20 08:48:55.517 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.53]
+2026-04-20 08:48:56.018 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-04-20 08:48:56.018 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 10933 ms
+2026-04-20 08:48:56.620 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-20 08:48:56.633 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-04-20 08:48:56.698 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-20 08:48:56.704 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Starting...
+2026-04-20 08:48:57.512 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5e3bdc71
+2026-04-20 08:48:57.513 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Start completed.
+2026-04-20 08:48:57.523 [restartedMain] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+	Database driver: undefined/unknown
+	Database version: 8.0.45
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-04-20 08:48:59.007 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-20 08:48:59.228 [restartedMain] DEBUG org.hibernate.SQL - 
+    alter table point_transactions 
+       modify column type enum ('ADMIN_ADJUST','EARNED','REDEEMED','REFUND_DEDUCTED') not null
+2026-04-20 08:48:59.403 [restartedMain] DEBUG org.hibernate.SQL - 
+    alter table sz_wallet_transactions 
+       modify column type enum ('ADMIN_TOP_UP','PAYMENT','REFUND_IN','WITHDRAWAL') not null
+2026-04-20 08:48:59.430 [restartedMain] DEBUG org.hibernate.SQL - 
+    alter table sz_withdrawal_requests 
+       modify column status enum ('APPROVED','PENDING','REJECTED') not null
+2026-04-20 08:49:00.136 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
