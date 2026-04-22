@@ -38,3 +38,7 @@ out/
 
 # Custom local properties
 application-local.properties
+
+# Runtime logs
+logs/
+*.log
