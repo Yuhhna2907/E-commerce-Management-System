@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codegym.smartphonemanagement.service.NotificationService;
+import com.codegym.smartphonemanagement.service.notification.AdminNotificationService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,6 +34,7 @@ public class RefundService {
     private final ProductVariantRepository productVariantRepository;
     private final ICouponService couponService;
     private final NotificationService notificationService;
+    private final AdminNotificationService adminNotificationService;
 
     private static final int REFUND_WINDOW_DAYS = 14;
 
@@ -202,6 +204,15 @@ public class RefundService {
 
         saveHistory(order, oldStatus, OrderStatus.REFUND_REQUESTED, "USER",
                 "Khách yêu cầu hoàn trả: " + dto.getReason());
+
+        // [NEW] Notify Admin
+        adminNotificationService.notify(
+                "Yêu cầu hoàn tiền mới #" + refundRequest.getId(),
+                "Khách hàng " + order.getUser().getFullName() + " yêu cầu hoàn tiền cho đơn hàng #" + order.getId() + ".",
+                AdminNotificationType.REFUND_REQUEST,
+                NotificationPriority.HIGH,
+                "/admin/refunds?id=" + refundRequest.getId()
+        );
 
         return mapToDTO(refundRequest);
     }

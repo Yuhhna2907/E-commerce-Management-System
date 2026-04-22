@@ -45,17 +45,16 @@ public class AdminSetupController {
                         .enabled(true)
                         .build();
             } else {
-                admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setEnabled(true);
             }
 
-            Set<Role> roles = new HashSet<>();
+            Set<Role> roles = admin.getRoles() != null ? new HashSet<>(admin.getRoles()) : new HashSet<>();
             roles.add(adminRole);
             admin.setRoles(roles);
 
             userRepository.save(admin);
 
-            return "Admin user setup completed. Username: admin, Password: admin123";
+            return "Admin user setup completed. Existing admin credentials were preserved.";
         } catch (Exception e) {
             return "Error setting up admin: " + e.getMessage();
         }

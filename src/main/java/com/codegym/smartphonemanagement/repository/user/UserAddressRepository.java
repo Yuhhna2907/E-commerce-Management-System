@@ -35,4 +35,7 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, Long> 
 
     // Performance optimization: Count addresses by user without loading all addresses
     long countByUserId(Long userId);
+
+    @Query("SELECT a.province FROM UserAddress a")
+    List<String> getAllProvinces();
 }

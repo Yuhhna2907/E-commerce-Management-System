@@ -8,23 +8,133 @@
 <!-- COMPONENT: ADMIN SIDEBAR -->
 <div th:fragment="sidebar" class="sidebar-container glass-panel p-3">
 <style>
-/* --- STYLES CHO SIDEBAR --- */
+/* --- HỆ THỐNG MÀU SẮC TOÀN CẦU (GLOBAL THEME) --- */
+:root {
+    --sz-bg: #f4f6f9;
+    --sz-glass: rgba(255, 255, 255, 0.7);
+    --sz-glass-border: rgba(255, 255, 255, 0.4);
+    --sz-text: #1A1C20;
+    --sz-text-muted: #6e6e73;
+    --sz-card-bg: #ffffff;
+    --sz-sidebar-link: #48484a;
+    --sz-sidebar-hover: rgba(255, 255, 255, 0.6);
+}
+
+/* ĐỊNH NGHĨA MIDNIGHT BLUE (DARK MODE) */
+body.dark-mode {
+    --sz-bg: #0f172a; /* Midnight Deep */
+    --sz-glass: rgba(30, 41, 59, 0.7);
+    --sz-glass-border: rgba(255, 255, 255, 0.1);
+    --sz-text: #f1f5f9;
+    --sz-text-muted: #94a3b8;
+    --sz-card-bg: #1e293b;
+    --sz-sidebar-link: #cbd5e1;
+    --sz-sidebar-hover: rgba(255, 255, 255, 0.05);
+}
+
+/* ÁP DỤNG BIẾN CHO BODY */
+body {
+    background-color: var(--sz-bg) !important;
+    color: var(--sz-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- STYLES CHO SIDEBAR (Sử dụng biến) --- */
 .sidebar-container {
+    width: 280px;
     height: calc(100vh - 40px);
     position: sticky;
     top: 20px;
+    background: var(--sz-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--sz-glass-border);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     padding: 20px 15px !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+    z-index: 1000;
+    overflow-x: hidden;
+}
+
+/* Script tự động áp dụng Dark Mode ngay lập tức */
+<script>
+    (function() {
+        const savedTheme = localStorage.getItem('admin-theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    })();
+</script>
+
+/* Scroll area cho nội dung menu */
+.sidebar-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0; /* QUAN TRỌNG: fix flexbox không cho scroll */
+}
+
+/* Custom Scrollbar cho scroll area */
+.sidebar-scroll-area::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(88, 86, 214, 0.3);
+    border-radius: 4px;
+}
+
+.sidebar-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .sidebar-heading {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--sz-text-muted, #8E8E93);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #5856D6;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin: 10px 0 10px 15px;
+    letter-spacing: 1.2px;
+    margin: 20px 0 12px 15px;
+    padding: 8px 12px;
+    background: rgba(88, 86, 214, 0.08);
+    border-radius: 8px;
+    border-left: 3px solid #5856D6;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.sidebar-heading:hover {
+    background: rgba(88, 86, 214, 0.15);
+}
+
+.sidebar-heading .chevron-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    color: #5856D6;
+}
+
+.sidebar-heading.collapsed .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.section-content.collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
 }
 
 .sidebar-link {
@@ -32,7 +142,7 @@
     display: flex;
     align-items: center;
     padding: 10px 15px;
-    color: #48484a;
+    color: var(--sz-sidebar-link);
     border-radius: 14px;
     margin-bottom: 5px;
     transition: all 0.2s ease;
@@ -54,21 +164,29 @@
     flex-shrink: 0;
 }
 
-.sidebar-link span.link-text {
+.sidebar-link span.link-text,
+.sidebar-heading,
+.brand-text {
     white-space: nowrap;
     opacity: 1;
-    transition: opacity 0.2s ease, width 0.2s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease;
+    overflow: hidden;
 }
 
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--sz-sidebar-hover);
     transform: translateX(3px);
 }
 
 .sidebar-collapsed { width: 80px !important; padding-left: 10px !important; padding-right: 10px !important; }
 .sidebar-collapsed .link-text,
 .sidebar-collapsed .sidebar-heading,
-.sidebar-collapsed .brand-text { display: none !important; }
+.sidebar-collapsed .brand-text { 
+    opacity: 0 !important; 
+    width: 0 !important; 
+    margin: 0 !important;
+    pointer-events: none;
+}
 .sidebar-collapsed .sidebar-link { justify-content: center; padding: 10px 0; }
 .sidebar-collapsed .sidebar-link .icon-box { margin-right: 0; }
 .sidebar-collapsed .brand-section { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; }
@@ -78,14 +196,14 @@
     position: absolute; top: 20px; right: -15px; width: 30px; height: 30px;
     background: white; border: 1px solid var(--sz-glass-border); border-radius: 50%;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; color: #1A1C20;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; color: var(--sz-text);
     transition: transform 0.3s ease;
 }
 .sidebar-collapsed .toggle-btn { transform: rotate(180deg); }
 
 .sidebar-link.active {
-    background: white;
-    color: var(--sz-dark, #1A1C20);
+    background: var(--sz-card-bg);
+    color: var(--sz-text);
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     font-weight: 600;
 }
@@ -96,89 +214,293 @@
     box-shadow: 0 4px 10px rgba(251, 189, 5, 0.3);
 }
 
+/* --- GLASS LOGOUT MODAL STYLES --- */
+.logout-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.logout-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+
+.logout-modal {
+    background: var(--sz-card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--sz-glass-border);
+    border-radius: 28px;
+    padding: 35px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    transform: scale(0.85);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logout-overlay.show .logout-modal {
+    transform: scale(1);
+}
+
+.logout-icon-box {
+    width: 70px;
+    height: 70px;
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 20px;
+}
+
+.logout-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--sz-text);
+    margin-bottom: 10px;
+}
+
+.logout-text {
+    color: #8E8E93;
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.logout-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-logout-confirm {
+    flex: 1;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.btn-logout-confirm:hover {
+    background: #c82333;
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+}
+
+.btn-logout-cancel {
+    flex: 1;
+    background: rgba(0,0,0,0.05);
+    color: #48484a;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-logout-cancel:hover {
+    background: rgba(0,0,0,0.08);
+}
+
 .bg-gradient-orange { background: linear-gradient(135deg, #fbbd05, #f59e0b); }
 </style>
-    <!-- Brand Info -->
-    <a th:href="@{/admin/dashboard}" class="brand-section mb-4 d-flex align-items-center px-3 mt-2 text-decoration-none">
-        <div class="icon-box-brand bg-gradient-orange rounded-3 p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
-            <i class="bi bi-apple text-white fs-5"></i>
-        </div>
-        <div class="brand-text">
-            <h6 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">SmartZone</h6>
-            <small class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">ENTERPRISE ADMIN</small>
-        </div>
-    </a>
+    <!-- Bọc toàn bộ nội dung menu vào sidebar-scroll-area -->
+    <div class="sidebar-scroll-area">
+        <!-- Brand Info -->
+        <a th:href="@{/admin/dashboard}" class="brand-section mb-4 d-flex align-items-center px-3 mt-2 text-decoration-none">
+            <div class="icon-box-brand bg-gradient-orange rounded-3 p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                <i class="bi bi-apple text-white fs-5"></i>
+            </div>
+            <div class="brand-text">
+                <h6 class="fw-bold mb-0" style="letter-spacing: -0.5px; color: var(--sz-text);">SmartZone</h6>
+                <small class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">ENTERPRISE ADMIN</small>
+            </div>
+        </a>
 
-    <!-- COLLAPSE TOGGLE -->
-    <div class="toggle-btn" id="sidebarToggle" title="Thu gọn sidebar">
-        <i class="bi bi-chevron-left small"></i>
+        <!-- COLLAPSE TOGGLE -->
+        <div class="toggle-btn" id="sidebarToggle" title="Thu gọn sidebar">
+            <i class="bi bi-chevron-left small"></i>
+        </div>
+
+        <!-- MASTER DASHBOARD - STANDALONE -->
+        <a th:href="@{/admin/dashboard}" class="sidebar-link mt-4" th:classappend="${pageTitle == 'dashboard' ? 'active' : ''}" title="Master Dashboard">
+            <div class="icon-box"><i class="bi bi-grid-1x2-fill"></i></div> 
+            <span class="link-text">Master Dashboard</span>
+        </a>
+
+        <!-- CORE BUSINESS -->
+        <div class="sidebar-heading mt-4" data-section="core-business">
+            <span>CORE BUSINESS</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+        </div>
+        <div class="section-content" data-section-content="core-business">
+            <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product' ? 'active' : ''}" title="Sản phẩm & Tồn kho">
+                <div class="icon-box"><i class="bi bi-phone-vibrate-fill"></i></div> 
+                <span class="link-text">Sản phẩm & Tồn kho</span>
+            </a>
+            <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order' ? 'active' : ''}" title="Xử lý Đơn hàng">
+                <div class="icon-box"><i class="bi bi-box-seam-fill"></i></div> 
+                <span class="link-text">Xử lý Đơn hàng</span>
+            </a>
+            <a th:href="@{/admin/refunds}" class="sidebar-link" th:classappend="${pageTitle == 'refund' ? 'active' : ''}" title="Duyệt Hoàn tiền">
+                <div class="icon-box"><i class="bi bi-arrow-return-left"></i></div> 
+                <span class="link-text">Duyệt Hoàn tiền</span>
+            </a>
+            <a th:href="@{/admin/reviews}" class="sidebar-link" th:classappend="${pageTitle == 'review' ? 'active' : ''}" title="Đánh giá & Bình luận">
+                <div class="icon-box"><i class="bi bi-chat-square-heart-fill"></i></div> 
+                <span class="link-text">Đánh giá & Bình luận</span>
+            </a>
+            <a th:href="@{/admin/qa}" class="sidebar-link" th:classappend="${pageTitle == 'qa' ? 'active' : ''}" title="Hỏi & Đáp Sản Phẩm">
+                <div class="icon-box"><i class="bi bi-patch-question-fill"></i></div> 
+                <span class="link-text">Hỏi & Đáp Sản Phẩm</span>
+            </a>
+        </div>
+
+        <!-- CRM & HR -->
+        <div class="sidebar-heading mt-4" data-section="crm-hr">
+            <span>CRM & HR</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+        </div>
+        <div class="section-content" data-section-content="crm-hr">
+            <a th:href="@{/admin/users}" class="sidebar-link" th:classappend="${pageTitle == 'user' ? 'active' : ''}" title="Quản lý Người dùng">
+                <div class="icon-box"><i class="bi bi-people-fill"></i></div> 
+                <span class="link-text">Quản lý Người dùng</span>
+            </a>
+            <a th:href="@{/admin/loyalty}" class="sidebar-link" th:classappend="${pageTitle == 'loyalty' ? 'active' : ''}" title="Hệ thống Loyalty">
+                <div class="icon-box"><i class="bi bi-star-fill"></i></div> 
+                <span class="link-text">Điểm Loyalty</span>
+            </a>
+            <a th:href="@{/admin/wallet}" class="sidebar-link" th:classappend="${pageTitle == 'wallet' ? 'active' : ''}" title="Ví SmartZone Xu">
+                <div class="icon-box"><i class="bi bi-coin"></i></div> 
+                <span class="link-text">Ví SmartZone Xu</span>
+            </a>
+            <a th:href="@{/admin/audit}" class="sidebar-link" th:classappend="${pageTitle == 'audit' ? 'active' : ''}" title="Nhật ký Giao dịch (Audit)">
+                <div class="icon-box"><i class="bi bi-shield-lock-fill"></i></div> 
+                <span class="link-text">Đối soát & Nhật ký</span>
+            </a>
+        </div>
+
+        <!-- MARKETING -->
+        <div class="sidebar-heading mt-4" data-section="marketing">
+            <span>MARKETING</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+        </div>
+        <div class="section-content" data-section-content="marketing">
+            <a th:href="@{/admin/coupons}" class="sidebar-link" th:classappend="${pageTitle == 'coupon' ? 'active' : ''}" title="Mã Khuyến mãi">
+                <div class="icon-box"><i class="bi bi-ticket-perforated-fill"></i></div> 
+                <span class="link-text">Mã Khuyến mãi</span>
+            </a>
+            <a th:href="@{/admin/broadcast}" class="sidebar-link" th:classappend="${pageTitle == 'broadcast' ? 'active' : ''}" title="Broadcast Thông báo">
+                <div class="icon-box"><i class="bi bi-megaphone-fill"></i></div> 
+                <span class="link-text">Broadcast Thông báo</span>
+            </a>
+        </div>
+
+        <!-- THỐNG KÊ - CHỈ CÁC CONTROLLER THỰC SỰ TỒN TẠI -->
+        <div class="sidebar-heading mt-4" data-section="analytics">
+            <span>THỐNG KÊ</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+        </div>
+        <div class="section-content" data-section-content="analytics">
+            <a th:href="@{/admin/analytics/products}" class="sidebar-link" th:classappend="${activePage == 'analytics-products' ? 'active' : ''}" title="Phân tích Sản phẩm">
+                <div class="icon-box"><i class="bi bi-box-seam-fill"></i></div>
+                <span class="link-text">Phân tích Sản phẩm</span>
+            </a>
+            <a th:href="@{/admin/analytics/orders}" class="sidebar-link" th:classappend="${activePage == 'analytics-orders' ? 'active' : ''}" title="Thống kê Đơn hàng">
+                <div class="icon-box"><i class="bi bi-bar-chart-line-fill"></i></div>
+                <span class="link-text">Thống kê Đơn hàng</span>
+            </a>
+            <a th:href="@{/admin/analytics/customers}" class="sidebar-link" th:classappend="${activePage == 'analytics-customers' ? 'active' : ''}" title="Báo cáo Khách hàng">
+                <div class="icon-box"><i class="bi bi-person-hearts"></i></div>
+                <span class="link-text">Báo cáo Khách hàng</span>
+            </a>
+            <a th:href="@{/admin/analytics/customer-service}" class="sidebar-link" th:classappend="${activePage == 'analytics-cs' ? 'active' : ''}" title="Thống kê CSKH & Q&A">
+                <div class="icon-box"><i class="bi bi-headset"></i></div>
+                <span class="link-text">Thống kê CSKH & Q&A</span>
+            </a>
+            <a th:href="@{/admin/analytics/marketing}" class="sidebar-link" th:classappend="${activePage == 'analytics-marketing' ? 'active' : ''}" title="Phân tích Marketing">
+                <div class="icon-box"><i class="bi bi-megaphone"></i></div>
+                <span class="link-text">Phân tích Marketing</span>
+            </a>
+            <a th:href="@{/admin/analytics/search}" class="sidebar-link" th:classappend="${activePage == 'analytics-search' ? 'active' : ''}" title="Xu hướng Tìm kiếm">
+                <div class="icon-box"><i class="bi bi-lightning-charge-fill"></i></div>
+                <span class="link-text">Xu hướng Tìm kiếm</span>
+            </a>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="sidebar-heading mt-4" data-section="settings">
+            <span>SETTINGS</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+        </div>
+        <div class="section-content" data-section-content="settings">
+            <a th:href="@{/admin/categories}" class="sidebar-link" th:classappend="${pageTitle == 'category' ? 'active' : ''}" title="Categories & Brands">
+                <div class="icon-box"><i class="bi bi-tags-fill"></i></div>
+                <span class="link-text">Categories & Brands</span>
+            </a>
+            <a th:href="@{/admin/setup}" class="sidebar-link" th:classappend="${pageTitle == 'setup' ? 'active' : ''}" title="System Setup">
+                <div class="icon-box"><i class="bi bi-gear-fill"></i></div>
+                <span class="link-text">System Setup</span>
+            </a>
+        </div>
+
+        <!-- CẤU HÌNH -->
+        <hr class="my-4 border-secondary opacity-10">
     </div>
 
-    <!-- CORE BUSINESS -->
-    <p class="sidebar-heading mt-4">CORE BUSINESS</p>
-    <a th:href="@{/admin/dashboard}" class="sidebar-link" th:classappend="${pageTitle == 'dashboard' ? 'active' : ''}" title="Master Dashboard">
-        <div class="icon-box"><i class="bi bi-grid-1x2-fill"></i></div> 
-        <span class="link-text">Master Dashboard</span>
-    </a>
-    <a th:href="@{/admin/products}" class="sidebar-link" th:classappend="${pageTitle == 'product' ? 'active' : ''}" title="Sản phẩm & Tồn kho">
-        <div class="icon-box"><i class="bi bi-phone-vibrate-fill"></i></div> 
-        <span class="link-text">Sản phẩm & Tồn kho</span>
-    </a>
-    <a th:href="@{/admin/orders}" class="sidebar-link" th:classappend="${pageTitle == 'order' ? 'active' : ''}" title="Xử lý Đơn hàng">
-        <div class="icon-box"><i class="bi bi-box-seam-fill"></i></div> 
-        <span class="link-text">Xử lý Đơn hàng</span>
-    </a>
-    <a th:href="@{/admin/refunds}" class="sidebar-link" th:classappend="${pageTitle == 'refund' ? 'active' : ''}" title="Duyệt Hoàn tiền">
-        <div class="icon-box"><i class="bi bi-arrow-return-left"></i></div> 
-        <span class="link-text">Duyệt Hoàn tiền</span>
-    </a>
-    <a th:href="@{/admin/reviews}" class="sidebar-link" th:classappend="${pageTitle == 'review' ? 'active' : ''}" title="Đánh giá & Bình luận">
-        <div class="icon-box"><i class="bi bi-chat-square-heart-fill"></i></div> 
-        <span class="link-text">Đánh giá & Bình luận</span>
-    </a>
-    <a th:href="@{/admin/qa}" class="sidebar-link" th:classappend="${pageTitle == 'qa' ? 'active' : ''}" title="Hỏi & Đáp Sản Phẩm">
-        <div class="icon-box"><i class="bi bi-patch-question-fill"></i></div> 
-        <span class="link-text">Hỏi & Đáp Sản Phẩm</span>
-    </a>
+    <!-- Theme Toggle & Sign Out -->
+    <div class="d-block mt-auto border-top border-secondary border-opacity-10 pt-3">
+        <!-- THEME TOGGLE -->
+        <button type="button" class="sidebar-link w-100 text-start border-0 bg-transparent mb-2 theme-toggle-btn" onclick="toggleSidebarTheme()" title="Đổi giao diện">
+            <div class="icon-box theme-icon-container">
+                <i class="bi bi-moon-stars-fill theme-icon"></i>
+            </div> 
+            <span class="fw-bold link-text theme-label">Dark Mode</span>
+        </button>
 
-    <!-- CRM & HR -->
-    <p class="sidebar-heading mt-4">CRM & HR</p>
-    <a th:href="@{/admin/users}" class="sidebar-link" th:classappend="${pageTitle == 'user' ? 'active' : ''}" title="Quản lý Người dùng">
-        <div class="icon-box"><i class="bi bi-people-fill"></i></div> 
-        <span class="link-text">Quản lý Người dùng</span>
-    </a>
-    <a th:href="@{/admin/loyalty}" class="sidebar-link" th:classappend="${pageTitle == 'loyalty' ? 'active' : ''}" title="Hệ thống Loyalty">
-        <div class="icon-box"><i class="bi bi-star-fill"></i></div> 
-        <span class="link-text">Điểm Loyalty</span>
-    </a>
-    <a th:href="@{/admin/wallet}" class="sidebar-link" th:classappend="${pageTitle == 'wallet' ? 'active' : ''}" title="Ví SmartZone Xu">
-        <div class="icon-box"><i class="bi bi-coin"></i></div> 
-        <span class="link-text">Ví SmartZone Xu</span>
-    </a>
-
-    <!-- GROWTH & MARKETING -->
-    <p class="sidebar-heading mt-4">MARKETING</p>
-    <a th:href="@{/admin/coupons}" class="sidebar-link" th:classappend="${pageTitle == 'coupon' ? 'active' : ''}" title="Mã Khuyến mãi">
-        <div class="icon-box"><i class="bi bi-ticket-perforated-fill"></i></div> 
-        <span class="link-text">Mã Khuyến mãi</span>
-    </a>
-    <a href="#" class="sidebar-link text-muted" title="Broadcast Thông báo (Sắp ra mắt)">
-        <div class="icon-box opacity-50"><i class="bi bi-megaphone-fill"></i></div> 
-        <span class="link-text">Broadcast Thông báo</span>
-        <span class="badge bg-warning text-dark ms-auto rounded-pill link-text" style="font-size:0.65rem">Soon</span>
-    </a>
-
-    <!-- CẤU HÌNH -->
-    <hr class="my-4 border-secondary opacity-10">
-    <form th:action="@{/logout}" method="post" class="d-block mt-auto">
-        <button type="submit" class="sidebar-link text-danger w-100 text-start border-0 bg-transparent mt-2 logout-btn" onclick="return confirm('Bạn có chắc muốn đăng xuất?')" title="Sign Out">
+        <button type="button" class="sidebar-link text-danger w-100 text-start border-0 bg-transparent logout-btn" onclick="showLogoutModal()" title="Sign Out">
             <div class="icon-box text-danger bg-danger bg-opacity-10"><i class="bi bi-box-arrow-right"></i></div> 
             <span class="fw-bold link-text">Sign Out</span>
         </button>
-    </form>
+    </div>
+
+    <!-- LOGOUT MODAL HTML -->
+    <div class="logout-overlay" id="logoutOverlay">
+        <div class="logout-modal">
+            <div class="logout-icon-box">
+                <i class="bi bi-box-arrow-right"></i>
+            </div>
+            <div class="logout-title">Xác nhận Đăng xuất</div>
+            <div class="logout-text">
+                Chào sếp! Sếp có chắc chắn muốn rời phiên làm việc hiện tại không?<br>
+                Mọi thay đổi chưa lưu có thể bị mất.
+            </div>
+            <div class="logout-actions">
+                <button type="button" class="btn-logout-cancel" onclick="hideLogoutModal()">Ở lại</button>
+                <form th:action="@{/logout}" method="post" id="logoutForm" class="flex-grow-1">
+                    <button type="submit" class="btn-logout-confirm w-100">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('Sidebar script loaded');
+            
             const toggleBtn = document.getElementById('sidebarToggle');
             const sidebar = document.querySelector('.sidebar-container');
             
@@ -187,14 +509,109 @@
                 sidebar.classList.add('sidebar-collapsed');
             }
 
-            // Gán sự kiện click
+            // Gán sự kiện click cho sidebar toggle
             if(toggleBtn) {
                 toggleBtn.addEventListener('click', () => {
                     sidebar.classList.toggle('sidebar-collapsed');
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
                 });
             }
+
+            // ===== SECTION COLLAPSE/EXPAND =====
+            const sectionHeadings = document.querySelectorAll('.sidebar-heading[data-section]');
+            console.log('Found section headings:', sectionHeadings.length);
+            
+            // Initialize all sections as expanded by default
+            sectionHeadings.forEach(heading => {
+                const sectionId = heading.getAttribute('data-section');
+                const content = document.querySelector(`[data-section-content="${sectionId}"]`);
+                
+                if (content) {
+                    // Load saved state or default to expanded
+                    const savedState = localStorage.getItem(`section-${sectionId}`);
+                    if (savedState === 'collapsed') {
+                        heading.classList.add('collapsed');
+                        content.classList.add('collapsed');
+                    }
+                    
+                    // Add click event
+                    heading.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        console.log('Section clicked:', sectionId);
+                        
+                        heading.classList.toggle('collapsed');
+                        content.classList.toggle('collapsed');
+                        
+                        // Save state to localStorage
+                        const isCollapsed = heading.classList.contains('collapsed');
+                        localStorage.setItem(`section-${sectionId}`, isCollapsed ? 'collapsed' : 'expanded');
+                        
+                        console.log('Section', sectionId, 'is now:', isCollapsed ? 'collapsed' : 'expanded');
+                    });
+                }
+            });
         });
+
+        // --- LOGOUT MODAL LOGIC ---
+        // Đẩy modal ra body để thoát khỏi stacking context của sidebar (backdrop-filter)
+        const logoutOverlay = document.getElementById('logoutOverlay');
+        if (logoutOverlay) {
+            document.body.appendChild(logoutOverlay);
+        }
+
+        function showLogoutModal() {
+            const overlay = document.getElementById('logoutOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
+        }
+
+        function hideLogoutModal() {
+            const overlay = document.getElementById('logoutOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        // Đóng khi click ra ngoài
+        window.onclick = function(event) {
+            const overlay = document.getElementById('logoutOverlay');
+            if (event.target == overlay) {
+                hideLogoutModal();
+            }
+        }
+        // --- THEME TOGGLE LOGIC ---
+        function toggleSidebarTheme() {
+            const body = document.body;
+            const icon = document.querySelector('.theme-icon');
+            const label = document.querySelector('.theme-label');
+            
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            
+            // Lưu trạng thái
+            localStorage.setItem('admin-theme', isDark ? 'dark' : 'light');
+            
+            // Cập nhật UI ngay lập tức
+            updateSidebarThemeUI(isDark);
+            
+            // Trigger event cho các component khác (như Chart.js) nếu cần
+            window.dispatchEvent(new Event('themeChanged'));
+        }
+
+        function updateSidebarThemeUI(isDark) {
+            const icon = document.querySelector('.theme-icon');
+            const label = document.querySelector('.theme-label');
+            if (icon && label) {
+                icon.className = isDark ? 'bi bi-sun-fill theme-icon' : 'bi bi-moon-stars-fill theme-icon';
+                label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+            }
+        }
+
+        // Khởi tạo UI theme khi load trang
+        const initialTheme = localStorage.getItem('admin-theme');
+        updateSidebarThemeUI(initialTheme === 'dark');
+
     </script>
 </div>
 

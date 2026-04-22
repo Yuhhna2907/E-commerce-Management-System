@@ -11,12 +11,13 @@ import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
 import com.codegym.smartphonemanagement.exception.InsufficientStockException;
 import com.codegym.smartphonemanagement.exception.InvalidOrderStatusException;
 import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codegym.smartphonemanagement.service.NotificationService;
 import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
-import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
+import com.codegym.smartphonemanagement.service.notification.AdminNotificationService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -37,10 +38,12 @@ public class OrderService implements IOrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderHistoryRepository orderHistoryRepository;
     private final RefundRequestRepository refundRequestRepository;
+    private final SearchLogRepository searchLogRepository;
     private final ICartService cartService;
     private final ICouponService couponService;
     private final NotificationService notificationService;
     private final RecommendationService recommendationService;
+    private final AdminNotificationService adminNotificationService;
     private final ILoyaltyPointService loyaltyPointService;
 
     // ======================= CONSTANTS =======================
@@ -105,6 +108,15 @@ public class OrderService implements IOrderService {
 
         // 7. Record history
         saveHistory(savedOrder, null, OrderStatus.PENDING, "SYSTEM", "Đơn hàng được tạo");
+
+        // [NEW] 8. Notify Admin
+        adminNotificationService.notify(
+                "Đơn hàng mới #" + savedOrder.getId(),
+                "Khách hàng " + user.getFullName() + " vừa đặt một đơn hàng mới trị giá " + savedOrder.getTotalPrice() + " đ.",
+                AdminNotificationType.NEW_ORDER,
+                NotificationPriority.HIGH,
+                "/admin/orders?id=" + savedOrder.getId()
+        );
 
         return mapToResponseDTO(savedOrder);
     }
@@ -182,6 +194,17 @@ public class OrderService implements IOrderService {
         // Update stock
         variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
         productVariantRepository.save(variant);
+
+        // [NEW] Check Low Stock
+        if (variant.getStockQuantity() <= 5) {
+            adminNotificationService.notify(
+                    "Cảnh báo hết hàng: " + variant.getVariantName(),
+                    "Sản phẩm " + variant.getVariantName() + " chỉ còn lại " + variant.getStockQuantity() + " chiếc trong kho.",
+                    AdminNotificationType.LOW_STOCK,
+                    NotificationPriority.MEDIUM,
+                    "/admin/products?search=" + variant.getVariantName()
+            );
+        }
 
         // Create order item
         return OrderItem.builder()
@@ -318,6 +341,9 @@ public class OrderService implements IOrderService {
         
         // Award loyalty points
         awardLoyaltyPoints(order);
+        
+        // Track search conversion
+        trackSearchConversion(order);
     }
 
     private void updateRecommendations(Order order) {
@@ -357,6 +383,42 @@ public class OrderService implements IOrderService {
                 order.getUser(), message,
                 NotificationType.ORDER_STATUS_CHANGED,
                 "/user/loyalty");
+    }
+
+    /**
+     * Track search conversion when order is completed
+     * Updates SearchLog entries where user searched within last 30 minutes before order
+     */
+    private void trackSearchConversion(Order order) {
+        try {
+            // Only track for authenticated users
+            if (order.getUser() == null || order.getUser().getId() == null) {
+                return;
+            }
+            
+            // Find search logs from last 30 minutes that haven't been converted yet
+            LocalDateTime thirtyMinutesAgo = LocalDateTime.now().minusMinutes(30);
+            List<SearchLog> recentSearches = searchLogRepository.findRecentSearchesByUser(
+                    order.getUser().getId(),
+                    thirtyMinutesAgo
+            );
+            
+            // Update all recent searches as converted
+            if (!recentSearches.isEmpty()) {
+                LocalDateTime now = LocalDateTime.now();
+                recentSearches.forEach(searchLog -> {
+                    searchLog.setConverted(true);
+                    searchLog.setConversionTimestamp(now);
+                });
+                searchLogRepository.saveAll(recentSearches);
+                
+                log.info("Marked {} search logs as converted for user {} on order #{}",
+                        recentSearches.size(), order.getUser().getId(), order.getId());
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the order completion
+            log.error("Failed to track search conversion for order #{}", order.getId(), e);
+        }
     }
 
     private void handleOrderRefunded(Order order) {

@@ -52,4 +52,23 @@ public class AsyncConfiguration {
         
         return executor;
     }
+
+    /**
+     * Creates thread pool executor for broadcast processing
+     * Configured with a large queue to handle mass notifications
+     * 
+     * @return ThreadPoolTaskExecutor configured for broadcast processing
+     */
+    @Bean(name = "broadcastExecutor")
+    public Executor broadcastExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(5000);
+        executor.setThreadNamePrefix("broadcast-");
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.initialize();
+        return executor;
+    }
 }

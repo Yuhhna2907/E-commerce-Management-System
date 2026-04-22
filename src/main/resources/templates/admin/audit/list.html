@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Auditing - SmartZone Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark Mode Overrides cho Audit */
+        body.dark-mode .glass-panel { background: var(--sz-glass); border-color: var(--sz-glass-border); }
+        body.dark-mode .audit-table tbody tr { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .audit-table tbody tr:hover { background: rgba(255,255,255,0.06); }
+        body.dark-mode .audit-table code { color: #cbd5e1 !important; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
+        body.dark-mode .filter-section { background: rgba(255,255,255,0.02); }
+        body.dark-mode .form-control, body.dark-mode .form-select { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f1f5f9; }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .page-link { background: rgba(255,255,255,0.05); color: #cbd5e1; }
+        body.dark-mode .bg-success-subtle { background: rgba(25, 135, 84, 0.15) !important; color: #75b798 !important; }
+        body.dark-mode .bg-danger-subtle { background: rgba(220, 53, 69, 0.15) !important; color: #ea868f !important; }
+        body.dark-mode .bg-warning-subtle { background: rgba(251, 189, 5, 0.15) !important; color: #ffda6a !important; }
+
+        /* --- ANIMATIONS --- */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; padding: 30px 40px; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        .audit-table thead th {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--sz-text-muted);
+            padding: 10px 20px;
+            border: none;
+        }
+        .audit-table tbody tr {
+            background: white;
+            transition: all 0.2s;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .audit-table tbody tr:hover {
+            transform: scale(1.005);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .audit-table tbody td {
+            padding: 18px 20px;
+            border: none;
+            vertical-align: middle;
+        }
+        .audit-table tbody tr td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .audit-table tbody tr td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .bg-success-subtle { background: #e6f4ea; color: #1e7e34; }
+        .bg-danger-subtle { background: #fdf2f2; color: #d62b2b; }
+        .bg-warning-subtle { background: #fff9e6; color: #856404; }
+
+        .type-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 12px;
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 10px 15px;
+            background: white;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 3px rgba(251, 189, 5, 0.15);
+            border-color: var(--sz-orange);
+        }
+
+        .pagination .page-link {
+            border: none;
+            margin: 0 3px;
+            border-radius: 8px;
+            color: var(--sz-dark);
+            font-weight: 500;
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--sz-orange);
+            color: white;
+        }
+
+        /* Tooltip style animation */
+        .integrity-verified { color: #198754; }
+        .integrity-warning { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        <!-- GLOBAL HEADER -->
+        <!-- HEADER TRANG -->
+        <div class="page-header fade-up">
+            <div>
+                <h3 class="fw-bold mb-1">Payment Auditing 🛡️</h3>
+                <p class="text-muted small mb-0">Hệ thống nhật ký đối soát giao dịch thời gian thực.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/admin/audit/export(search=${search}, type=${type})}" class="btn btn-success btn-sm rounded-pill px-3 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Xuất CSV
+                </a>
+                <button onclick="location.reload()" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
+                </button>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filter-section glass-panel">
+            <form th:action="@{/admin/audit}" method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Mã Giao dịch (Reference)</label>
+                    <input type="text" name="search" th:value="${search}" class="form-control" placeholder="Tìm mã VNPay hoặc Wallet ID...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Loại Giao dịch</label>
+                    <select name="type" class="form-select">
+                        <option value="">Tất cả các loại</option>
+                        <option th:each="t : ${types}" th:value="${t}" th:text="${t}" th:selected="${t == type}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold">
+                        <i class="bi bi-funnel-fill me-1"></i> Lọc dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- AUDIT TABLE -->
+        <div class="table-responsive">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Loại</th>
+                        <th>Mã Tham Chiếu</th>
+                        <th>Số Tiền</th>
+                        <th>User ID</th>
+                        <th>IP Address</th>
+                        <th>Trạng Thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="log : ${logs.content}">
+                        <td class="text-muted small fw-medium" th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}">20/04/2024 12:00:00</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="type-icon" th:classappend="${log.type.name().contains('VNPAY') ? 'bg-primary bg-opacity-10 text-primary' : 'bg-warning bg-opacity-10 text-warning'}">
+                                    <i class="bi" th:classappend="${log.type.name().contains('VNPAY') ? 'bi-credit-card-2-front' : 'bi-wallet2'}"></i>
+                                </div>
+                                <span class="fw-bold small" th:text="${log.type}">VNPAY</span>
+                            </div>
+                        </td>
+                        <td>
+                            <code class="fw-bold text-dark" th:text="${log.transactionReference}">VNP12345678</code>
+                        </td>
+                        <td>
+                            <span class="fw-bold" th:text="${#numbers.formatCurrency(log.amount)}">1,000,000₫</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary rounded-pill px-2" th:text="${log.userId ?: 'Guest'}">101</span>
+                        </td>
+                        <td class="small text-muted" th:text="${log.ipAddress}">192.168.1.1</td>
+                        <td>
+                            <span class="badge-status" 
+                                  th:classappend="${log.status.name() == 'SUCCESS' ? 'bg-success-subtle' : (log.status.name() == 'FAILED' ? 'bg-danger-subtle' : 'bg-warning-subtle')}"
+                                  th:text="${log.status}">
+                                SUCCESS
+                            </span>
+                        </td>
+                    </tr>
+                    <tr th:if="${logs.isEmpty()}">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-shield-slash fs-1 text-muted opacity-25"></i>
+                            <p class="mt-2 text-muted">Không tìm thấy dữ liệu đối soát nào.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <nav th:if="${logs.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${logs.first ? 'disabled' : ''}">
+                    <a class="page-link" th:href="@{/admin/audit(page=${logs.number - 1}, search=${search}, type=${type})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}" th:classappend="${i == logs.number ? 'active' : ''}">
+                    <a class="page-link" th:href="@{/admin/audit(page=${i}, search=${search}, type=${type})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${logs.last ? 'disabled' : ''}">
+                    <a class="page-link" th:href="@{/admin/audit(page=${logs.number + 1}, search=${search}, type=${type})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification Center - SmartZone Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: var(--sz-bg);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.04) 0%, transparent 40%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-text);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark Mode Overrides cho Notifications */
+        body.dark-mode .filter-pill { background: rgba(255,255,255,0.05); color: #cbd5e1; border-color: rgba(255,255,255,0.1); }
+        body.dark-mode .notification-card { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; padding: 25px 40px; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Hero Header */
+        .notif-hero {
+            padding: 40px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .notif-hero::after {
+            content: ''; position: absolute; top: -50px; right: -50px;
+            width: 200px; height: 200px; border-radius: 50%;
+            background: rgba(251, 189, 5, 0.1); filter: blur(50px);
+        }
+
+        /* Filter Pills */
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .filter-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); color: var(--sz-orange); }
+        .filter-pill.active { background: var(--sz-orange); color: white; border-color: var(--sz-orange); }
+
+        /* Notification Timeline */
+        .notification-card {
+            margin-bottom: 15px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border-left: 5px solid transparent;
+        }
+        .notification-card:hover { transform: translateX(5px); border-color: var(--sz-orange); }
+        .notification-card.unread { background: rgba(251, 189, 5, 0.03); border-left-color: var(--sz-orange); }
+        
+        .priority-dot {
+            width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;
+        }
+        .priority-CRITICAL { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .priority-WARNING { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+        .priority-INFO { background: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+
+        .type-badge {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            margin-left: 10px;
+        }
+
+        .action-btns {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .notification-card:hover .action-btns { opacity: 1; }
+
+        /* --- Empty State --- */
+        .empty-state {
+            padding: 100px 40px;
+            text-align: center;
+        }
+        .empty-state i { font-size: 5rem; color: #cbd5e1; margin-bottom: 20px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        <!-- HERO -->
+        <div class="notif-hero d-flex justify-content-between align-items-center">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2 text-white-50">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-white-50 text-decoration-none">Dashboard</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Notifications</li>
+                    </ol>
+                </nav>
+                <h1 class="fw-bold mb-0">Trung tâm Thông báo</h1>
+                <p class="text-white-50 mb-0 mt-1">Quản lý và giám sát mọi hoạt động của hệ thống SmartZone</p>
+            </div>
+            <div class="text-end">
+                <div class="h2 fw-bold mb-0" th:text="${unreadCount}">0</div>
+                <small class="text-white-50 text-uppercase letter-spacing-1">Chưa đọc</small>
+                <button class="btn btn-warning btn-sm mt-3 d-block w-100 rounded-pill fw-bold" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-1"></i> Đã đọc hết
+                </button>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filter-container">
+            <a th:href="@{/admin/notifications(type='ALL', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'ALL' ? 'active' : ''}">Tất cả</a>
+            <a th:href="@{/admin/notifications(type='NEW_ORDER', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'NEW_ORDER' ? 'active' : ''}">Đơn hàng</a>
+            <a th:href="@{/admin/notifications(type='REFUND_REQUEST', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'REFUND_REQUEST' ? 'active' : ''}">Hoàn tiền</a>
+            <a th:href="@{/admin/notifications(type='NEW_QUESTION', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'NEW_QUESTION' ? 'active' : ''}">Hỏi đáp</a>
+            <a th:href="@{/admin/notifications(type='LOW_STOCK', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'LOW_STOCK' ? 'active' : ''}">Kho hàng</a>
+            <a th:href="@{/admin/notifications(type='SECURITY_ALERT', unreadOnly=${unreadOnly})}" 
+               class="filter-pill" th:classappend="${activeFilter == 'SECURITY_ALERT' ? 'active' : ''}">Bảo mật</a>
+            
+            <div class="ms-auto d-flex align-items-center">
+                <div class="form-check form-switch bg-white px-3 py-2 rounded-pill shadow-sm border border-light">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="unreadToggle" th:checked="${unreadOnly}" 
+                           onchange="toggleUnreadOnly()">
+                    <label class="form-check-label small fw-bold text-muted" for="unreadToggle">Chưa đọc</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION LIST -->
+        <div class="glass-panel p-4">
+            <div th:if="${notifications.empty}" class="empty-state">
+                <i class="bi bi-bell-slash"></i>
+                <h4 class="fw-bold text-muted">Không có thông báo nào</h4>
+                <p class="text-muted small">Mọi thứ hiện tại đều ổn định!</p>
+            </div>
+
+            <div th:each="n : ${notifications}" 
+                 class="notification-card p-4 rounded-4 bg-white shadow-sm border border-light d-flex align-items-start gap-4"
+                 th:classappend="${!n.isRead ? 'unread' : ''}" th:id="'notif-' + ${n.id}">
+                
+                <div class="notif-icon-box p-3 rounded-4" 
+                     th:classappend="${'bg-' + (n.priority.name() == 'CRITICAL' ? 'danger' : (n.priority.name() == 'WARNING' ? 'warning' : 'primary')) + '-subtle'}">
+                     <i class="bi" th:classappend="${n.type.name() == 'NEW_ORDER' ? 'bi-cart-plus' : (n.type.name() == 'SECURITY_ALERT' ? 'bi-shield-exclamation' : 'bi-bell')}"></i>
+                </div>
+
+                <div class="flex-grow-1 pe-5">
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="priority-dot" th:classappend="'priority-' + ${n.priority}"></span>
+                        <h6 class="fw-bold mb-0 text-dark" th:text="${n.title}">Tiêu đề</h6>
+                        <span class="type-badge" th:text="${n.type}" 
+                              th:style="'background: rgba(' + (n.priority.name() == 'CRITICAL' ? '239, 68, 68' : '251, 189, 5') + ', 0.1); color: ' + (n.priority.name() == 'CRITICAL' ? '#ef4444' : '#d97706')">
+                              Type
+                        </span>
+                    </div>
+                    <div class="text-muted small mb-3" th:text="${n.message}">Nội dung thông báo</div>
+                    
+                    <div class="d-flex align-items-center gap-3 mt-auto">
+                        <span class="small text-muted fw-bold">
+                            <i class="bi bi-clock me-1"></i>
+                            <span th:text="${#temporals.format(n.createdAt, 'HH:mm - dd/MM/yyyy')}">12:00 - 01/01/2024</span>
+                        </span>
+                        <a th:if="${n.targetUrl != null}" th:href="${n.targetUrl}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-bold" style="font-size: 0.7rem;">
+                            Chi tiết <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="action-btns">
+                    <button th:if="${!n.isRead}" class="btn btn-light btn-sm rounded-circle shadow-sm" 
+                            th:onclick="'markSingleAsRead(' + ${n.id} + ')'" title="Đánh dấu đã đọc">
+                        <i class="bi bi-check2 text-success"></i>
+                    </button>
+                    <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Xóa">
+                        <i class="bi bi-trash text-danger"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    function getCsrfToken() {
+        const name = "XSRF-TOKEN=";
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const ca = decodedCookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+        }
+        return "";
+    }
+
+    function toggleUnreadOnly() {
+        const isChecked = document.getElementById('unreadToggle').checked;
+        const url = new URL(window.location.href);
+        url.searchParams.set('unreadOnly', isChecked);
+        window.location.href = url.toString();
+    }
+
+    function markSingleAsRead(id) {
+        fetch(`/api/admin/notifications/mark-read/${id}`, {
+            method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken()
+            }
+        }).then(res => {
+            if (res.ok) {
+                const card = document.getElementById(`notif-${id}`);
+                card.classList.remove('unread');
+                card.querySelector('.action-btns button').remove();
+                // Reload count later or just minus 1
+                location.reload(); 
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        if (!confirm('Sếp có chắc chắn muốn đánh dấu đã đọc toàn bộ thông báo không?')) return;
+        
+        fetch('/api/admin/notifications/mark-all-read', {
+            method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken()
+            }
+        }).then(res => {
+            if (res.ok) location.reload();
+        });
+    }
+</script>
+
+</body>
+</html>

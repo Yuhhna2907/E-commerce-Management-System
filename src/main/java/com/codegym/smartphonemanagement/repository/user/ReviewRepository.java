@@ -48,4 +48,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.rating = 1")
     long countOneStarReviews();
+
+    // --- ANALYTICS ---
+
+    @Query("SELECT r.product.id, AVG(r.rating), COUNT(r.id) " +
+           "FROM Review r GROUP BY r.product.id")
+    List<Object[]> countRatingsByProduct();
+
+    @Query("SELECT r.product.id, COUNT(r.id) " +
+           "FROM Review r WHERE r.rating <= 2 " +
+           "GROUP BY r.product.id")
+    List<Object[]> findProductsWithNegativeReviews();
 }

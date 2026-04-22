@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.service.category;
 
 import com.codegym.smartphonemanagement.model.Category;
+import com.codegym.smartphonemanagement.model.dto.BrandStatDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
@@ -72,4 +73,64 @@ public interface ICategoryService {
      * @return true if another category with this name exists, false otherwise
      */
     boolean existsByNameAndIdNot(String name, Long id);
+    
+    // ===== BRAND MANAGEMENT METHODS =====
+    
+    /**
+     * Get statistics for all brands including product count and market share
+     * @return List of brand statistics
+     */
+    List<BrandStatDTO> getBrandStatistics();
+    
+    /**
+     * Get all unique brand names from products
+     * @return List of brand names
+     */
+    List<String> getAllBrands();
+    
+    /**
+     * Get total count of all products
+     * @return Total products count
+     */
+    Long getTotalProductsCount();
+    
+    /**
+     * Rename a brand across all products
+     * @param oldName Current brand name
+     * @param newName New brand name
+     */
+    void renameBrand(String oldName, String newName);
+    
+    /**
+     * Merge source brand into target brand
+     * @param sourceBrand Brand to be merged (will be removed)
+     * @param targetBrand Target brand (will keep)
+     */
+    void mergeBrands(String sourceBrand, String targetBrand);
+    
+    /**
+     * Delete a brand (set all products with this brand to null or default)
+     * @param brandName Brand name to delete
+     */
+    void deleteBrand(String brandName);
+    
+    // ===== BULK OPERATIONS =====
+    
+    /**
+     * Bulk activate multiple categories
+     * @param categoryIds List of category IDs to activate
+     */
+    void bulkActivateCategories(List<Long> categoryIds);
+    
+    /**
+     * Bulk deactivate multiple categories
+     * @param categoryIds List of category IDs to deactivate
+     */
+    void bulkDeactivateCategories(List<Long> categoryIds);
+    
+    /**
+     * Bulk delete multiple categories
+     * @param categoryIds List of category IDs to delete
+     */
+    void bulkDeleteCategories(List<Long> categoryIds);
 }

@@ -10,28 +10,46 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <style>
-        :root {
-            --sz-glass-bg: rgba(255,255,255,0.7);
-            --sz-glass-border: rgba(255,255,255,0.4);
-            --sz-primary: #1A1C20;
-            --sz-text-muted: #86868b;
-        }
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f5f7;
-            color: var(--sz-primary);
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
             background-image:
                 radial-gradient(circle at 0% 0%, rgba(13,202,240,0.07) 0%, transparent 50%),
                 radial-gradient(circle at 100% 100%, rgba(13,110,253,0.05) 0%, transparent 50%);
             background-attachment: fixed;
+            transition: all 0.3s ease;
         }
+
+        /* Dark Mode Overrides cho Q&A Center */
+        body.dark-mode .bento-card { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .overdue-alert { background: linear-gradient(135deg, #451a1a, #2d1616); border-color: #632525; }
+        body.dark-mode .overdue-alert .text-dark { color: #fecaca !important; }
+        body.dark-mode .glass-table-container { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .custom-table tbody tr { background: rgba(255,255,255,0.02); }
+        body.dark-mode .custom-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode .bg-light { background-color: rgba(255,255,255,0.05) !important; }
+        body.dark-mode .btn-light { background: rgba(255,255,255,0.1); color: #cbd5e1; border: none; }
+        body.dark-mode .reply-modal-box { background: #1e293b; border-color: rgba(255,255,255,0.1); }
+        body.dark-mode .reply-tabs { background: #1a2234; border-bottom-color: rgba(255,255,255,0.05); }
+        body.dark-mode .reply-tab-btn { color: #94a3b8; }
+        body.dark-mode .reply-tab-btn.active { background: var(--sz-orange); color: #000; }
+        body.dark-mode .quick-reply-chip { background: #1a2234; border-color: rgba(255,255,255,0.1); color: #cbd5e1; }
+        body.dark-mode .quick-reply-chip:hover { background: #2d3748; border-color: #3b82f6; }
+        body.dark-mode textarea { background: #0f172a !important; color: #f1f5f9 !important; border: 1px solid rgba(255,255,255,0.1) !important; }
+        body.dark-mode .filter-pill:not(.active) { background: rgba(255,255,255,0.05); color: #cbd5e1; }
+        body.dark-mode .filter-pill.active { background: var(--sz-orange); color: #000; }
+        body.dark-mode [style*="background:white"] { background-color: var(--sz-card-bg) !important; }
         .admin-layout { display: flex; min-height: 100vh; }
         .main-content { flex-grow: 1; padding: 40px 50px; height: 100vh; overflow-y: auto; }
         h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; }
 
         .bento-card {
-            background: var(--sz-glass-bg);
+            background: var(--sz-glass);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--sz-glass-border);
             border-radius: 24px; padding: 28px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.04);
@@ -97,101 +115,152 @@
         /* MODAL */
         .reply-modal-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
             z-index: 9999; align-items: center; justify-content: center;
         }
         .reply-modal-overlay.show { display: flex; }
         .reply-modal-box {
-            background: white; border-radius: 24px; padding: 36px;
-            max-width: 640px; width: 92%;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.15);
-            animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+            background: white; border-radius: 32px; padding: 0;
+            max-width: 850px; width: 95%;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.2);
+            animation: modalSlideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.8);
         }
-        @keyframes modalSlideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes modalSlideUp { from { opacity:0; transform: translateY(40px); } to { opacity:1; transform: translateY(0); } }
 
-        /* QUICK REPLY CHIPS */
-        .quick-reply-chip {
-            display: inline-block; padding: 5px 14px; border-radius: 20px;
-            background: #f0f4ff; border: 1px solid #c2d0ff;
-            color: #3558c9; font-size: 0.78rem; font-weight: 600;
-            cursor: pointer; transition: all 0.15s ease; user-select: none;
+        /* QUICK REPLY TABS */
+        .reply-tabs {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex; gap: 10px;
         }
-        .quick-reply-chip:hover { background: #3558c9; color: white; transform: translateY(-1px); }
+        .reply-tab-btn {
+            background: transparent; border: none; padding: 8px 18px;
+            border-radius: 99px; font-weight: 700; font-size: 0.82rem;
+            color: #666; transition: all 0.2s;
+        }
+        .reply-tab-btn.active { background: #1A1C20; color: white; }
+
+        .reply-templates-grid {
+            display: none; padding: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            max-height: 250px; overflow-y: auto;
+        }
+        .reply-templates-grid.show { display: grid; }
+
+        .quick-reply-chip {
+            padding: 12px 16px; border-radius: 16px;
+            background: white; border: 1.5px solid #eee;
+            color: #1A1C20; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .quick-reply-chip:hover { border-color: #0d6efd; background: #f0f7ff; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(13,110,253,0.1); }
+        .quick-reply-chip .chip-title { font-weight: 800; color: #0d6efd; font-size: 0.72rem; text-transform: uppercase; }
+
+        /* PURCHASE BADGE */
+        .purchase-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 99px;
+            font-size: 0.68rem; font-weight: 800;
+            text-transform: uppercase; margin-top: 4px;
+        }
+        .purchase-badge.tier-bronze { background: rgba(205,127,50,0.1); color: #cd7f32; border: 1px solid rgba(205,127,50,0.2); }
+        .purchase-badge.tier-silver { background: rgba(148,163,184,0.1); color: #64748b; border: 1px solid rgba(148,163,184,0.2); }
+        .purchase-badge.tier-gold   { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+        .purchase-badge.tier-diamond { background: rgba(99,102,241,0.1); color: #4f46e5; border: 1px solid rgba(99,102,241,0.2); }
 
         .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
         @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
 <div class="admin-layout">
     <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
     <div class="main-content">
+        <!-- HEADER TRANG -->
 
         <!-- HEADER -->
-        <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+        <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
             <div>
-                <a th:href="@{/admin/dashboard}" class="text-decoration-none fw-bold text-muted mb-2 d-block">
-                    <i class="bi bi-arrow-left me-1"></i> Dashboard
-                </a>
-                <h1 class="fw-bolder mb-0 text-dark">Trạm Giải Đáp Thắc Mắc</h1>
-                <p class="text-muted mb-0 mt-1" style="font-size:0.9rem">Quản lý & phản hồi toàn bộ câu hỏi sản phẩm từ khách hàng</p>
+                <h1 class="fw-900 mb-0 text-dark" style="font-size: 2.5rem; letter-spacing: -1.5px;">Q&A <span class="text-primary">Pro Center</span></h1>
+                <p class="text-muted mb-0 fw-medium">Hệ thống điều phối & phản hồi khách hàng thông minh</p>
             </div>
-            <span class="badge bg-white text-dark border px-3 py-2 rounded-pill fw-bold shadow-sm">
-                <i class="bi bi-patch-question-fill text-info me-1"></i> Q&amp;A Center
-            </span>
+            <div class="d-flex gap-3">
+                <div class="glass-card px-4 py-2 rounded-pill border d-flex align-items-center gap-2 shadow-sm" style="background:white">
+                    <span class="pulse-red"></span>
+                    <small class="fw-bold text-dark">Hệ thống đang trực tuyến</small>
+                </div>
+                <a th:href="@{/admin/dashboard}" class="btn btn-dark rounded-pill px-4 fw-bold">
+                    <i class="bi bi-grid-fill me-2"></i> Dashboard
+                </a>
+            </div>
         </div>
 
         <!-- ⚠️ OVERDUE ALERT BANNER -->
         <div class="overdue-alert mb-4 fade-up" style="animation-delay:0.05s"
              th:if="${overdueCount != null and overdueCount > 0}">
-            <i class="bi bi-exclamation-triangle-fill text-danger fs-4 flex-shrink-0"></i>
-            <div class="flex-grow-1">
-                <span class="fw-bolder text-danger">Cảnh báo phản hồi chậm!</span>
-                <span class="text-dark ms-2">Có
-                    <strong class="text-danger" th:text="${overdueCount}">0</strong>
-                    câu hỏi chưa được trả lời đã <strong>quá 24 giờ</strong>. Hãy ưu tiên xử lý ngay!
-                </span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:45px;height:45px;">
+                    <i class="bi bi-fire fs-4"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="fw-900 mb-0 text-danger">PHẢN HỒI KHẨN CẤP!</h6>
+                    <p class="text-dark mb-0 small fw-medium">Bạn có <strong class="text-danger" th:text="${overdueCount}">0</strong> câu hỏi chưa trả lời đã quá 24h. Sự hài lòng của khách hàng đang bị ảnh hưởng!</p>
+                </div>
+                <a th:href="@{/admin/qa(status='unanswered')}" class="btn btn-danger rounded-pill fw-bold px-4 flex-shrink-0 shadow">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> XỬ LÝ NGAY
+                </a>
             </div>
-            <a th:href="@{/admin/qa(status='unanswered')}" class="btn btn-danger btn-sm rounded-pill fw-bold px-3 flex-shrink-0">
-                <i class="bi bi-lightning-fill me-1"></i> Xử lý ngay
-            </a>
         </div>
 
         <!-- STATS BENTO ROW -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-4 fade-up" style="animation-delay:0.1s">
-                <div class="bento-card bg-white d-flex flex-column justify-content-between">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <i class="bi bi-chat-dots-fill fs-3 text-info mb-2"></i>
-                        <span class="badge bg-light text-dark fw-bold border">Tổng</span>
+        <div class="row g-4 mb-5">
+            <div class="col-md-3 fade-up" style="animation-delay:0.1s">
+                <div class="bento-card bg-white border-0 shadow-sm overflow-hidden group">
+                    <div class="p-1 px-3 bg-primary text-white xsmall fw-bold text-uppercase position-absolute top-0 start-0" style="font-size:0.6rem; border-radius: 0 0 12px 0;">Tổng thu hồi</div>
+                    <div class="mt-3">
+                        <span class="text-muted xsmall fw-bold text-uppercase" style="letter-spacing:1px">Tất cả câu hỏi</span>
+                        <h2 class="fw-900 mb-0 mt-1" th:text="${totalQuestions}">0</h2>
                     </div>
-                    <div class="mt-2">
-                        <h1 class="display-5 fw-bolder mb-0 text-dark" th:text="${totalQuestions}">0</h1>
-                        <span class="fw-medium text-muted">câu hỏi từ tất cả sản phẩm</span>
-                    </div>
+                    <i class="bi bi-chat-square-text-fill position-absolute bottom-0 end-0 m-3 opacity-10" style="font-size:3rem"></i>
                 </div>
             </div>
-            <div class="col-md-4 fade-up" style="animation-delay:0.2s">
-                <a th:href="@{/admin/qa(status='unanswered')}" class="text-decoration-none h-100 d-block">
-                    <div class="bento-card bg-danger bg-opacity-10 border-danger border-opacity-25 d-flex flex-column justify-content-center align-items-center text-center h-100"
-                         style="cursor:pointer; transition: transform 0.2s;"
-                         onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
-                        <i class="bi bi-hourglass-split display-4 text-danger opacity-75 mb-2"></i>
-                        <h2 class="fw-bolder text-danger mb-0" th:text="${unansweredCount}">0</h2>
-                        <span class="fw-bold text-danger opacity-75 small text-uppercase">Chờ Phản Hồi</span>
-                        <span th:if="${overdueCount > 0}" class="badge bg-danger text-white mt-2 fw-bold">
-                            <i class="bi bi-clock-history me-1"></i>[[${overdueCount}]] quá 24h
-                        </span>
+            <div class="col-md-3 fade-up" style="animation-delay:0.2s">
+                <div class="bento-card border-0 shadow-sm overflow-hidden" 
+                     th:classappend="${unansweredCount > 0 ? 'bg-danger bg-opacity-10 border border-danger border-opacity-10' : 'bg-white'}">
+                    <div class="p-1 px-3 bg-danger text-white xsmall fw-bold text-uppercase position-absolute top-0 start-0" style="font-size:0.6rem; border-radius: 0 0 12px 0;">Cần xử lý</div>
+                    <div class="mt-3">
+                        <span class="text-danger xsmall fw-bold text-uppercase" style="letter-spacing:1px">Chờ phản hồi</span>
+                        <h2 class="fw-900 mb-0 mt-1 text-danger" th:text="${unansweredCount}">0</h2>
                     </div>
-                </a>
+                    <i class="bi bi-hourglass-split position-absolute bottom-0 end-0 m-3 opacity-10 text-danger" style="font-size:3rem"></i>
+                </div>
             </div>
-            <div class="col-md-4 fade-up" style="animation-delay:0.3s">
-                <div class="bento-card bg-success bg-opacity-10 border-success border-opacity-25 d-flex flex-column justify-content-center align-items-center text-center">
-                    <i class="bi bi-check2-circle display-4 text-success opacity-75 mb-2"></i>
-                    <h2 class="fw-bolder text-success mb-0" th:text="${answeredCount}">0</h2>
-                    <span class="fw-bold text-success opacity-75 small text-uppercase">Đã Trả Lời</span>
+            <div class="col-md-3 fade-up" style="animation-delay:0.3s">
+                <div class="bento-card bg-white border-0 shadow-sm overflow-hidden">
+                    <div class="p-1 px-3 bg-success text-white xsmall fw-bold text-uppercase position-absolute top-0 start-0" style="font-size:0.6rem; border-radius: 0 0 12px 0;">Hoàn tất</div>
+                    <div class="mt-3">
+                        <span class="text-success xsmall fw-bold text-uppercase" style="letter-spacing:1px">Đã giải đáp</span>
+                        <h2 class="fw-900 mb-0 mt-1 text-success" th:text="${answeredCount}">0</h2>
+                    </div>
+                    <i class="bi bi-check-all position-absolute bottom-0 end-0 m-3 opacity-10 text-success" style="font-size:4rem"></i>
+                </div>
+            </div>
+            <div class="col-md-3 fade-up" style="animation-delay:0.4s">
+                <div class="bento-card bg-white border-0 shadow-sm overflow-hidden">
+                    <div class="p-1 px-3 bg-warning text-white xsmall fw-bold text-uppercase position-absolute top-0 start-0" style="font-size:0.6rem; border-radius: 0 0 12px 0;">Tỷ lệ</div>
+                    <div class="mt-3">
+                        <span class="text-muted xsmall fw-bold text-uppercase" style="letter-spacing:1px">Độ hài lòng</span>
+                        <h2 class="fw-900 mb-0 mt-1">98%</h2>
+                    </div>
+                    <div class="progress mt-2" style="height:6px; background:#f0f0f0">
+                        <div class="progress-bar bg-warning" style="width: 98%"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,8 +319,17 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold text-dark" th:text="${q.user.username}">User</div>
-                                            <!-- Time badge: JS sẽ fill vào đây -->
-                                            <span class="time-badge mt-1 js-time-ago"
+                                            <!-- Tier Badge (Aligned with SmartZone Xu) -->
+                                            <div th:class="'purchase-badge tier-' + ${#strings.toLowerCase(q.tierLabel == 'Đồng' ? 'bronze' : (q.tierLabel == 'Bạc' ? 'silver' : (q.tierLabel == 'Vàng' ? 'gold' : 'diamond')))}">
+                                                <i th:class="'bi ' + ${q.tierIcon}"></i>
+                                                <span th:text="${q.tierLabel}">Tier</span>
+                                            </div>
+                                            <!-- Secondary: Order count for Newcomer balance -->
+                                            <div class="text-muted xsmall mt-1" style="font-size: 0.65rem; font-weight: 600;">
+                                                <i class="bi bi-cart2"></i> [[${q.userPurchaseCount}]] đơn hàng
+                                            </div>
+                                            <!-- Time badge -->
+                                            <span class="time-badge mt-2 js-time-ago"
                                                   th:attr="data-createdat=${q.createdAt},data-answered=${!#lists.isEmpty(q.answers)}">
                                                 <i class="bi bi-clock"></i> ...
                                             </span>
@@ -334,74 +412,103 @@
     </div><!-- /main-content -->
 </div><!-- /admin-layout -->
 
-<!-- ===================== REPLY MODAL ===================== -->
+<!-- ===================== REPLY MODAL PRO ===================== -->
 <div class="reply-modal-overlay" id="replyModalOverlay" onclick="closeReplyModal(event)">
     <div class="reply-modal-box">
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="p-4 px-5 bg-light border-bottom d-flex justify-content-between align-items-center">
             <div>
-                <h5 class="fw-bolder mb-0"><i class="bi bi-reply-fill text-primary me-2"></i>Trả Lời Câu Hỏi</h5>
-                <small class="text-muted" id="modalProductName">Sản phẩm: ...</small>
+                <h4 class="fw-bolder mb-0" style="letter-spacing:-0.5px">💡 Phản Hồi Chuyên Nghiệp</h4>
+                <p class="text-muted mb-0 small" id="modalProductName">Sản phẩm: ...</p>
             </div>
-            <button class="btn btn-sm btn-light rounded-circle" onclick="document.getElementById('replyModalOverlay').classList.remove('show')">
+            <button class="btn btn-dark rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;" 
+                    onclick="document.getElementById('replyModalOverlay').classList.remove('show')">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
 
-        <!-- Question preview -->
-        <div class="p-3 mb-3 rounded-3" style="background:#f8f9fa;border-left:3px solid #dee2e6;">
-            <p class="fw-bold text-dark mb-0 small" id="modalQuestionText">Câu hỏi...</p>
-        </div>
-
-        <!-- ⚡ Quick Reply Templates -->
-        <div class="mb-3">
-            <p class="text-muted small fw-bold mb-2 text-uppercase" style="letter-spacing:0.5px;">
-                <i class="bi bi-lightning-fill text-warning me-1"></i> Câu trả lời mẫu nhanh:
-            </p>
-            <div class="d-flex flex-wrap gap-2">
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('Sản phẩm được bảo hành chính hãng 12 tháng tại tất cả trung tâm bảo hành trên toàn quốc. Quý khách vui lòng giữ phiếu bảo hành để được hỗ trợ tốt nhất ạ!')">
-                    🛡️ Bảo hành 12T
-                </span>
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('Dạ sản phẩm hiện còn hàng và sẵn sàng giao ngay trong ngày (nội thành) hoặc 2-3 ngày (ngoại tỉnh). Quý khách có thể đặt hàng ngay ạ!')">
-                    📦 Còn hàng & giao ngay
-                </span>
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('Sản phẩm hỗ trợ trả góp 0% lãi suất qua thẻ tín dụng hoặc trả góp qua Home Credit, HD Saison với kỳ hạn 3-24 tháng. Quý khách liên hệ hotline để được tư vấn chi tiết!')">
-                    💳 Trả góp 0%
-                </span>
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('SmartZone áp dụng chính sách đổi trả trong vòng 30 ngày kể từ ngày nhận hàng nếu sản phẩm có lỗi từ nhà sản xuất. Quý khách vui lòng liên hệ hotline để được hỗ trợ!')">
-                    🔄 Đổi trả 30 ngày
-                </span>
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('Dạ sản phẩm này có đầy đủ các màu sắc và phiên bản bộ nhớ. Quý khách có thể chọn biến thể phù hợp ngay trên trang sản phẩm ạ!')">
-                    🎨 Phiên bản & màu sắc
-                </span>
-                <span class="quick-reply-chip"
-                      onclick="fillTemplate('Cảm ơn Quý khách đã quan tâm đến sản phẩm! Để được tư vấn chi tiết hơn, Quý khách vui lòng liên hệ hotline 1800-xxxx (miễn phí) hoặc chat trực tiếp với chúng tôi ạ.')">
-                    📞 Liên hệ tư vấn
-                </span>
+        <!-- Question Preview -->
+        <div class="px-5 py-4">
+            <div class="p-3 mb-4 rounded-4" style="background:#f8f9fa; border-left: 4px solid #1A1C20">
+                <div class="text-muted xsmall fw-bold text-uppercase mb-2" style="font-size:0.65rem">Câu hỏi của khách:</div>
+                <p class="fw-bold text-dark mb-0" id="modalQuestionText" style="font-size: 0.95rem;">...</p>
             </div>
-        </div>
 
-        <!-- Textarea -->
-        <textarea id="answerTextarea" class="form-control border-0 mb-2 fw-medium" rows="4"
-                  placeholder="Hoặc nhập câu trả lời tùy chỉnh..."
-                  style="background:#f8f9fa;resize:none;border-radius:12px;"
-                  oninput="updateCharCount()"></textarea>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <small class="text-muted"><span id="charCount">0</span> / 1000 ký tự</small>
-        </div>
+            <!-- TABS & TEMPLATES -->
+            <div class="mb-4">
+                <div class="reply-tabs">
+                    <button class="reply-tab-btn active" onclick="switchReplyTab('general', this)">Chung</button>
+                    <button class="reply-tab-btn" onclick="switchReplyTab('warranty', this)">Bảo hành</button>
+                    <button class="reply-tab-btn" onclick="switchReplyTab('stock', this)">Tồn kho</button>
+                    <button class="reply-tab-btn" onclick="switchReplyTab('finance', this)">Giá & Trả góp</button>
+                </div>
 
-        <!-- Actions -->
-        <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-light fw-bold rounded-pill px-4"
-                    onclick="document.getElementById('replyModalOverlay').classList.remove('show')">Hủy</button>
-            <button id="submitReplyBtn" class="btn btn-primary fw-bold rounded-pill px-4" onclick="submitAdminReply()">
-                <i class="bi bi-send me-1"></i> Gửi Trả Lời
-            </button>
+                <div id="tab-general" class="reply-templates-grid show">
+                    <div class="quick-reply-chip" onclick="fillTemplate('Dạ chào bạn, rất cảm ơn bạn đã dành sự quan tâm cho sản phẩm này của SmartZone ạ! Mời bạn xem qua thông tin chi tiết hoặc nhắn tin trực tiếp để nhân viên tư vấn kỹ hơn cho mình nhé.')">
+                        <span class="chip-title">Chào hỏi</span>
+                        Chào & Cảm ơn quan tâm
+                    </div>
+                    <div class="quick-reply-chip" onclick="fillTemplate('Chào bạn, phiên bản này hiện đang là mẫu bán chạy nhất tại SmartZone với cấu hình cực mạnh và thiết kế sang trọng. Bạn cần tư vấn thêm về màu sắc hay dung lượng bộ nhớ nào không ạ?')">
+                        <span class="chip-title">Tư vấn</span>
+                        Mẫu Hot / Best Seller
+                    </div>
+                    <div class="quick-reply-chip" onclick="fillTemplate('Dạ chào bạn, để được hỗ trợ tốt nhất và nhận ưu đãi riêng, mời bạn để lại SĐT hoặc gọi hotline 1800-xxxx (miễn phí). SmartZone luôn sẵn sàng hỗ trợ bạn 24/7 ạ!')">
+                        <span class="chip-title">Liên hệ</span>
+                        Yêu cầu để lại SĐT
+                    </div>
+                </div>
+
+                <div id="tab-warranty" class="reply-templates-grid">
+                    <div class="quick-reply-chip" onclick="fillTemplate('Chào bạn, sản phẩm mua tại SmartZone được bảo hành chính hãng 12 tháng tại tất cả các trung tâm bảo hành ủy quyền trên toàn quốc. Bộ sản phẩm bao gồm đầy đủ phụ kiện và phiếu bảo hành đi kèm ạ.')">
+                        <span class="chip-title">Chính sách</span>
+                        Bảo hành 12 tháng
+                    </div>
+                    <div class="quick-reply-chip" onclick="fillTemplate('Dạ chào bạn, SmartZone hỗ trợ chính sách 1 ĐỔI 1 trong vòng 30 ngày nếu máy có lỗi từ nhà sản xuất. Bạn hoàn toàn có thể yên tâm trải nghiệm sản phẩm ạ!')">
+                        <span class="chip-title">Đổi trả</span>
+                        1 Đổi 1 trong 30 ngày
+                    </div>
+                </div>
+
+                <div id="tab-stock" class="reply-templates-grid">
+                    <div class="quick-reply-chip" onclick="fillTemplate('Dạ sản phẩm này hiện vẫn đang còn hàng tại các chi nhánh SmartZone. Nếu bạn đặt online ngay hôm nay, hệ thống sẽ giao hàng hỏa tốc trong 2h (nội thành) hoặc 2-3 ngày (tỉnh) ạ.')">
+                        <span class="chip-title">Ghi chú</span>
+                        Còn hàng & Giao hỏa tốc
+                    </div>
+                    <div class="quick-reply-chip" onclick="fillTemplate('Chào bạn, mẫu này hiện đang tạm hết hàng do nhu cầu quá cao. Tuy nhiên dự kiến sẽ có hàng đợt mới sau 3-5 ngày nữa. Bạn có muốn đặt gạch trước để giữ giá ưu đãi không ạ?')">
+                        <span class="chip-title">Thông báo</span>
+                        Tạm hết & Hẹn ngày về
+                    </div>
+                </div>
+
+                <div id="tab-finance" class="reply-templates-grid">
+                    <div class="quick-reply-chip" onclick="fillTemplate('Chào bạn, SmartZone hỗ trợ TRẢ GÓP 0% qua thẻ tín dụng của hơn 20 ngân hàng, hoặc thủ tục duyệt nhanh chỉ cần CCCD qua công ty tài chính. Số tiền trả trước chỉ từ 10-30% thôi ạ.')">
+                        <span class="chip-title">Trả góp</span>
+                        Hỗ trợ Trả góp 0%
+                    </div>
+                    <div class="quick-reply-chip" onclick="fillTemplate('Dạ mức giá hiện tại là giá đã giảm kịch sàn trong chương trình khuyến mãi tháng này rồi ạ. Nếu bạn thanh toán qua VNPAY hoặc ví SmartZone sẽ được giảm thêm tối đa 500k nữa đó ạ!')">
+                        <span class="chip-title">Khuyến mãi</span>
+                        Giá tốt + Ưu đãi ví/bank
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing:1px">Nội dung phản hồi từ Admin:</label>
+            <textarea id="answerTextarea" class="form-control border-0 mb-2 fw-medium p-3" rows="4"
+                      placeholder="Nhập nội dung trả lời tùy chỉnh hoặc chọn từ mẫu bên trên..."
+                      style="background:#f4f4f9; resize:none; border-radius:18px; font-size: 0.95rem;"
+                      oninput="updateCharCount()"></textarea>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i> <span id="charCount">0</span> / 1000 ký tự (Auto-save enabled)</small>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary fw-bold rounded-pill px-4" 
+                            onclick="document.getElementById('replyModalOverlay').classList.remove('show')">Hủy</button>
+                    <button id="submitReplyBtn" class="btn btn-dark fw-bold rounded-pill px-5 shadow-lg" onclick="submitAdminReply()">
+                        <i class="bi bi-send-fill me-2"></i> Gửi Trả Lời
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -468,8 +575,18 @@
         }
     }
 
-    // ===================== QUICK REPLY TEMPLATES =====================
+    // ===================== QUICK REPLY TABS & TEMPLATES =====================
+    function switchReplyTab(tabName, btn) {
+        document.querySelectorAll('.reply-templates-grid').forEach(g => g.classList.remove('show'));
+        document.querySelectorAll('.reply-tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById('tab-' + tabName).classList.add('show');
+        btn.classList.add('active');
+    }
+
     function fillTemplate(text) {
+        // Tự động nhận diện Tên Khách Hàng (nếu có thể lấy từ Modal context)
+        // Hiện tại chỉ đơn giản điền text chuyên nghiệp
         document.getElementById('answerTextarea').value = text;
         updateCharCount();
         document.getElementById('answerTextarea').focus();
@@ -536,5 +653,7 @@
     // On load
     document.addEventListener('DOMContentLoaded', applyTimeBadges);
 </script>
+    </div> <!-- Close main-content -->
+</div> <!-- Close admin-layout -->
 </body>
 </html>

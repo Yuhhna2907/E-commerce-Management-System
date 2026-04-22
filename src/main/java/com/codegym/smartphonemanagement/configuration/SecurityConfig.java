@@ -2,9 +2,11 @@ package com.codegym.smartphonemanagement.configuration;
 
 import com.codegym.smartphonemanagement.config.CacheControlFilter;
 import com.codegym.smartphonemanagement.config.CustomAccessDeniedHandler;
+import com.codegym.smartphonemanagement.config.CustomAuthenticationEntryPoint;
 import com.codegym.smartphonemanagement.config.CustomAuthenticationFailureHandler;
 import com.codegym.smartphonemanagement.config.CustomAuthenticationSuccessHandler;
 import com.codegym.smartphonemanagement.config.CustomLogoutSuccessHandler;
+import com.codegym.smartphonemanagement.config.CustomInvalidSessionStrategy;
 import com.codegym.smartphonemanagement.config.CustomSessionInformationExpiredStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,8 +38,10 @@ public class SecurityConfig {
     private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CacheControlFilter cacheControlFilter;
     private final CustomSessionInformationExpiredStrategy customSessionInformationExpiredStrategy;
+    private final CustomInvalidSessionStrategy customInvalidSessionStrategy;
     private final DataSource dataSource;
     
     @Value("${app.security.remember-me.key}")
@@ -86,6 +90,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/public/**")
                 )
                 .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
@@ -143,7 +148,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session
                         .sessionFixation(fixation -> fixation.migrateSession()) // Migrate session on authentication
-                        .invalidSessionUrl("/login?session=expired")
+                        .invalidSessionStrategy(customInvalidSessionStrategy)
                         .maximumSessions(2)
                         .maxSessionsPreventsLogin(false) // Invalidate oldest session instead of preventing login
                         .expiredSessionStrategy(customSessionInformationExpiredStrategy)

@@ -7,6 +7,8 @@ import com.codegym.smartphonemanagement.repository.SzWalletRepository;
 import com.codegym.smartphonemanagement.repository.SzWalletTransactionRepository;
 import com.codegym.smartphonemanagement.repository.SzWithdrawalRequestRepository;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
+import com.codegym.smartphonemanagement.service.notification.AdminNotificationService;
+import com.codegym.smartphonemanagement.service.payment.TransactionLogService;
 import com.codegym.smartphonemanagement.service.wallet.dto.WalletDTO;
 import com.codegym.smartphonemanagement.service.wallet.dto.WalletStatsDTO;
 import com.codegym.smartphonemanagement.service.wallet.dto.WithdrawalRequestDTO;
@@ -32,6 +34,8 @@ public class WalletService {
     private final SzWalletTransactionRepository txRepo;
     private final SzWithdrawalRequestRepository withdrawalRepo;
     private final UserRepository userRepo;
+    private final TransactionLogService auditLogService;
+    private final AdminNotificationService adminNotificationService;
 
     // ==================== CORE WALLET OPS ====================
 
@@ -147,6 +151,15 @@ public class WalletService {
         saveTransaction(wallet, WalletTransactionType.WITHDRAWAL, amount,
                 "Yêu cầu rút tiền #" + saved.getId() + " đang chờ duyệt", null, null);
 
+        // [NEW] Notify Admin
+        adminNotificationService.notify(
+                "Yêu cầu rút tiền mới #" + saved.getId(),
+                "Người dùng " + (user.getFullName() != null ? user.getFullName() : user.getUsername()) + " yêu cầu rút " + amount + " đ.",
+                AdminNotificationType.WITHDRAWAL_REQUEST,
+                NotificationPriority.HIGH,
+                "/admin/wallet"
+        );
+
         log.info("User {} requested withdrawal of {} VND (request #{})", userId, amount, saved.getId());
         return saved;
     }
@@ -251,7 +264,27 @@ public class WalletService {
                 .adminNote(adminNote)
                 .relatedOrderId(orderId)
                 .build();
-        txRepo.save(tx);
+        SzWalletTransaction saved = txRepo.save(tx);
+
+        // Audit Log
+        auditLogService.logTransaction(
+                "WL-" + saved.getId(),
+                mapTransactionType(type),
+                amount,
+                wallet.getUser().getId(),
+                TransactionLogStatus.SUCCESS,
+                description
+        );
+    }
+
+    private TransactionLogType mapTransactionType(WalletTransactionType type) {
+        return switch (type) {
+            case ADMIN_TOP_UP -> TransactionLogType.WALLET_TOP_UP;
+            case PAYMENT -> TransactionLogType.WALLET_PAYMENT;
+            case WITHDRAWAL -> TransactionLogType.WALLET_WITHDRAWAL;
+            case REFUND_IN -> TransactionLogType.WALLET_REFUND;
+            default -> TransactionLogType.WALLET_PAYMENT;
+        };
     }
 
     // ==================== MAPPING ====================

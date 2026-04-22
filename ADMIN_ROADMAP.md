@@ -26,9 +26,9 @@ Chào mừng đến với bản đồ lộ trình phát triển hệ thống Qu�
 - [x] **Ví SmartZone Xu**: Hệ thống ví tiền thật cho User.
 - [x] **Manual Top-up**: Admin nạp tiền bồi thường/hỗ trợ cho User.
 - [x] **Withdrawal Workflow**: Quy trình yêu cầu và duyệt rút tiền ngân hàng.
-- [ ] **Payment Auditing**: Nhật ký giao dịch VNPAY/Ví (Checksum, Transaction ID) để đối soát lỗi thanh toán.
+- [x] **Payment Auditing**: Nhật ký giao dịch VNPAY/Ví (Checksum, Transaction ID) để đối soát lỗi thanh toán.
 - [ ] **Policy Manager**: Cấu hình tỷ lệ đổi điểm và quy định rút tiền trực tiếp trên UI.
-- [ ] **Financial Reporting**: Xuất báo cáo giao dịch ví (Excel/PDF) định kỳ.
+- [x] **Financial Reporting**: Xuất báo cáo giao dịch ví (Excel/PDF) định kỳ.
 
 ### 3. CRM & Hỗ trợ khách hàng (CRM & Support)
 - [x] **User Management**: Quản lý trạng thái, Ban/Unban tài khoản.

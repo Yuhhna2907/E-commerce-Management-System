@@ -126,4 +126,19 @@ public interface ProductAnswerRepository extends JpaRepository<ProductAnswer, Lo
      * Xóa tất cả câu trả lời của một câu hỏi
      */
     void deleteByQuestionId(Long questionId);
+
+    // --- ANALYTICS: Top Responders ---
+    @Query("SELECT a.user.username, COUNT(a.id) " +
+           "FROM ProductAnswer a " +
+           "WHERE a.createdAt >= :startDate AND a.createdAt <= :endDate " +
+           "GROUP BY a.user.username " +
+           "ORDER BY COUNT(a.id) DESC")
+    List<Object[]> findResponderStats(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    // Đếm tổng số vote Helpful/Not Helpful trong hệ thống
+    @Query("SELECT SUM(CASE WHEN v.isHelpful = true THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN v.isHelpful = false THEN 1 ELSE 0 END) " +
+           "FROM AnswerVote v " +
+           "WHERE v.answer.createdAt >= :startDate AND v.answer.createdAt <= :endDate")
+    List<Object[]> countHelpfulVotes(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }
