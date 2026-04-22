@@ -86,3 +86,8 @@
 2026-04-22 08:58:03.010 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
 2026-04-22 08:59:16.493 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
 2026-04-22 08:59:35.974 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 09:07:30.201 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 09:10:00.776 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+2026-04-22 09:10:02.131 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/api/admin/notifications ip=0:0:0:0:0:0:0:1
+2026-04-22 09:10:52.786 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+2026-04-22 09:10:53.429 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/api/admin/notifications ip=0:0:0:0:0:0:0:1
