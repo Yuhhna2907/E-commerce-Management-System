@@ -2,6 +2,8 @@ package com.codegym.smartphonemanagement.service.payment;
 
 import com.codegym.smartphonemanagement.model.PaymentTransaction;
 import com.codegym.smartphonemanagement.model.PaymentTransactionStatus;
+import com.codegym.smartphonemanagement.model.TransactionLogStatus;
+import com.codegym.smartphonemanagement.model.TransactionLogType;
 import com.codegym.smartphonemanagement.repository.PaymentTransactionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +35,7 @@ public class PaymentTransactionLogger {
 
     private final PaymentTransactionRepository repository;
     private final ObjectMapper objectMapper;
+    private final TransactionLogService auditLogService;
 
     /**
      * Log a new payment transaction with INITIATED status
@@ -55,6 +58,16 @@ public class PaymentTransactionLogger {
             
             PaymentTransaction saved = repository.save(transaction);
             
+            // Audit Log
+            auditLogService.logTransaction(
+                    String.valueOf(orderId),
+                    TransactionLogType.VNPAY,
+                    amount,
+                    null, // User ID can be retrieved from Order if needed, but keeping it simple for now
+                    TransactionLogStatus.PENDING,
+                    "Khởi tạo giao dịch VNPay cho đơn hàng #" + orderId
+            );
+
             log.info("Successfully logged INITIATED transaction ID: {} for order ID: {}", 
                     saved.getId(), orderId);
             
@@ -132,6 +145,16 @@ public class PaymentTransactionLogger {
             
             PaymentTransaction saved = repository.save(transaction);
             
+            // Audit Log
+            auditLogService.logTransaction(
+                    vnpayTransactionNo,
+                    TransactionLogType.VNPAY,
+                    transaction.getAmount(),
+                    null, 
+                    status == PaymentTransactionStatus.COMPLETED ? TransactionLogStatus.SUCCESS : TransactionLogStatus.FAILED,
+                    "Cập nhật từ VNPay callback: " + transaction.getResponseMessage()
+            );
+
             log.info("Successfully updated transaction ID: {} for order ID: {}, status: {}", 
                     saved.getId(), orderId, status);
             
@@ -175,6 +198,16 @@ public class PaymentTransactionLogger {
             
             repository.save(transaction);
             
+            // Audit Log
+            auditLogService.logTransaction(
+                    "ERROR-" + orderId,
+                    TransactionLogType.VNPAY,
+                    BigDecimal.ZERO,
+                    null,
+                    TransactionLogStatus.FAILED,
+                    "Lỗi thanh toán: " + errorMessage
+            );
+
             log.info("Successfully logged error for order ID: {}", orderId);
             
         } catch (Exception e) {

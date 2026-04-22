@@ -23,33 +23,34 @@
         <p class="page-subtitle">Chào mừng trở lại SmartZone</p>
     </div>
 
+    <!-- Session Expired Message -->
+    <div th:if="${param.session != null and param.session[0] == 'expired'}" class="alert alert-warning text-center">
+        <i class="bi bi-clock-history me-1"></i> Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.
+    </div>
+
     <!-- Success Message -->
-    <div th:if="${param.success}" class="alert alert-success text-center">
+    <div th:if="${param.success != null}" class="alert alert-success text-center">
         <i class="bi bi-check-circle me-1"></i> Đăng ký thành công! Mời bạn đăng nhập.
     </div>
 
     <!-- Logout Message -->
-    <div th:if="${param.logout}" class="alert alert-info text-center">
+    <div th:if="${param.logout != null}" class="alert alert-info text-center">
         <i class="bi bi-info-circle me-1"></i>
-        <span th:if="${param.role == 'admin'}">Admin đã đăng xuất thành công! Hẹn gặp lại.</span>
-        <span th:unless="${param.role == 'admin'}">Đăng xuất thành công! Hẹn gặp lại bạn.</span>
+        <span th:if="${param.role != null and param.role[0] == 'admin'}">Admin đã đăng xuất thành công! Hẹn gặp lại.</span>
+        <span th:unless="${param.role != null and param.role[0] == 'admin'}">Đăng xuất thành công! Hẹn gặp lại bạn.</span>
     </div>
 
-    <!-- Access Denied Message -->
-    <div th:if="${param.access_denied}" class="alert alert-warning text-center">
-        <i class="bi bi-shield-exclamation me-1"></i> Bạn không có quyền truy cập trang này. Vui lòng đăng nhập.
+    <!-- Access Denied / Security Message -->
+    <div th:if="${param.access_denied != null or (param.error != null and param.error[0] == 'unauthorized')}" class="alert alert-warning text-center">
+        <i class="bi bi-shield-exclamation me-1"></i> Yêu cầu không hợp lệ hoặc phiên làm việc đã cũ. Vui lòng tải lại trang và đăng nhập lại.
     </div>
 
-    <!-- Error Messages -->
-    <div th:if="${param.error}" class="alert alert-danger text-center">
+    <!-- Error Messages (Credentials) -->
+    <div th:if="${param.error != null and (param.error[0] == 'true' or param.error[0] == 'invalid')}" class="alert alert-danger text-center">
         <i class="bi bi-exclamation-triangle me-1"></i> Tên đăng nhập/email hoặc mật khẩu không đúng.
     </div>
 
-    <div th:if="${param.error == 'invalid'}" class="alert alert-danger text-center">
-        <i class="bi bi-exclamation-triangle me-1"></i> Tên đăng nhập/email hoặc mật khẩu không đúng.
-    </div>
-
-    <div th:if="${param.error == 'locked'}" class="alert alert-danger text-center">
+    <div th:if="${param.error != null and param.error[0] == 'locked'}" class="alert alert-danger text-center">
         <i class="bi bi-lock-fill me-1"></i> Tài khoản đã bị khóa do nhiều lần đăng nhập thất bại. Vui lòng thử lại sau.
     </div>
 

@@ -21,7 +21,12 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
             "productRecommendations", 
-            "coPurchasePatterns"
+            "coPurchasePatterns",
+            "advancedProductAnalytics",
+            "orderAnalytics",
+            "productAnalytics",
+            "customerAnalytics",
+            "voucherAnalytics"
         );
         
         cacheManager.setCaffeine(Caffeine.newBuilder()

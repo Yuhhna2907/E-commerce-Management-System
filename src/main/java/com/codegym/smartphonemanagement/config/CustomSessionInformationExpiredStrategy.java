@@ -1,6 +1,7 @@
 package com.codegym.smartphonemanagement.config;
 
 import com.codegym.smartphonemanagement.util.SecurityAuditLogger;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.ServletException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,18 @@ public class CustomSessionInformationExpiredStrategy implements SessionInformati
         // Log to security audit
         securityAuditLogger.logSessionExpired(username, sessionId);
 
+        expireCookie(event, "JSESSIONID");
+        expireCookie(event, "remember-me");
+
         // Redirect to login page with session expired message
         event.getResponse().sendRedirect("/login?session=expired");
+    }
+
+    private void expireCookie(SessionInformationExpiredEvent event, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly("JSESSIONID".equals(cookieName));
+        event.getResponse().addCookie(cookie);
     }
 }

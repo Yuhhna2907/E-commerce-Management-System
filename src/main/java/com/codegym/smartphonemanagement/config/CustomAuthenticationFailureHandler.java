@@ -40,10 +40,20 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
         String ipAddress = getClientIP(request);
         String userAgent = request.getHeader("User-Agent");
 
-        log.warn("Authentication failed for user: {} from IP: {}", username, ipAddress);
+        log.warn("Authentication failed for user: {} from IP: {}. Exception: {} - {}",
+                username,
+                ipAddress,
+                exception.getClass().getSimpleName(),
+                exception.getMessage());
 
-        // Record failed login attempt
-        loginAttemptService.recordLoginAttempt(username, false, ipAddress, userAgent);
+        // CRITICAL FIX: Only record failed attempt if account is NOT already locked
+        // This prevents infinite lock when user tries wrong password while locked
+        boolean isAlreadyLocked = loginAttemptService.isAccountLocked(username);
+        if (!isAlreadyLocked) {
+            loginAttemptService.recordLoginAttempt(username, false, ipAddress, userAgent);
+        } else {
+            log.debug("Skipping failed attempt recording for already locked account: {}", username);
+        }
 
         // Determine failure reason
         String errorMessage;
@@ -54,8 +64,8 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
             errorParam = "locked";
             securityAuditLogger.logLoginFailure(username, ipAddress, "Account locked");
         } else if (exception instanceof BadCredentialsException) {
-            // Check if this failure will trigger lockout
-            if (loginAttemptService.isAccountLocked(username)) {
+            // Check if this failure triggered lockout (after recording attempt above)
+            if (isAlreadyLocked || loginAttemptService.isAccountLocked(username)) {
                 errorMessage = "Account has been locked due to multiple failed login attempts. Please try again in 15 minutes.";
                 errorParam = "locked";
                 securityAuditLogger.logLoginFailure(username, ipAddress, "Account locked after failed attempts");

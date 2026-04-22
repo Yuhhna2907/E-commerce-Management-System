@@ -1,1 +1,88 @@
-2026-04-19 00:17:30.795 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/admin/products/toggle-status/57 ip=0:0:0:0:0:0:0:1
+2026-04-22 00:49:40.565 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customers ip=0:0:0:0:0:0:0:1
+2026-04-22 00:50:15.825 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2907@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 00:50:42.425 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 00:52:06.298 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 00:52:18.389 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=admin ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 00:52:25.761 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=yuhhna2907 ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+2026-04-22 00:52:30.115 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:35.391 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:40.715 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:43.474 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/admin/dashboard ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:43.585 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/admin/dashboard ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:46.247 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:52.243 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:52:58.243 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:53:04.233 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:53:10.242 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:53:16.258 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:53:22.242 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:53:27.244 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=yuhhna2907 requestedUrl=/ws/info ip=0:0:0:0:0:0:0:1
+2026-04-22 00:54:08.294 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=admin ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 00:54:58.791 [SECURITY_AUDIT] WARN  - [ACCOUNT_LOCKED] username=admin reason=Exceeded maximum failed login attempts (5) lockDuration=15 minutes
+2026-04-22 00:54:58.830 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=admin ip=0:0:0:0:0:0:0:1 reason=Account locked after failed attempts
+2026-04-22 00:55:27.512 [SECURITY_AUDIT] WARN  - [ACCOUNT_LOCKED] username=admin reason=Exceeded maximum failed login attempts (5) lockDuration=15 minutes
+2026-04-22 00:55:27.548 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Account locked after failed attempts
+2026-04-22 00:57:04.352 [SECURITY_AUDIT] WARN  - [ACCOUNT_LOCKED] username=admin reason=Exceeded maximum failed login attempts (5) lockDuration=15 minutes
+2026-04-22 00:57:04.388 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Account locked after failed attempts
+2026-04-22 01:14:49.285 [SECURITY_AUDIT] INFO  - [ACCOUNT_UNLOCKED] username=admin reason=Lockout period expired
+2026-04-22 01:14:49.645 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 01:15:59.278 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 01:16:49.126 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=admin ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 01:18:19.678 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 01:19:02.466 [SECURITY_AUDIT] WARN  - [ACCOUNT_LOCKED] username=admin reason=Exceeded maximum failed login attempts (5) lockDuration=15 minutes
+2026-04-22 01:19:02.488 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=admin ip=0:0:0:0:0:0:0:1 reason=Account locked after failed attempts
+2026-04-22 01:26:49.684 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 01:33:14.529 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+2026-04-22 01:34:57.084 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/marketing ip=0:0:0:0:0:0:0:1
+2026-04-22 01:35:42.677 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/marketing ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:00.060 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:24.413 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:24.413 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=90
+2026-04-22 01:43:25.322 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:25.322 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=30
+2026-04-22 01:43:25.873 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:25.873 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=7
+2026-04-22 01:43:26.648 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:26.649 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=30
+2026-04-22 01:43:27.297 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:27.297 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=90
+2026-04-22 01:43:28.179 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:28.179 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=7
+2026-04-22 01:43:28.819 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:28.819 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=30
+2026-04-22 01:43:29.260 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 01:43:29.260 [SECURITY_AUDIT] INFO  - [ANALYTICS_FILTER] username=admin page=/admin/analytics/customer-service filters=days=90
+2026-04-22 01:43:57.579 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 01:44:19.365 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 01:44:24.268 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/products ip=0:0:0:0:0:0:0:1
+2026-04-22 01:44:27.207 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 01:45:39.397 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 01:52:02.015 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 01:52:08.303 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 02:43:54.055 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/search ip=0:0:0:0:0:0:0:1
+2026-04-22 02:45:26.075 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/admin/setup/flags ip=0:0:0:0:0:0:0:1
+2026-04-22 02:45:27.484 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=admin requestedUrl=/admin/setup/flags ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:21.803 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/products ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:27.125 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:30.055 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customers ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:32.478 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customer-service ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:34.392 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/marketing ip=0:0:0:0:0:0:0:1
+2026-04-22 03:46:36.742 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/search ip=0:0:0:0:0:0:0:1
+2026-04-22 03:55:38.316 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/marketing ip=0:0:0:0:0:0:0:1
+2026-04-22 03:55:42.427 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/search ip=0:0:0:0:0:0:0:1
+2026-04-22 03:55:48.756 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/products ip=0:0:0:0:0:0:0:1
+2026-04-22 03:55:52.889 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 03:55:57.273 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/customers ip=0:0:0:0:0:0:0:1
+2026-04-22 03:56:02.969 [SECURITY_AUDIT] INFO  - [ANALYTICS_ACCESS] username=admin page=/admin/analytics/orders ip=0:0:0:0:0:0:0:1
+2026-04-22 08:33:44.798 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:43:11.103 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:47:23.028 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 08:47:52.350 [SECURITY_AUDIT] WARN  - [ACCESS_DENIED] username=anonymous requestedUrl=/do-login ip=0:0:0:0:0:0:0:1
+2026-04-22 08:48:05.215 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 08:48:15.761 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 08:48:45.172 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115
+2026-04-22 08:57:06.571 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:57:16.318 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:58:03.010 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:59:16.493 [SECURITY_AUDIT] WARN  - [LOGIN_FAILURE] username=luonganhhuy2004@gmail.com ip=0:0:0:0:0:0:0:1 reason=Invalid credentials
+2026-04-22 08:59:35.974 [SECURITY_AUDIT] INFO  - [LOGIN_SUCCESS] username=admin ip=0:0:0:0:0:0:0:1 userAgent=Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115

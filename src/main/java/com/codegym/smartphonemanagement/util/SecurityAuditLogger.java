@@ -101,6 +101,58 @@ public class SecurityAuditLogger {
     }
 
     /**
+     * Log analytics page access event
+     * Requirements: 14.3, 14.4
+     */
+    public void logAnalyticsPageAccess(String username, String pagePath, String ipAddress) {
+        auditLogger.info("[ANALYTICS_ACCESS] username={} page={} ip={}",
+                username, pagePath, ipAddress);
+    }
+
+    /**
+     * Log recommendation rebuild action
+     * Requirements: 14.3, 14.4
+     */
+    public void logRecommendationRebuild(String adminUsername, String ipAddress, boolean success, String message) {
+        if (success) {
+            auditLogger.info("[RECOMMENDATION_REBUILD] admin={} ip={} status=SUCCESS message={}",
+                    adminUsername, ipAddress, message);
+        } else {
+            auditLogger.warn("[RECOMMENDATION_REBUILD] admin={} ip={} status=FAILURE message={}",
+                    adminUsername, ipAddress, message);
+        }
+    }
+
+    /**
+     * Log analytics data export operation
+     * Requirements: 14.3, 14.4
+     */
+    public void logAnalyticsExport(String username, String exportType, String dataType, 
+                                   String filters, String ipAddress) {
+        auditLogger.info("[ANALYTICS_EXPORT] username={} exportType={} dataType={} filters={} ip={}",
+                username, exportType, dataType, filters, ipAddress);
+    }
+
+    /**
+     * Log pinned product management action
+     * Requirements: 14.3, 14.4
+     */
+    public void logPinnedProductAction(String adminUsername, String action, Long productId, 
+                                       String ipAddress) {
+        auditLogger.info("[PINNED_PRODUCT] admin={} action={} productId={} ip={}",
+                adminUsername, action, productId, ipAddress);
+    }
+
+    /**
+     * Log analytics filter usage
+     * Requirements: 14.3
+     */
+    public void logAnalyticsFilter(String username, String pagePath, String filterParams) {
+        auditLogger.info("[ANALYTICS_FILTER] username={} page={} filters={}",
+                username, pagePath, filterParams);
+    }
+
+    /**
      * Format duration for logging
      */
     private String formatDuration(Duration duration) {

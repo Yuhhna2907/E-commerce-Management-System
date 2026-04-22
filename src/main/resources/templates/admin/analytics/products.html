@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống Kê Sản Phẩm Nâng Cao | Analytics Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px 40px;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-orange-light: rgba(251, 189, 5, 0.15);
+            --sz-dark: #1A1C20;
+            --sz-gray: #f2f2f7;
+            --sz-text-muted: #8E8E93;
+            
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            --glass-blur: blur(20px);
+        }
+
+        body {
+            background-color: #f4f6f9;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .sz-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .fade-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-list-item {
+            transition: all 0.2s;
+        }
+
+        .product-list-item:hover {
+            background: rgba(0,0,0,0.02) !important;
+            transform: translateX(3px);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-content">
+        
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
+            <div>
+                <h2 class="fw-bolder mb-1" style="font-family: 'Outfit';">
+                    <i class="bi bi-cpu-fill text-primary me-2"></i>Advanced Product Analytics Pro
+                </h2>
+                <p class="text-muted mb-0">
+                    Báo cáo hiệu suất 360°: <strong th:text="${periodDisplay}"></strong>
+                </p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <form action="/admin/analytics/products" method="get" class="d-flex gap-2">
+                    <div class="btn-group shadow-sm sz-glass" role="group">
+                        <button type="submit" name="days" value="1" class="btn btn-outline-primary btn-sm" th:classappend="${currentFilter == '1' ? 'active' : ''}">1D</button>
+                        <button type="submit" name="days" value="7" class="btn btn-outline-primary btn-sm" th:classappend="${currentFilter == '7' ? 'active' : ''}">7D</button>
+                        <button type="submit" name="days" value="30" class="btn btn-outline-primary btn-sm" th:classappend="${currentFilter == '30' ? 'active' : ''}">30D</button>
+                    </div>
+                </form>
+                <form action="/admin/analytics/products" method="get" class="d-flex gap-2 ms-2 p-1 sz-glass rounded-3 border">
+                    <input type="date" name="customStart" class="form-control form-control-sm bg-transparent border-0" required>
+                    <button type="submit" class="btn btn-sm btn-dark px-2"><i class="bi bi-search"></i></button>
+                </form>
+                
+                <!-- Export CSV -->
+                <a th:href="@{/admin/analytics/products/export/csv(days=${currentFilter != 'custom' ? currentFilter : null}, customStart=${currentFilter == 'custom' ? dateFrom : null}, customEnd=${currentFilter == 'custom' ? dateTo : null})}"
+                   class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold">
+                    <i class="bi bi-download me-1"></i> Xuất CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI SUMMARY -->
+        <div class="row g-4 mb-5 fade-up delay-1">
+            <div class="col-md-3">
+                <div class="glass-panel p-3 shadow-sm border-0">
+                    <div class="text-muted small fw-bold text-uppercase">Total Views</div>
+                    <div class="h3 fw-bolder mb-0" th:text="${stats.totalUniqueViews != null ? #numbers.formatInteger(stats.totalUniqueViews, 0, 'COMMA') : '0'}">0</div>
+                    <div class="text-primary small mt-1"><i class="bi bi-eye"></i> Unique visitors</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-panel p-3 shadow-sm border-0 bg-primary text-white">
+                    <div class="text-white-50 small fw-bold text-uppercase">Total Units Sold</div>
+                    <div class="h3 fw-bolder mb-0" th:text="${stats.totalUnitsSold != null ? stats.totalUnitsSold : 0}">0</div>
+                    <div class="text-white-50 small mt-1"><i class="bi bi-cart"></i> Delivered items</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-panel p-3 shadow-sm border-0">
+                    <div class="text-muted small fw-bold text-uppercase">Gross Revenue</div>
+                    <div class="h3 fw-bolder mb-0 text-dark">
+                        <span th:text="${stats.totalGrossRevenue != null ? #numbers.formatDecimal(stats.totalGrossRevenue, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> ₫
+                    </div>
+                    <div class="text-success small mt-1"><i class="bi bi-cash-stack"></i> Successful orders</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-panel p-3 shadow-sm border-0">
+                    <div class="text-muted small fw-bold text-uppercase">Inventory Value</div>
+                    <div class="h3 fw-bolder mb-0 text-dark">
+                        <span th:text="${stats.totalInventoryValue != null ? #numbers.formatDecimal(stats.totalInventoryValue, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> ₫
+                    </div>
+                    <div class="text-warning small mt-1"><i class="bi bi-box-seam"></i> Current stock worth</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============= MAIN TABBED INTERFACE ============= -->
+        <div class="glass-panel p-4 mb-5 fade-up delay-2">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bolder mb-1" style="font-family: 'Outfit';"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i> Thống Kê Sản Phẩm</h4>
+                    <p class="text-muted mb-0 small">Phân tích hiệu suất kinh doanh và tồn kho theo thời gian thực</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" onclick="switchTab('sales')">Bán Hàng</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('stock')">Tồn Kho</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('engagement')">Tương Tác</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('conversion')">Chuyển Đổi</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('comparison')">So Sánh</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('trends')">Xu Hướng</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('segments')">Phân Khúc</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchTab('risks')">Rủi Ro</button>
+                </div>
+            </div>
+
+            <!-- TAB 1: HIỆU SUẤT BÁN HÀNG -->
+            <div class="stats-tab-content" id="sales">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-trophy-fill me-2"></i> Top 10 Bán Chạy Nhất</h6>
+                            <div th:replace="~{::metricList(${stats.topSellingProducts}, 'Sold')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-graph-down-arrow me-2"></i> Bán Chậm</h6>
+                            <div th:if="${stats.topSellingProducts != null and stats.topSellingProducts.size() > 5}">
+                                <div class="list-group list-group-flush bg-transparent">
+                                    <div th:each="p : ${stats.topSellingProducts.subList(stats.topSellingProducts.size() > 5 ? stats.topSellingProducts.size() - 5 : 0, stats.topSellingProducts.size())}" 
+                                         class="list-group-item bg-transparent border-0 px-0 product-list-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1 text-truncate pe-2">
+                                            <div class="fw-bold text-dark text-truncate" th:text="${p.name != null ? p.name : 'N/A'}">Product</div>
+                                            <small class="text-muted d-block" th:text="${p.category != null ? p.category : 'N/A'}">Category</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary" th:text="${p.value != null ? p.value : 0} + ' Sold'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cash-stack me-2"></i> Top 10 Doanh Thu Cao</h6>
+                            <div th:replace="~{::metricList(${stats.topRevenueProducts}, 'Revenue')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: TỒN KHO & LOGISTICS -->
+            <div class="stats-tab-content d-none" id="stock">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i> Sắp Hết Hàng</h6>
+                            <div th:replace="~{::metricList(${stats.lowStockProducts}, 'Stock')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-boxes me-2"></i> Tồn Kho Nhiều</h6>
+                            <div th:replace="~{::metricList(${stats.highStockProducts}, 'Stock')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-x-circle-fill me-2"></i> Hết Hàng</h6>
+                            <div th:replace="~{::metricList(${stats.outOfStockProducts}, 'Stock')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TƯƠNG TÁC KHÁCH HÀNG -->
+            <div class="stats-tab-content d-none" id="engagement">
+                <div class="row g-3">
+                    <!-- Wishlisted -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-heart-fill me-2"></i> Được Yêu Thích</h6>
+                            <div th:replace="~{::metricList(${stats.mostWishlistedProducts}, 'Votes')}"></div>
+                        </div>
+                    </div>
+                    <!-- Viewed -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye-fill me-2"></i> Được Xem Nhiều</h6>
+                            <div th:replace="~{::metricList(${stats.mostViewedProducts}, 'Views')}"></div>
+                        </div>
+                    </div>
+                    <!-- Questions -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-chat-dots-fill me-2"></i> Nhiều Q&A</h6>
+                            <div th:replace="~{::metricList(${stats.mostQuestionedProducts}, 'Questions')}"></div>
+                        </div>
+                    </div>
+                    <!-- Rated -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-star-fill me-2"></i> Đánh Giá Nhiều</h6>
+                            <div th:replace="~{::metricList(${stats.topRatedProducts}, 'Reviews')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CHUYỂN ĐỔI -->
+            <div class="stats-tab-content d-none" id="conversion">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-graph-up-arrow me-2"></i> Top Tỷ Lệ Chuyển Đổi (CR)</h6>
+                            <div th:if="${stats.topConversionProducts != null and !stats.topConversionProducts.isEmpty()}" class="table-responsive">
+                                <table class="table table-sm align-middle table-borderless">
+                                    <thead>
+                                        <tr class="text-muted small text-uppercase">
+                                            <th>Sản phẩm</th>
+                                            <th class="text-center">Views</th>
+                                            <th class="text-center">Sold</th>
+                                            <th class="text-end">Ratio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="p : ${stats.topConversionProducts}">
+                                            <td class="fw-bold text-truncate" style="max-width:200px" th:text="${p.name}">-</td>
+                                            <td class="text-center" th:text="${p.value != null ? p.value : 0}">0</td>
+                                            <td class="text-center" th:text="${p.value != null ? p.value : 0}">0</td>
+                                            <td class="text-end">
+                                                <span class="badge bg-success bg-opacity-10 text-success" th:text="${p.percentage != null ? p.percentage : 0} + '%'">0%</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div th:if="${stats.topConversionProducts == null or stats.topConversionProducts.isEmpty()}" class="py-4 text-center text-muted small">Chưa có dữ liệu</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-fire me-2"></i> Cần Cải Thiện CR</h6>
+                            <div th:replace="~{::metricList(${stats.lowConversionProducts}, 'Ratio')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: SO SÁNH -->
+            <div class="stats-tab-content d-none" id="comparison">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-arrow-left-right me-2"></i> Được So Sánh Nhiều</h6>
+                            <div th:replace="~{::metricList(${stats.mostComparedProducts}, 'Compares')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-purple mb-3"><i class="bi bi-diagram-3 me-2"></i> Cặp Sản Phẩm Hay So Sánh Cùng Nhau</h6>
+                            <div th:if="${stats.topComparisonPairs != null and !stats.topComparisonPairs.isEmpty()}" class="list-group list-group-flush bg-transparent">
+                                <div th:each="pair : ${stats.topComparisonPairs}" class="list-group-item bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+                                    <div>
+                                        <span class="fw-bold" th:text="${pair.product1}">P1</span>
+                                        <i class="bi bi-repeat text-muted mx-2"></i>
+                                        <span class="fw-bold" th:text="${pair.product2}">P2</span>
+                                    </div>
+                                    <span class="badge bg-dark rounded-pill" th:text="${pair.frequency} + ' lần'">0</span>
+                                </div>
+                            </div>
+                            <div th:if="${stats.topComparisonPairs == null or stats.topComparisonPairs.isEmpty()}" class="py-4 text-center text-muted small">Chưa có dữ liệu</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: RỦI RO -->
+            <div class="stats-tab-content d-none" id="risks">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 p-3 h-100 border border-danger border-opacity-25 shadow-sm">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-hourglass-split me-2"></i> Tồn Kho Quá Lâu (>90 ngày)</h6>
+                            <div th:replace="~{::metricList(${stats.oldStockProducts}, 'Stock')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 p-3 h-100 border border-danger border-opacity-25 shadow-sm">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-emoji-frown me-2"></i> Đánh Giá Tiêu Cực</h6>
+                            <div th:replace="~{::metricList(${stats.badReviewProducts}, 'Low Stars')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: XU HƯỚNG -->
+            <div class="stats-tab-content d-none" id="trends">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-graph-up me-2"></i> Xu Hướng Doanh Số Sản Phẩm</h6>
+                            <canvas id="growthTrendChart" style="max-height: 250px;"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-fire me-2"></i> Hot Trend (View Đột Biến)</h6>
+                            <div th:replace="~{::metricList(${stats.hotTrendProducts7Days}, 'Views')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: PHÂN KHÚC KHÁCH HÀNG -->
+            <div class="stats-tab-content d-none" id="segments">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-warning border-opacity-50">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-star-fill me-2"></i> Yêu Thích Bởi KH VIP</h6>
+                            <p class="small text-muted mb-2">Lượng MUA của Hạng Vàng & Kim Cương</p>
+                            <div th:replace="~{::metricList(${stats.vipCustomerFavorites}, 'Sold')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-secondary border-opacity-25">
+                            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-person-plus-fill me-2"></i> Yêu Thích Bởi KH Mới</h6>
+                            <p class="small text-muted mb-2">Lượng MUA của Hạng Đồng</p>
+                            <div th:replace="~{::metricList(${stats.newCustomerFavorites}, 'Sold')}"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-arrow-repeat me-2"></i> Khả Năng Mua Lại Cao</h6>
+                            <p class="small text-muted mb-2">SP được mua > 1 lần bởi cùng khách hàng</p>
+                            <div th:replace="~{::metricList(${stats.highRepeatPurchaseProducts}, 'Users Repeat')}"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="bg-light rounded-4 p-3 border border-info border-opacity-25">
+                             <h6 class="fw-bold text-info mb-3"><i class="bi bi-diagram-2-fill me-2"></i> Gợi Ý Bán Chéo Khởi Nguồn (Cross-sell)</h6>
+                             <div th:if="${stats.topCrossSellOpportunities != null and !stats.topCrossSellOpportunities.isEmpty()}" class="d-flex gap-3 overflow-auto pb-2">
+                                 <div th:each="pair : ${stats.topCrossSellOpportunities}" class="bg-white p-2 rounded shadow-sm d-flex align-items-center flex-shrink-0">
+                                     <span class="text-truncate fw-medium" style="max-width: 150px;" title="s" th:title="${pair.product1}" th:text="${pair.product1}">P1</span>
+                                     <i class="bi bi-plus-lg text-primary mx-2"></i>
+                                     <span class="text-truncate fw-medium" style="max-width: 150px;" title="s" th:title="${pair.product2}" th:text="${pair.product2}">P2</span>
+                                     <span class="badge bg-success ms-2" th:text="${pair.frequency} + ' Orders'">Freq</span>
+                                 </div>
+                             </div>
+                             <div th:if="${stats.topCrossSellOpportunities == null or stats.topCrossSellOpportunities.isEmpty()}" class="py-3 text-center text-muted small">Chưa có dữ liệu</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CATEGORY SHARE -->
+        <div class="row fade-up delay-3">
+            <div class="col-12">
+                <div class="glass-panel p-4">
+                    <h6 class="fw-bold mb-4">Phân Bổ Doanh Thu Theo Danh Mục</h6>
+                    <div th:if="${stats.categoryDetails != null and !stats.categoryDetails.isEmpty()}" class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <canvas id="categoryPie" style="max-height: 250px;"></canvas>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr class="small text-uppercase">
+                                            <th>Danh mục</th>
+                                            <th class="text-center">Đã bán</th>
+                                            <th class="text-end">Doanh thu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="cat : ${stats.categoryDetails}">
+                                            <td class="fw-bold text-primary" th:text="${cat.name}">Category</td>
+                                            <td class="text-center" th:text="${cat.sold}">0</td>
+                                            <td class="text-end fw-bold"><span th:text="${#numbers.formatDecimal(cat.revenue, 0, 'COMMA', 0, 'POINT')}">0</span> ₫</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${stats.categoryDetails == null or stats.categoryDetails.isEmpty()}" class="py-5 text-center text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <p class="mb-0">Chưa có dữ liệu danh mục</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FRAGMENT: REUSABLE METRIC LIST -->
+    <div th:fragment="metricList(products, label)">
+        <div class="list-group list-group-flush bg-transparent">
+            <div th:if="${products != null and !products.isEmpty()}">
+                <div th:each="p : ${products}" class="list-group-item bg-transparent border-0 px-0 product-list-item d-flex justify-content-between align-items-center">
+                    <div class="flex-grow-1 text-truncate pe-2">
+                        <div class="fw-bold text-dark text-truncate" th:text="${p.name != null ? p.name : 'N/A'}">Product</div>
+                        <small class="text-muted d-block" th:text="${p.category != null ? p.category : 'N/A'}">Category</small>
+                    </div>
+                    <div class="text-end">
+                        <span th:if="${label == 'Revenue'}" class="fw-bold text-dark small">
+                            <span th:text="${p.revenue != null ? #numbers.formatDecimal(p.revenue, 0, 'COMMA', 0, 'POINT') : '0'}"></span> ₫
+                        </span>
+                        <span th:if="${label == 'Ratio'}" class="badge bg-danger bg-opacity-10 text-danger" 
+                              th:text="${p.percentage != null ? p.percentage : 0} + '%'"></span>
+                        <span th:if="${label != 'Revenue' && label != 'Ratio'}" class="badge bg-secondary bg-opacity-10 text-secondary" 
+                              th:text="${p.value != null ? p.value : 0} + ' ' + ${label}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    function switchTab(tabId) {
+        document.querySelectorAll('.stats-tab-content').forEach(el => el.classList.add('d-none'));
+        document.getElementById(tabId).classList.remove('d-none');
+        
+        document.querySelectorAll('[onclick^="switchTab"]').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    /* Chart initialization */
+    const catData = /*[[${stats.categoryDetails}]]*/ [];
+    if (catData && catData.length > 0) {
+        const ctx = document.getElementById('categoryPie').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: catData.map(c => c.name),
+                datasets: [{
+                    data: catData.map(c => c.revenue),
+                    backgroundColor: ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#ffc107'],
+                    borderWidth: 0
+                }]
+            },
+            options: { cutout: '70%', plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    const tLabels = /*[[${stats.trendLabels}]]*/ [];
+    const tData = /*[[${stats.growthTrendData}]]*/ [];
+    if (tLabels && tData && tLabels.length > 0) {
+        const ctxTrend = document.getElementById('growthTrendChart').getContext('2d');
+        
+        let gradient = ctxTrend.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(13, 110, 253, 0.4)');
+        gradient.addColorStop(1, 'rgba(13, 110, 253, 0.0)');
+
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: tLabels,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: tData,
+                    borderColor: '#0d6efd',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#0d6efd',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: true, color: 'rgba(0,0,0,0.05)', drawBorder: false }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false }
+                    }
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>

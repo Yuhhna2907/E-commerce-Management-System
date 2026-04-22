@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Trends Analytics - SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(13, 110, 253, 0.04) 0%, transparent 40%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark Mode Overrides cho Analytics */
+        body.dark-mode .glass-panel { background: var(--sz-glass); border-color: var(--sz-glass-border); }
+        body.dark-mode .kpi-card { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .trend-table th { background: rgba(255,255,255,0.05); color: #94a3b8; }
+        body.dark-mode .trend-table td { border-bottom-color: rgba(255,255,255,0.05); color: #cbd5e1; }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .bg-light { background-color: rgba(255,255,255,0.05) !important; }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode [style*="background: white"] { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode .dropdown-menu { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); }
+        body.dark-mode .dropdown-item { color: #cbd5e1; }
+        body.dark-mode .dropdown-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; padding: 30px 40px; }
+
+        .glass-panel {
+            background: var(--sz-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+
+        .trend-table th {
+            background: rgba(0,0,0,0.02);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--sz-text-muted);
+            border: none;
+            padding: 15px 20px;
+        }
+
+        .trend-table td {
+            vertical-align: middle;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            font-size: 0.9rem;
+        }
+
+        .keyword-pill {
+            background: rgba(251, 189, 5, 0.1);
+            color: #d4a017;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .growth-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .growth-up { background: rgba(46, 204, 113, 0.1); color: #2ecc71; }
+
+        .fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        <!-- HEADER TRANG -->
+        <div class="page-header fade-up">
+            <div>
+                <h2 class="fw-bold m-0" style="font-family: 'Outfit';">Search Trends Analytics</h2>
+                <p class="text-muted">Phân tích hành vi và xu hướng tìm kiếm của khách hàng</p>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="dropdown">
+                    <button class="btn glass-panel dropdown-toggle px-3" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar3 me-2"></i> Last <span th:text="${periodDays}">7</span> Days
+                    </button>
+                    <ul class="dropdown-menu border-0 shadow-sm">
+                        <li><a class="dropdown-item" href="?days=1">Hôm nay</a></li>
+                        <li><a class="dropdown-item" href="?days=7">7 ngày qua</a></li>
+                        <li><a class="dropdown-item" href="?days=30">30 ngày qua</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-dark rounded-pill px-4" onclick="window.print()">
+                    <i class="bi bi-download me-2"></i> Xuất báo cáo
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 fade-up" style="animation-delay: 0.1s">
+                <div class="kpi-card">
+                    <div class="text-muted small mb-1">Tổng lượt tìm kiếm</div>
+                    <h3 class="fw-bold m-0" th:text="${#numbers.formatInteger(totalSearches, 0, 'POINT')}">0</h3>
+                    <div class="mt-2 text-success small">
+                        <i class="bi bi-graph-up-arrow me-1"></i> +12% so với tháng trước
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 fade-up" style="animation-delay: 0.2s">
+                <div class="kpi-card">
+                    <div class="text-muted small mb-1">Lượt chuyển đổi (Mua hàng)</div>
+                    <h3 class="fw-bold m-0" th:text="${#numbers.formatInteger(totalConversions, 0, 'POINT')}">0</h3>
+                    <div class="mt-2 text-primary small">
+                        <i class="bi bi-bag-check me-1"></i> Hiệu quả tìm kiếm tốt
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 fade-up" style="animation-delay: 0.3s">
+                <div class="kpi-card">
+                    <div class="text-muted small mb-1">Tỷ lệ chuyển đổi trung bình</div>
+                    <h3 class="fw-bold m-0" th:text="${avgConversionRate + '%'}">0%</h3>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-warning" th:style="'width: ' + ${avgConversionRate} + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Trending Table -->
+            <div class="col-lg-8 fade-up" style="animation-delay: 0.4s">
+                <div class="glass-panel p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0">Top từ khóa đang lên</h5>
+                        <button class="btn btn-link text-decoration-none text-muted p-0">Xem tất cả</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table trend-table">
+                            <thead>
+                                <tr>
+                                    <th>Từ khóa</th>
+                                    <th>Lượt tìm</th>
+                                    <th>Chuyển đổi</th>
+                                    <th>Tỷ lệ (%)</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="trend : ${topTrends}">
+                                    <td>
+                                        <span class="keyword-pill" th:text="${trend.keyword}">iphone 15</span>
+                                    </td>
+                                    <td class="fw-bold" th:text="${trend.searchCount}">1,240</td>
+                                    <td th:text="${trend.conversionCount}">120</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span th:text="${trend.conversionRate + '%'}">9.5%</span>
+                                            <div class="flex-grow-1 bg-light rounded" style="height: 4px; width: 40px;">
+                                                <div class="bg-primary rounded" th:style="'height: 4px; width: ' + ${trend.conversionRate} + '%'"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="growth-badge growth-up">
+                                            <i class="bi bi-caret-up-fill me-1"></i> Hot
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(topTrends)}">
+                                    <td colspan="5" class="text-center py-5 text-muted">Chưa có dữ liệu tìm kiếm trong giai đoạn này</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Chart -->
+            <div class="col-lg-4 fade-up" style="animation-delay: 0.5s">
+                <div class="glass-panel p-4 h-100">
+                    <h5 class="fw-bold mb-4">Phân tích Chuyển đổi</h5>
+                    <canvas id="conversionChart" height="300"></canvas>
+                    <div class="mt-4">
+                        <div class="p-3 rounded-4 bg-light mb-2">
+                            <div class="small text-muted">Đánh giá chung</div>
+                            <div class="fw-bold text-dark mt-1">Lưu lượng tìm kiếm tăng cao vào khung giờ 20h-22h.</div>
+                        </div>
+                        <div class="p-3 rounded-4" style="background: rgba(13,110,253,0.05)">
+                            <div class="small text-primary fw-bold">Gợi ý từ AI</div>
+                            <div class="small text-dark mt-1">Cân nhắc đẩy mạnh quảng cáo cho các từ khóa có tỷ lệ chuyển đổi > 10%.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const searches = [[${totalSearches}]];
+    const conversions = [[${totalConversions}]];
+    const nonConversions = searches - conversions;
+
+    const ctx = document.getElementById('conversionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Đã mua hàng', 'Chỉ xem'],
+            datasets: [{
+                data: [conversions, nonConversions],
+                backgroundColor: ['#fbbd05', document.body.classList.contains('dark-mode') ? '#334155' : '#e9ecef'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: { family: 'Inter', size: 12 }
+                    }
+                }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+    </div> <!-- Close main-content -->
+</div> <!-- Close admin-layout -->
+
+</body>
+</html>

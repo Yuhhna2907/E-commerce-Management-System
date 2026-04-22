@@ -16,8 +16,17 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.codegym.smartphonemanagement.service.wallet.WalletReportService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +38,7 @@ public class AdminWalletController {
 
     private final WalletService walletService;
     private final SzWalletRepository walletRepo;
+    private final WalletReportService reportService;
 
     /**
      * GET /admin/wallet — Dashboard tổng quan Ví SmartZone Xu
@@ -145,5 +155,49 @@ public class AdminWalletController {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/wallet";
+    }
+
+    /**
+     * GET /admin/wallet/reports/excel — Xuất báo cáo Excel theo khoảng thời gian
+     */
+    @GetMapping("/reports/excel")
+    public ResponseEntity<byte[]> exportExcel(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.atTime(LocalTime.MAX);
+            
+            byte[] data = reportService.generateExcelReport(start, end);
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Bao-cao-vi-" + startDate + "-to-" + endDate + ".xlsx")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(data);
+        } catch (Exception e) {
+            log.error("Lỗi khi xuất báo cáo Excel: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * GET /admin/wallet/reports/pdf — Xuất báo cáo PDF theo khoảng thời gian
+     */
+    @GetMapping("/reports/pdf")
+    public ResponseEntity<byte[]> exportPdf(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.atTime(LocalTime.MAX);
+            
+            byte[] data = reportService.generatePdfReport(start, end);
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Bao-cao-vi-" + startDate + "-to-" + endDate + ".pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(data);
+        } catch (Exception e) {
+            log.error("Lỗi khi xuất báo cáo PDF: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

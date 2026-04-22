@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Gợi Ý Sản Phẩm - SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            background-color: #f0f2f5;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%);
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: #8e8e93;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .rebuild-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rebuild-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .rebuild-btn {
+            background: white;
+            color: #667eea;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .rebuild-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .rebuild-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .status-healthy {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #664d03;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .pinned-product-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: move;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .pinned-product-item:hover {
+            background: #e9ecef;
+            border-color: var(--sz-orange);
+        }
+
+        .pinned-product-item.dragging {
+            opacity: 0.5;
+        }
+
+        .product-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: #6c757d;
+        }
+
+        .unpin-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .unpin-btn:hover {
+            background: #bb2d3b;
+            transform: scale(1.05);
+        }
+
+        .pin-product-btn {
+            background: var(--sz-orange);
+            color: var(--sz-dark);
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .pin-product-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(251, 189, 5, 0.3);
+        }
+
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        body.dark-mode .section-card {
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        body.dark-mode .table thead th {
+            background: rgba(51, 65, 85, 0.5);
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .table tbody td {
+            color: #e2e8f0;
+            border-color: rgba(71, 85, 105, 0.3);
+        }
+
+        body.dark-mode .pinned-product-item {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        body.dark-mode .pinned-product-item:hover {
+            background: rgba(71, 85, 105, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Analytics</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Quản Lý Gợi Ý</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2 class="fw-bold mb-2">
+                <i class="bi bi-stars text-warning me-2"></i>
+                Quản Lý Hệ Thống Gợi Ý Sản Phẩm
+            </h2>
+            <p class="text-muted mb-0">Điều khiển AI recommendation engine và sản phẩm ghim trang chủ</p>
+        </div>
+
+        <!-- Rebuild Section -->
+        <div class="rebuild-section">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="fw-bold mb-3">
+                        <i class="bi bi-arrow-repeat me-2"></i>
+                        Rebuild Recommendation Matrix
+                    </h4>
+                    <p class="mb-3 opacity-75">
+                        Tái tạo toàn bộ ma trận gợi ý dựa trên lịch sử mua hàng và hành vi người dùng. 
+                        Quá trình này chạy bất đồng bộ và có thể mất vài phút.
+                    </p>
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="rebuild-btn" id="rebuildBtn" onclick="triggerRebuild()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Rebuild Ngay
+                        </button>
+                        <div>
+                            <small class="d-block opacity-75">Trạng thái:</small>
+                            <span class="status-badge" 
+                                  th:classappend="${status.engineHealthStatus == 'healthy' ? 'status-healthy' : (status.engineHealthStatus == 'warning' ? 'status-warning' : 'status-error')}"
+                                  th:text="${status.engineHealthStatus == 'healthy' ? 'Khỏe mạnh' : (status.engineHealthStatus == 'warning' ? 'Cảnh báo' : 'Lỗi')}">
+                                Khỏe mạnh
+                            </span>
+                        </div>
+                        <div>
+                            <small class="d-block opacity-75">Tổng gợi ý:</small>
+                            <strong class="fs-5" th:text="${status.totalRecommendationsCount}">0</strong>
+                        </div>
+                        <div th:if="${status.lastRebuildTimestamp != null}">
+                            <small class="d-block opacity-75">Rebuild lần cuối:</small>
+                            <strong th:text="${#temporals.format(status.lastRebuildTimestamp, 'dd/MM/yyyy HH:mm')}">--</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <i class="bi bi-cpu" style="font-size: 6rem; opacity: 0.2;"></i>
+                </div>
+            </div>
+
+            <!-- Progress Container -->
+            <div class="progress-container" id="progressContainer">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-semibold">Đang xử lý...</span>
+                    <span id="progressText">0%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         id="progressBar"
+                         role="progressbar" 
+                         style="width: 0%"></div>
+                </div>
+                <small class="d-block mt-2 opacity-75" id="progressMessage">Đang khởi tạo...</small>
+            </div>
+        </div>
+
+        <!-- Pinned Products Section -->
+        <div class="section-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <i class="bi bi-pin-angle-fill text-danger me-2"></i>
+                        Sản Phẩm Ghim Trang Chủ
+                    </h5>
+                    <small class="text-muted">
+                        Tối đa 10 sản phẩm | Hiện có: <strong th:text="${pinnedProducts.size()}">0</strong>/10
+                    </small>
+                </div>
+                <button class="pin-product-btn" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#pinProductModal"
+                        th:disabled="${pinnedProducts.size() >= 10}">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Ghim Sản Phẩm
+                </button>
+            </div>
+
+            <div id="pinnedProductsList">
+                <div th:if="${pinnedProducts.empty}" class="text-center py-5 text-muted">
+                    <i class="bi bi-pin fs-1 d-block mb-3"></i>
+                    Chưa có sản phẩm nào được ghim
+                </div>
+
+                <div th:each="pinned, iterStat : ${pinnedProducts}" 
+                     class="pinned-product-item"
+                     th:attr="data-pinned-id=${pinned.id}"
+                     draggable="true">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <i class="bi bi-grip-vertical drag-handle fs-4 me-3"></i>
+                            <span class="badge bg-secondary me-3" th:text="${iterStat.index + 1}">1</span>
+                            <img th:src="${pinned.product.imageUrl}" alt="Product" class="product-img me-3">
+                            <div>
+                                <div class="fw-semibold" th:text="${pinned.product.name}">Product Name</div>
+                                <small class="text-muted">
+                                    ID: <span th:text="${pinned.product.id}">0</span> | 
+                                    Ghim lúc: <span th:text="${#temporals.format(pinned.pinnedAt, 'dd/MM/yyyy HH:mm')}">--</span>
+                                </small>
+                            </div>
+                        </div>
+                        <button class="unpin-btn" th:onclick="'unpinProduct(' + ${pinned.id} + ')'">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Bỏ ghim
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Recommended Products Section -->
+        <div class="section-card">
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-graph-up-arrow text-success me-2"></i>
+                Sản Phẩm Được Gợi Ý Nhiều Nhất
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Xếp Hạng</th>
+                            <th>Sản Phẩm</th>
+                            <th>Danh Mục</th>
+                            <th class="text-center">Số Lần Gợi Ý</th>
+                            <th class="text-center">Điểm Trung Bình</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${mostRecommended.empty}">
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                Chưa có dữ liệu gợi ý
+                            </td>
+                        </tr>
+                        <tr th:each="item, iterStat : ${mostRecommended}">
+                            <td>
+                                <span class="badge" 
+                                      th:classappend="${iterStat.index < 3 ? 'bg-warning text-dark' : 'bg-secondary'}"
+                                      th:text="${iterStat.index + 1}">1</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.imageUrl}" alt="Product" class="product-img me-3">
+                                    <span class="fw-semibold" th:text="${item.productName}">Product Name</span>
+                                </div>
+                            </td>
+                            <td th:text="${item.categoryName}">Category</td>
+                            <td class="text-center">
+                                <strong class="text-primary" th:text="${item.recommendationCount}">0</strong>
+                            </td>
+                            <td class="text-center">
+                                <strong class="text-success" th:text="${#numbers.formatDecimal(item.averageScore, 1, 2)}">0.00</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pin Product Modal -->
+<div class="modal fade" id="pinProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pin-angle-fill me-2"></i>
+                    Ghim Sản Phẩm Lên Trang Chủ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tìm sản phẩm</label>
+                    <input type="text" class="form-control" id="productSearchInput" placeholder="Nhập tên hoặc ID sản phẩm...">
+                </div>
+                <div id="productSearchResults" class="mt-3">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // Dark mode support
+    const currentTheme = localStorage.getItem('adminTheme') || 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Rebuild functionality
+    let rebuildPollingInterval = null;
+
+    function triggerRebuild() {
+        const btn = document.getElementById('rebuildBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Đang xử lý...';
+        progressContainer.classList.add('active');
+        
+        fetch('/admin/analytics/recommendations/rebuild', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Start polling for progress
+                startProgressPolling();
+            } else {
+                alert('Lỗi: ' + data.message);
+                resetRebuildUI();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi rebuild');
+            resetRebuildUI();
+        });
+    }
+
+    function startProgressPolling() {
+        let progress = 0;
+        rebuildPollingInterval = setInterval(() => {
+            fetch('/admin/analytics/recommendations/rebuild/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isRebuilding) {
+                        // Simulate progress (since we don't have real progress tracking)
+                        progress = Math.min(progress + 10, 90);
+                        updateProgress(progress, 'Đang xử lý...');
+                    } else {
+                        // Rebuild complete
+                        clearInterval(rebuildPollingInterval);
+                        updateProgress(100, 'Hoàn tất!');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error polling status:', error);
+                    clearInterval(rebuildPollingInterval);
+                    resetRebuildUI();
+                });
+        }, 2000);
+    }
+
+    function updateProgress(percent, message) {
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressText').textContent = percent + '%';
+        document.getElementById('progressMessage').textContent = message;
+    }
+
+    function resetRebuildUI() {
+        const btn = document.getElementById('rebuildBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Rebuild Ngay';
+        progressContainer.classList.remove('active');
+    }
+
+    // Unpin product
+    function unpinProduct(pinnedId) {
+        if (!confirm('Bạn có chắc muốn bỏ ghim sản phẩm này?')) {
+            return;
+        }
+        
+        fetch(`/admin/analytics/recommendations/pin/${pinnedId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra');
+        });
+    }
+
+    // Drag and drop for reordering
+    let draggedElement = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const pinnedItems = document.querySelectorAll('.pinned-product-item');
+        
+        pinnedItems.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+            });
+            
+            item.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+            });
+            
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (draggedElement !== this) {
+                    const allItems = Array.from(document.querySelectorAll('.pinned-product-item'));
+                    const draggedIndex = allItems.indexOf(draggedElement);
+                    const targetIndex = allItems.indexOf(this);
+                    
+                    if (draggedIndex < targetIndex) {
+                        this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedElement, this);
+                    }
+                    
+                    // Save new order
+                    saveNewOrder();
+                }
+            });
+        });
+    });
+
+    function saveNewOrder() {
+        const items = document.querySelectorAll('.pinned-product-item');
+        const orderData = Array.from(items).map((item, index) => ({
+            pinnedProductId: parseInt(item.getAttribute('data-pinned-id')),
+            displayOrder: index + 1
+        }));
+        
+        fetch('/admin/analytics/recommendations/pin/reorder', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update badge numbers
+                items.forEach((item, index) => {
+                    item.querySelector('.badge').textContent = index + 1;
+                });
+            } else {
+                alert('Lỗi khi lưu thứ tự: ' + data.message);
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi lưu thứ tự');
+            location.reload();
+        });
+    }
+</script>
+
+</body>
+</html>

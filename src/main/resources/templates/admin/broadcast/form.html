@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gửi Thông báo Hàng loạt | SmartZone Admin</title>
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(9, 32, 63, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(13, 110, 253, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark Mode Overrides cho Broadcast */
+        body.dark-mode .sz-glass { background: var(--sz-glass); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .form-control, body.dark-mode .form-select { background-color: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; color: #f1f5f9 !important; }
+        body.dark-mode .form-control:focus, body.dark-mode .form-select:focus { border-color: var(--sz-accent) !important; }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; color: #cbd5e1 !important; }
+        body.dark-mode .bg-light { background-color: rgba(255,255,255,0.05) !important; color: #cbd5e1 !important; }
+        body.dark-mode .channel-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); color: #cbd5e1; }
+        body.dark-mode .channel-checkbox:checked + .channel-card { background: rgba(88, 86, 214, 0.15); border-color: var(--sz-accent); color: #fff; }
+        body.dark-mode .btn-light { background: rgba(255,255,255,0.05); border: none; color: #cbd5e1; }
+        body.dark-mode .input-group-text { background-color: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #cbd5e1; }
+        body.dark-mode hr { border-color: rgba(255,255,255,0.1) !important; }
+
+        /* --- LAYOUT --- */
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content {
+            flex-grow: 1; padding: 30px 40px; height: 100vh; overflow-y: auto;
+        }
+
+        /* --- GLASSMORPHISM --- */
+        .sz-glass {
+            background: var(--sz-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            transition: all 0.35s ease;
+        }
+
+        /* --- FORM STYLING --- */
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: white;
+            border-color: var(--sz-accent);
+            box-shadow: 0 0 0 4px rgba(88, 86, 214, 0.1);
+        }
+
+        .form-label {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sz-text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- ANIMATIONS --- */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.6s forwards cubic-bezier(0.16, 1, 0.3, 1); }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CHANNEL CARDS --- */
+        .channel-card {
+            border: 2px solid transparent;
+            padding: 1.25rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .channel-checkbox:checked + .channel-card {
+            border-color: var(--sz-accent);
+            background: rgba(88, 86, 214, 0.05);
+        }
+
+        .channel-card i { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+
+        .btn-elite {
+            background: var(--sz-primary);
+            color: white;
+            border-radius: 12px;
+            padding: 0.8rem 2rem;
+            font-weight: 700;
+            transition: all 0.3s;
+            border: none;
+        }
+        .btn-elite:hover {
+            background: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        <!-- HEADER TRANG -->
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
+            <div>
+                <h3 class="fw-bolder mb-1" style="font-family: 'Outfit'; font-size: 2.25rem;">Broadcast Engine</h3>
+                <p class="text-muted fw-500">Cấu hình và phát hành chiến dịch Marketing đa kênh</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i> Load lại trang
+                </button>
+            </div>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show sz-glass mb-4 fade-up" role="alert">
+            <i class="bi bi-check-circle-fill me-2 text-success"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show sz-glass mb-4 fade-up" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8 fade-up delay-1">
+                <div class="sz-glass p-5">
+                    <form th:action="@{/admin/broadcast/send}" method="post" id="broadcastForm">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3">
+                                <i class="bi bi-pen-fill text-primary" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <h5 class="fw-bolder m-0" style="font-family: 'Outfit';">Soạn Thảo Nội Dung</h5>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Tiêu đề thông báo</label>
+                            <input type="text" name="subject" class="form-control form-control-lg" placeholder="Nhập tiêu đề thu hút..." required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label d-flex justify-content-between">
+                                Nội dung chi tiết
+                                <span class="badge bg-light text-dark border-0 rounded-pill px-3 py-2" style="font-size: 0.7rem;">
+                                    Hỗ trợ: {{fullName}}, {{username}}
+                                </span>
+                            </label>
+                            <textarea name="message" class="form-control" rows="8" placeholder="Chào {{fullName}}, SmartZone dành tặng riêng bạn..." required></textarea>
+                            <div class="mt-2 text-muted" style="font-size: 0.8rem;">
+                                <i class="bi bi-info-circle me-1"></i> Nội dung hỗ trợ định dạng Markdown và sẽ được tự động chuyển đổi sang HTML cho Email.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <label class="form-label">Đường dẫn đích (CTA Link)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-link-45deg"></i></span>
+                                <input type="url" name="actionLink" class="form-control border-start-0" style="border-radius: 0 12px 12px 0;" placeholder="https://smartzone.com/promotions">
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-4 mt-5">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-4 me-3">
+                                <i class="bi bi-people-fill text-success" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <h5 class="fw-bolder m-0" style="font-family: 'Outfit';">Đối Tượng Mục Tiêu</h5>
+                        </div>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phân khúc khách hàng</label>
+                                <select class="form-select select-lg" name="target" id="targetSelect" onchange="toggleSpecificUser(this.value)">
+                                    <option value="ALL">Toàn bộ khách hàng</option>
+                                    <option value="BRONZE">Hạng ĐỒNG (Bronze)</option>
+                                    <option value="SILVER">Hạng BẠC (Silver)</option>
+                                    <option value="GOLD">Hạng VÀNG (Gold)</option>
+                                    <option value="DIAMOND">Hạng KIM CƯƠNG (Diamond)</option>
+                                    <option value="SPECIFIC">Kiểm thử (Chỉ định User)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="specificUserDiv" style="display:none;">
+                                <label class="form-label">Nhập Username nhận tin</label>
+                                <input type="text" name="specificUsername" class="form-control" placeholder="VD: huy.luong">
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center mb-4 mt-5">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3">
+                                <i class="bi bi-broadcast text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <h5 class="fw-bolder m-0" style="font-family: 'Outfit';">Kênh Phân Phối</h5>
+                        </div>
+                        
+                        <div class="row g-3 mb-5">
+                            <div class="col-md-6">
+                                <label class="w-100">
+                                    <input type="checkbox" class="channel-checkbox d-none" name="sendAppNotification" checked>
+                                    <div class="channel-card text-center">
+                                        <i class="bi bi-bell-fill text-warning"></i>
+                                        <div class="fw-bold">In-App Notification</div>
+                                        <div class="small text-muted">Hiển thị trong app/web</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="w-100">
+                                    <input type="checkbox" class="channel-checkbox d-none" name="sendEmail" checked>
+                                    <div class="channel-card text-center">
+                                        <i class="bi bi-envelope-paper-heart-fill text-primary"></i>
+                                        <div class="fw-bold">Email Marketing</div>
+                                        <div class="small text-muted">Gửi vào hòm thư cá nhân</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                            <button type="reset" class="btn btn-light px-5 py-3 rounded-4 fw-bold">Xóa Bản Nháp</button>
+                            <button type="submit" class="btn btn-elite px-5" onclick="return confirm('Xác nhận kích hoạt chiến dịch? Hệ thống sẽ bắt đầu gửi thông báo tới hàng ngàn khách hàng ngay lập tức.')">
+                                <i class="bi bi-rocket-takeoff-fill me-2"></i>Kích Hoạt Ngay
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 fade-up delay-2">
+                <div class="sz-glass p-4 sticky-top" style="top: 20px; border-color: rgba(88, 86, 214, 0.2); background: rgba(88, 86, 214, 0.02);">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-indigo p-2 rounded-3 me-3" style="background: var(--sz-accent);">
+                            <i class="bi bi-lightbulb text-white"></i>
+                        </div>
+                        <h6 class="fw-bolder m-0" style="font-family: 'Outfit';">Smart Tips</h6>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="small text-muted mb-3" style="line-height: 1.6;">Để tối ưu hóa tỷ lệ chuyển đổi, hãy sử dụng các biến cá nhân hóa để tạo sự tin tưởng cho khách hàng.</p>
+                        
+                        <div class="p-3 rounded-4 bg-white bg-opacity-50 mb-3 border border-white">
+                            <div class="fw-bold small mb-2"><i class="bi bi-code-slash me-2"></i>Snippet gợi ý:</div>
+                            <code class="small d-block text-dark">Chào {{fullName}}, bạn có 1 món quà mới...</code>
+                        </div>
+                    </div>
+                    
+                    <hr class="opacity-10 my-4">
+                    
+                    <h6 class="fw-bold small text-uppercase mb-3" style="letter-spacing: 1px;">Quy tắc gửi:</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                            <span>Nên kiểm tra trước với tùy chọn <b>"Kiểm thử"</b> trước khi gửi hàng loạt.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                            <span>Hệ thống xử lý gửi ngầm, bạn có thể chuyển sang tác vụ khác ngay.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                            <span>Email marketing sẽ bọc nội dung trong template Elite chuyên nghiệp.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSpecificUser(val) {
+            const div = document.getElementById('specificUserDiv');
+            const input = div.querySelector('input');
+            if (val === 'SPECIFIC') {
+                div.style.display = 'block';
+                input.required = true;
+                setTimeout(() => input.focus(), 200);
+            } else {
+                div.style.display = 'none';
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+        // Thêm hiệu ứng cho channel cards
+        document.querySelectorAll('.channel-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                // Background script visual handling is done by CSS + and :checked
+            });
+        });
+    </script>
+</div> <!-- Close main-content -->
+</div> <!-- Close admin-layout -->
+</body>
+</html>

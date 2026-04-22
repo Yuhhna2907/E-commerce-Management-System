@@ -30,22 +30,13 @@ public class CacheControlFilter extends OncePerRequestFilter {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
 
         // Áp dụng cache control cho các trang cần bảo mật
-        if (requestURI.startsWith("/admin/")) {
-            // Admin pages: chỉ cho phép admin đã đăng nhập
-            if (!isAdmin) {
-                response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-                response.setHeader("Pragma", "no-cache");
-                response.setHeader("Expires", "0");
-            }
-        } else if (requestURI.startsWith("/user/")) {
-            // User pages: chỉ cho phép user đã đăng nhập
-            if (!isAuthenticated) {
-                response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-                response.setHeader("Pragma", "no-cache");
-                response.setHeader("Expires", "0");
-            }
+        if (requestURI.startsWith("/admin/") || requestURI.startsWith("/user/") || requestURI.equals("/login")) {
+            // Không cho phép lưu cache các trang quản trị, trang người dùng và trang login
+            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            response.setHeader("Pragma", "no-cache");
+            response.setHeader("Expires", "0");
         } else if (!isAuthenticated) {
-            // Các trang khác: nếu chưa đăng nhập thì cũng áp dụng cache control
+            // Các trang khác (public): nếu chưa đăng nhập thì cũng áp dụng cache control để bảo mật form
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             response.setHeader("Pragma", "no-cache");
             response.setHeader("Expires", "0");

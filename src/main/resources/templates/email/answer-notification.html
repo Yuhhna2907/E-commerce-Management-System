@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Câu hỏi của bạn đã được giải đáp</title>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f9f9f9; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .header { background: #1a1c20; padding: 40px 20px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .content { padding: 40px 30px; }
+        .welcome { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .product-box { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #0d6efd; }
+        .q-label { color: #86868b; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .question-text { font-style: italic; color: #555; margin-bottom: 15px; }
+        .a-label { color: #0d6efd; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .answer-text { font-weight: 500; font-size: 16px; color: #1a1c20; }
+        .cta-button { display: inline-block; padding: 14px 30px; background-color: #1a1c20; color: #ffffff; text-decoration: none; border-radius: 99px; font-weight: 700; margin-top: 20px; }
+        .footer { background: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SmartZone Support</h1>
+        </div>
+        <div class="content">
+            <div class="welcome">Chào [[${userName}]],</div>
+            <p>SmartZone vừa giải đáp thắc mắc của bạn về sản phẩm: <br><strong th:text="${productName}">Tên sản phẩm</strong></p>
+            
+            <div class="product-box">
+                <div class="q-label">Câu hỏi của bạn:</div>
+                <div class="question-text" th:text="${questionText}">Nội dung câu hỏi...</div>
+                
+                <div class="a-label">Phản hồi từ SmartZone:</div>
+                <div class="answer-text" th:text="${answerText}">Nội dung trả lời...</div>
+            </div>
+
+            <p>Nếu bạn còn bất kỳ thắc mắc nào khác, đừng ngần ngại phản hồi lại email này hoặc liên hệ hotline 1800-xxxx nhé!</p>
+            
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">Xem chi tiết sản phẩm</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 SmartZone. All rights reserved.</p>
+            <p>Địa chỉ: 123 Đường Công Nghệ, TP. Hà Nội</p>
+        </div>
+    </div>
+</body>
+</html>

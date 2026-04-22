@@ -21,32 +21,21 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception {
-        System.out.println("=== DataInitializer: Bắt đầu khởi tạo dữ liệu ===");
+    public void run(String... args) {
+        System.out.println("=== DataInitializer: Bat dau khoi tao du lieu ===");
 
-        // Tạo role ADMIN nếu chưa có
-        Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElse(null);
-        if (adminRole == null) {
-            adminRole = new Role();
-            adminRole.setName("ROLE_ADMIN");
-            roleRepository.save(adminRole);
-            System.out.println("=== DataInitializer: Đã tạo ROLE_ADMIN ===");
-        } else {
-            System.out.println("=== DataInitializer: ROLE_ADMIN đã tồn tại ===");
-        }
+        Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> {
+            Role role = new Role();
+            role.setName("ROLE_ADMIN");
+            return roleRepository.save(role);
+        });
 
-        // Tạo role USER nếu chưa có
-        Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
-        if (userRole == null) {
-            userRole = new Role();
-            userRole.setName("ROLE_USER");
-            roleRepository.save(userRole);
-            System.out.println("=== DataInitializer: Đã tạo ROLE_USER ===");
-        } else {
-            System.out.println("=== DataInitializer: ROLE_USER đã tồn tại ===");
-        }
+        Role userRole = roleRepository.findByName("ROLE_USER").orElseGet(() -> {
+            Role role = new Role();
+            role.setName("ROLE_USER");
+            return roleRepository.save(role);
+        });
 
-        // Tạo hoặc cập nhật user admin
         User admin = userRepository.findByUsername("admin").orElse(null);
         if (admin == null) {
             admin = User.builder()
@@ -63,18 +52,17 @@ public class DataInitializer implements CommandLineRunner {
             admin.setRoles(roles);
 
             userRepository.save(admin);
-            System.out.println("=== DataInitializer: Đã tạo admin user với username: admin, password: admin123 ===");
+            System.out.println("=== DataInitializer: Da tao admin user mac dinh ===");
         } else {
-            // Cập nhật password và roles nếu cần
-            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEnabled(true);
-            Set<Role> roles = new HashSet<>();
+            Set<Role> roles = admin.getRoles() != null ? new HashSet<>(admin.getRoles()) : new HashSet<>();
             roles.add(adminRole);
             admin.setRoles(roles);
             userRepository.save(admin);
-            System.out.println("=== DataInitializer: Đã cập nhật admin user với password: admin123 ===");
+            System.out.println("=== DataInitializer: Da xac nhan admin user ton tai va co ROLE_ADMIN ===");
         }
 
-        System.out.println("=== DataInitializer: Hoàn thành khởi tạo dữ liệu ===");
+        System.out.println("=== DataInitializer: ROLE_USER san sang: " + (userRole.getId() != null) + " ===");
+        System.out.println("=== DataInitializer: Hoan thanh khoi tao du lieu ===");
     }
 }

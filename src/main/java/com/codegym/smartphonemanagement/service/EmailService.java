@@ -169,4 +169,78 @@ public class EmailService {
             log.error("Unexpected error sending refund rejected email to: {}", to, e);
         }
     }
+
+    /**
+     * Gửi email thông báo khi Admin trả lời câu hỏi sản phẩm
+     * 
+     * @param to Email người nhận
+     * @param userName Tên người dùng
+     * @param productName Tên sản phẩm
+     * @param questionText Nội dung câu hỏi
+     * @param answerText Nội dung câu trả lời
+     */
+    @Async
+    public void sendAnswerNotificationEmail(String to, String userName, String productName, String questionText, String answerText) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject("💡 Chào " + userName + ", câu hỏi của bạn đã được giải đáp! - SmartZone");
+            helper.setFrom("noreply@smartzone.com");
+
+            Context context = new Context();
+            context.setVariable("userName", userName);
+            context.setVariable("productName", productName);
+            context.setVariable("questionText", questionText);
+            context.setVariable("answerText", answerText);
+            context.setVariable("time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+
+            String htmlContent = templateEngine.process("email/answer-notification", context);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Q&A answer notification email sent successfully to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send Q&A notification email to: {}. Error: {}", to, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while sending Q&A notification email to: {}", to, e);
+        }
+    }
+    /**
+     * Gửi email khuyến mãi/thông báo hàng loạt
+     * 
+     * @param to Email người nhận
+     * @param userName Tên người dùng
+     * @param subject Chủ đề email
+     * @param content Nội dung chi tiết
+     * @param actionLink Link đính kèm
+     */
+    @Async("broadcastExecutor")
+    public void sendPromotionalEmail(String to, String userName, String subject, String content, String actionLink) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setFrom("marketing@smartzone.com");
+
+            Context context = new Context();
+            context.setVariable("userName", userName != null ? userName : "User");
+            context.setVariable("content", content);
+            context.setVariable("actionLink", actionLink);
+
+            String htmlContent = templateEngine.process("email/promotion", context);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            // We use trace/debug here to avoid log spamming for large broadcasts
+            log.debug("Promotional email sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send promotional email to: {}. Error: {}", to, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while sending promotional email to: {}", to, e);
+        }
+    }
 }

@@ -24,4 +24,7 @@ public interface SzWalletTransactionRepository extends JpaRepository<SzWalletTra
     BigDecimal sumByTypeAndPeriod(@Param("type") WalletTransactionType type,
                                   @Param("from") LocalDateTime from,
                                   @Param("to") LocalDateTime to);
+
+    /** Tìm tất cả giao dịch trong khoảng thời gian để xuất báo cáo */
+    List<SzWalletTransaction> findAllByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime start, LocalDateTime end);
 }

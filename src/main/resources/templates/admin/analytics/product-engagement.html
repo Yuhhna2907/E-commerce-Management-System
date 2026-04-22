@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Phân Tích Tương Tác Sản Phẩm - SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            background-color: #f0f2f5;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%);
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: #8e8e93;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        .product-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .engagement-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .engagement-score.high {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .engagement-score.medium {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .engagement-score.low {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .count-badge {
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .export-btn {
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            border: none;
+            color: var(--sz-dark);
+        }
+
+        .page-link:hover {
+            background: var(--sz-orange);
+            color: white;
+        }
+
+        .page-item.active .page-link {
+            background: var(--sz-orange);
+            border-color: var(--sz-orange);
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        body.dark-mode .filter-section,
+        body.dark-mode .data-table {
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        body.dark-mode .table thead th {
+            background: rgba(51, 65, 85, 0.5);
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .table tbody td {
+            color: #e2e8f0;
+            border-color: rgba(71, 85, 105, 0.3);
+        }
+
+        body.dark-mode .count-badge {
+            background: rgba(51, 65, 85, 0.5);
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Analytics</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tương Tác Sản Phẩm</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-2">
+                    <i class="bi bi-heart-fill text-danger me-2"></i>
+                    Phân Tích Tương Tác Sản Phẩm
+                </h2>
+                <p class="text-muted mb-0">Sản phẩm có mức độ quan tâm cao từ khách hàng (Wishlist + Compare)</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/admin/analytics/product-engagement/export/csv(categoryId=${param.categoryId}, minEngagementScore=${param.minEngagementScore})}" 
+                   class="btn btn-success export-btn">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>Xuất CSV
+                </a>
+                <a th:href="@{/admin/analytics/product-engagement/export/excel(categoryId=${param.categoryId}, minEngagementScore=${param.minEngagementScore})}" 
+                   class="btn btn-primary export-btn">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form method="get" th:action="@{/admin/analytics/product-engagement}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Danh Mục</label>
+                        <select name="categoryId" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="category : ${categories}" 
+                                    th:value="${category.id}" 
+                                    th:text="${category.name}"
+                                    th:selected="${param.categoryId != null && param.categoryId[0] == category.id.toString()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Điểm tối thiểu</label>
+                        <input type="number" name="minEngagementScore" class="form-control" 
+                               placeholder="0" min="0"
+                               th:value="${param.minEngagementScore != null ? param.minEngagementScore[0] : ''}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Sắp xếp theo</label>
+                        <select name="sortBy" class="form-select">
+                            <option value="engagementScore" th:selected="${param.sortBy == null || param.sortBy[0] == 'engagementScore'}">Điểm tương tác</option>
+                            <option value="wishlistCount" th:selected="${param.sortBy != null && param.sortBy[0] == 'wishlistCount'}">Wishlist</option>
+                            <option value="compareCount" th:selected="${param.sortBy != null && param.sortBy[0] == 'compareCount'}">Compare</option>
+                            <option value="productName" th:selected="${param.sortBy != null && param.sortBy[0] == 'productName'}">Tên sản phẩm</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Thứ tự</label>
+                        <select name="sortDir" class="form-select">
+                            <option value="desc" th:selected="${param.sortDir == null || param.sortDir[0] == 'desc'}">Giảm dần</option>
+                            <option value="asc" th:selected="${param.sortDir != null && param.sortDir[0] == 'asc'}">Tăng dần</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Số dòng</label>
+                        <select name="size" class="form-select">
+                            <option value="10" th:selected="${param.size != null && param.size[0] == '10'}">10</option>
+                            <option value="25" th:selected="${param.size == null || param.size[0] == '25'}">25</option>
+                            <option value="50" th:selected="${param.size != null && param.size[0] == '50'}">50</option>
+                            <option value="100" th:selected="${param.size != null && param.size[0] == '100'}">100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-dark w-100">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sản Phẩm</th>
+                            <th>Danh Mục</th>
+                            <th class="text-center">Wishlist</th>
+                            <th class="text-center">Compare</th>
+                            <th class="text-center">Điểm Tương Tác</th>
+                            <th>Cập Nhật</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${engagementData.empty}">
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                Không có dữ liệu
+                            </td>
+                        </tr>
+                        <tr th:each="item : ${engagementData.content}">
+                            <td class="fw-semibold" th:text="${item.productId}">1</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.imageUrl}" alt="Product" class="product-img me-3">
+                                    <span class="fw-semibold" th:text="${item.productName}">Product Name</span>
+                                </div>
+                            </td>
+                            <td th:text="${item.categoryName}">Category</td>
+                            <td class="text-center">
+                                <span class="count-badge">
+                                    <i class="bi bi-heart-fill text-danger me-1"></i>
+                                    <span th:text="${item.wishlistCount}">0</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="count-badge">
+                                    <i class="bi bi-arrow-left-right text-primary me-1"></i>
+                                    <span th:text="${item.compareCount}">0</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="engagement-score"
+                                      th:classappend="${item.engagementScore >= 20 ? 'high' : (item.engagementScore >= 10 ? 'medium' : 'low')}"
+                                      th:text="${item.engagementScore}">0</span>
+                            </td>
+                            <td th:text="${#temporals.format(item.lastUpdated, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="p-3 border-top" th:if="${!engagementData.empty}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        Hiển thị <strong th:text="${engagementData.numberOfElements}">0</strong> trong tổng số 
+                        <strong th:text="${engagementData.totalElements}">0</strong> bản ghi
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${engagementData.first} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/analytics/product-engagement(page=${engagementData.number - 1}, size=${engagementData.size}, categoryId=${param.categoryId}, minEngagementScore=${param.minEngagementScore}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item" 
+                                th:each="i : ${#numbers.sequence(0, engagementData.totalPages - 1)}"
+                                th:if="${i >= engagementData.number - 2 && i <= engagementData.number + 2}"
+                                th:classappend="${i == engagementData.number} ? 'active'">
+                                <a class="page-link" 
+                                   th:href="@{/admin/analytics/product-engagement(page=${i}, size=${engagementData.size}, categoryId=${param.categoryId}, minEngagementScore=${param.minEngagementScore}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}"
+                                   th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${engagementData.last} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/analytics/product-engagement(page=${engagementData.number + 1}, size=${engagementData.size}, categoryId=${param.categoryId}, minEngagementScore=${param.minEngagementScore}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-3 p-3 bg-light rounded">
+            <small class="text-muted">
+                <strong>Công thức điểm tương tác:</strong> (Wishlist × 2) + (Compare × 1) | 
+                <span class="engagement-score high ms-2">≥ 20</span>
+                <span class="engagement-score medium ms-2">10-19</span>
+                <span class="engagement-score low ms-2">< 10</span>
+            </small>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============= THỐNG KÊ SẢN PHẨM ============= -->
+        <div class="glass-panel p-4 mb-5 fade-up delay-3">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bolder mb-1" style="font-family: 'Outfit';"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i> Thống Kê Sản Phẩm</h4>
+                    <p class="text-muted mb-0 small">Phân tích hiệu suất kinh doanh và tồn kho theo thời gian thực</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" data-stats-tab="sales">Bán Hàng</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="stock">Tồn Kho</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="engagement">Tương Tác</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="conversion">Chuyển Đổi</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="comparison">So Sánh</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="trends">Xu Hướng</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="segments">Phân Khúc</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-stats-tab="risks">Rủi Ro</button>
+                </div>
+            </div>
+
+            <!-- TAB 1: HIỆU SUẤT BÁN HÀNG -->
+            <div class="stats-tab-content" data-stats-content="sales">
+                <div class="row g-3">
+                    <!-- Top 10 Bán Chạy -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-trophy-fill me-2"></i> Top 10 Bán Chạy Nhất</h6>
+                            <div class="small text-muted mb-2">Theo số lượng đã bán (30 ngày gần nhất)</div>
+                            <div id="topSellingList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top 10 Bán Ít -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-graph-down-arrow me-2"></i> Top 10 Bán Ít Nhất</h6>
+                            <div class="small text-muted mb-2">Cần review hoặc ngừng kinh doanh</div>
+                            <div id="lowSellingList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top 10 Doanh Thu -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cash-stack me-2"></i> Top 10 Doanh Thu Cao</h6>
+                            <div class="small text-muted mb-2">Theo tổng tiền (30 ngày gần nhất)</div>
+                            <div id="topRevenueList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: TỒN KHO & LOGISTICS -->
+            <div class="stats-tab-content" data-stats-content="stock" style="display: none;">
+                <div class="row g-3">
+                    <!-- Sắp Hết Hàng -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i> Sắp Hết Hàng</h6>
+                            <div class="small text-muted mb-2">Stock &lt; 10 (cần nhập thêm)</div>
+                            <div id="lowStockList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tồn Kho Nhiều -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-boxes me-2"></i> Tồn Kho Nhiều</h6>
+                            <div class="small text-muted mb-2">Stock &gt; 100 (cần khuyến mãi)</div>
+                            <div id="highStockList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hết Hàng -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-x-circle-fill me-2"></i> Hết Hàng</h6>
+                            <div class="small text-muted mb-2">Stock = 0 (cần nhập gấp)</div>
+                            <div id="outOfStockList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TƯƠNG TÁC KHÁCH HÀNG -->
+            <div class="stats-tab-content" data-stats-content="engagement" style="display: none;">
+                <div class="row g-3">
+                    <!-- Được Yêu Thích -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-heart-fill me-2"></i> Được Yêu Thích</h6>
+                            <div class="small text-muted mb-2">Wishlist count cao nhất</div>
+                            <div id="mostWishlistedList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Được Xem Nhiều -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye-fill me-2"></i> Được Xem Nhiều</h6>
+                            <div class="small text-muted mb-2">View count cao nhất</div>
+                            <div id="mostViewedList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Đánh Giá Cao -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-star-fill me-2"></i> Đánh Giá Cao</h6>
+                            <div class="small text-muted mb-2">Rating ≥ 4.5 sao</div>
+                            <div id="topRatedList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nhiều Q&A -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-chat-dots-fill me-2"></i> Nhiều Q&A</h6>
+                            <div class="small text-muted mb-2">Câu hỏi từ khách hàng</div>
+                            <div id="mostQuestionsLis" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải dữ liệu...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CHUYỂN ĐỔI & HIỆU SUẤT -->
+            <div class="stats-tab-content" data-stats-content="conversion" style="display: none;">
+                <div class="row g-3">
+                    <!-- Conversion Rate Chart -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-graph-up-arrow me-2"></i> Tỷ Lệ Chuyển Đổi Cao Nhất</h6>
+                            <div class="small text-muted mb-3">Top 10 sản phẩm có conversion rate tốt nhất</div>
+                            <canvas id="conversionChart" style="max-height: 300px;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Low Conversion -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-graph-down me-2"></i> Conversion Thấp</h6>
+                            <div class="small text-muted mb-2">Conversion rate &lt; 1%</div>
+                            <div id="lowConversionList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AOV & Return Rate -->
+                    <div class="col-md-3">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="bg-light rounded-4 p-3">
+                                    <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cash-coin me-2"></i> AOV Cao Nhất</h6>
+                                    <div class="small text-muted mb-2">Giá trị đơn hàng TB</div>
+                                    <div id="highAOVList" class="mt-3">
+                                        <div class="text-center py-2 text-muted small">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="bg-light rounded-4 p-3">
+                                    <h6 class="fw-bold text-warning mb-3"><i class="bi bi-arrow-repeat me-2"></i> Tỷ Lệ Hoàn Trả</h6>
+                                    <div class="small text-muted mb-2">Return rate cao</div>
+                                    <div id="highReturnList" class="mt-3">
+                                        <div class="text-center py-2 text-muted small">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: SO SÁNH & CẠNH TRANH -->
+            <div class="stats-tab-content" data-stats-content="comparison" style="display: none;">
+                <div class="row g-3">
+                    <!-- Được So Sánh Nhiều -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-arrow-left-right me-2"></i> So Sánh Nhiều</h6>
+                            <div class="small text-muted mb-2">Compare count cao</div>
+                            <div id="mostComparedList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cặp Sản Phẩm Hay So Sánh -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-purple mb-3"><i class="bi bi-diagram-3 me-2"></i> Cặp Sản Phẩm Hay So Sánh</h6>
+                            <div class="small text-muted mb-2">Top 10 cặp thường được so sánh cùng nhau</div>
+                            <div id="comparisonPairsList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saved to Purchased -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-bookmark-check me-2"></i> Saved → Mua</h6>
+                            <div class="small text-muted mb-2">Conversion từ Saved</div>
+                            <div id="savedToPurchasedList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: THỜI GIAN & XU HƯỚNG -->
+            <div class="stats-tab-content" data-stats-content="trends" style="display: none;">
+                <div class="row g-3">
+                    <!-- Growth Trend Chart -->
+                    <div class="col-md-8">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-graph-up me-2"></i> Xu Hướng Tăng Trưởng</h6>
+                            <div class="small text-muted mb-3">% thay đổi doanh số so với tháng trước</div>
+                            <canvas id="growthTrendChart" style="max-height: 280px;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Fast Growing & Declining -->
+                    <div class="col-md-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="bg-light rounded-4 p-3">
+                                    <h6 class="fw-bold text-success mb-3"><i class="bi bi-rocket-takeoff me-2"></i> Đang Lên</h6>
+                                    <div class="small text-muted mb-2">Tăng trưởng nhanh</div>
+                                    <div id="fastGrowingList" class="mt-3">
+                                        <div class="text-center py-2 text-muted small">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="bg-light rounded-4 p-3">
+                                    <h6 class="fw-bold text-danger mb-3"><i class="bi bi-graph-down-arrow me-2"></i> Suy Giảm</h6>
+                                    <div class="small text-muted mb-2">Giảm nhanh nhất</div>
+                                    <div id="decliningList" class="mt-3">
+                                        <div class="text-center py-2 text-muted small">Đang tải...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hot Trend 7 Days -->
+                    <div class="col-md-12">
+                        <div class="bg-light rounded-4 p-3">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-fire me-2"></i> Hot Trend 7 Ngày Qua</h6>
+                            <div class="small text-muted mb-2">Lượt xem tăng đột biến</div>
+                            <div id="hotTrendList" class="mt-3">
+                                <div class="text-center py-3 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: KHÁCH HÀNG & PHÂN KHÚC -->
+            <div class="stats-tab-content" data-stats-content="segments" style="display: none;">
+                <div class="row g-3">
+                    <!-- Customer Segment Pie Chart -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-pie-chart me-2"></i> Phân Bố Khách Hàng</h6>
+                            <div class="small text-muted mb-3">Khách mới vs VIP</div>
+                            <canvas id="customerSegmentChart" style="max-height: 250px;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- New Customer Favorites -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person-plus me-2"></i> Khách Mới Thích</h6>
+                            <div class="small text-muted mb-2">Entry-level products</div>
+                            <div id="newCustomerList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIP Customer Favorites -->
+                    <div class="col-md-4">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-gem me-2"></i> Khách VIP Thích</h6>
+                            <div class="small text-muted mb-2">Premium products</div>
+                            <div id="vipCustomerList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Repeat Purchase & Cross-sell -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-arrow-repeat me-2"></i> Tỷ Lệ Mua Lại Cao</h6>
+                            <div class="small text-muted mb-2">Repeat purchase rate</div>
+                            <div id="repeatPurchaseList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cross-sell -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded-4 p-3 h-100">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-cart-plus me-2"></i> Thường Mua Kèm</h6>
+                            <div class="small text-muted mb-2">Cross-sell opportunities</div>
+                            <div id="crossSellList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: RỦI RO & CẢNH BÁO -->
+            <div class="stats-tab-content" data-stats-content="risks" style="display: none;">
+                <div class="row g-3">
+                    <!-- Tồn Kho Quá Lâu -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-danger border-opacity-25">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-hourglass-split me-2"></i> Tồn Quá Lâu</h6>
+                            <div class="small text-muted mb-2">&gt; 90 ngày chưa bán</div>
+                            <div id="oldStockList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Đánh Giá Tiêu Cực -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-danger border-opacity-25">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-emoji-frown me-2"></i> Review Tiêu Cực</h6>
+                            <div class="small text-muted mb-2">&gt; 30% review 1-2 sao</div>
+                            <div id="badReviewsList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tỷ Lệ Hủy Đơn Cao -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-warning border-opacity-25">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-x-circle me-2"></i> Hủy Đơn Nhiều</h6>
+                            <div class="small text-muted mb-2">Cancellation rate cao</div>
+                            <div id="highCancelList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thiếu Hàng Thường Xuyên -->
+                    <div class="col-md-3">
+                        <div class="bg-light rounded-4 p-3 h-100 border border-danger border-opacity-25">
+                            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-octagon me-2"></i> Thiếu Hàng Liên Tục</h6>
+                            <div class="small text-muted mb-2">Out-of-stock nhiều lần</div>
+                            <div id="frequentOOSList" class="mt-3">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                                    <div class="small">Đang tải...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Dark mode support
+    const currentTheme = localStorage.getItem('adminTheme') || 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+</script>
+
+</body>
+</html>

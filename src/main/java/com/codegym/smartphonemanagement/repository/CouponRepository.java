@@ -21,4 +21,10 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
      */
     @Query("SELECT c FROM Coupon c LEFT JOIN FETCH c.applicableProducts WHERE c.code = :code")
     Optional<Coupon> findByCodeWithProducts(@Param("code") String code);
+
+    @Query("SELECT c.status, COUNT(c) FROM Coupon c GROUP BY c.status")
+    List<Object[]> countByStatus();
+
+    @Query("SELECT c FROM Coupon c WHERE c.status = 'ACTIVE' AND c.endDate > CURRENT_TIMESTAMP AND c.endDate <= :threshold")
+    List<Coupon> findUpcomingExpiryCoupons(@Param("threshold") java.time.LocalDateTime threshold);
 }

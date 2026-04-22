@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="header" class="top-nav d-flex justify-content-between align-items-center mb-0 fade-up">
+    <style th:inline="css">
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            background: var(--sz-glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 12px 25px;
+            margin: -31px -40px 35px -40px !important;
+            border-bottom: 1px solid var(--sz-glass-border);
+        }
+
+        .header-search-pill {
+            background: rgba(0,0,0,0.04);
+            border-radius: 50px;
+            padding: 8px 20px;
+            width: 400px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode .header-search-pill {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-search-pill:focus-within {
+            background: white;
+            border-color: #fbbd05;
+            box-shadow: 0 4px 15px rgba(251, 189, 5, 0.1);
+        }
+        
+        body.dark-mode .header-search-pill:focus-within {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .header-action-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid var(--sz-glass-border);
+            color: var(--sz-text);
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        body.dark-mode .header-action-btn {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .header-action-btn:hover {
+            transform: translateY(-2px);
+            background: #fbbd05;
+            color: white;
+            border-color: #fbbd05;
+        }
+
+        .theme-toggle-btn i {
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        body.dark-mode .theme-toggle-btn i {
+            transform: rotate(360deg);
+        }
+        
+        body.dark-mode .bi-sun::before {
+            content: "\f497"; /* Moon icon */
+        }
+    </style>
+
+    <!-- TRÁI: SEARCH PILL -->
+    <div class="d-flex align-items-center">
+        <div class="header-search-pill d-flex align-items-center">
+            <i class="bi bi-search text-muted me-2"></i>
+            <input type="text" class="form-control border-0 bg-transparent shadow-none p-0 small" 
+                   placeholder="Tìm kiếm nhanh hệ thống (Cmd + K)..." id="globalSearchInput">
+        </div>
+    </div>
+
+    <!-- PHẢI: ACTIONS -->
+    <div class="d-flex align-items-center gap-3">
+        <!-- THEME TOGGLE -->
+        <button class="header-action-btn theme-toggle-btn" onclick="toggleDarkMode()" title="Chuyển chế độ Sáng/Tối">
+            <i class="bi bi-sun fs-5"></i>
+        </button>
+
+        <!-- NOTIFICATIONS DROPDOWN -->
+        <div class="dropdown">
+            <button class="header-action-btn" data-bs-toggle="dropdown" id="notifBell">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" 
+                      id="notifBadge" style="display: none; padding: 0.35em 0.5em; font-size: 0.6rem;">
+                    0
+                </span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end glass-panel p-0 shadow-lg border-0 mt-3" style="width: 320px; overflow: hidden; border-radius: 20px;">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="background: rgba(251, 189, 5, 0.05);">
+                    <h6 class="mb-0 fw-bold">Thông báo</h6>
+                    <button class="btn btn-link btn-sm text-decoration-none p-0 text-warning fw-bold" onclick="markAllAsRead()" style="font-size: 0.75rem;">Đã đọc hết</button>
+                </div>
+                <div id="notifList" style="max-height: 400px; overflow-y: auto;">
+                    <div class="p-4 text-center text-muted">
+                        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                        <div class="mt-2 small">Đang nạp thông báo...</div>
+                    </div>
+                </div>
+                <div class="p-2 border-top text-center">
+                    <a href="/admin/notifications" class="text-muted text-decoration-none" style="font-size: 0.75rem;">Xem tất cả thông báo</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ADD -->
+        <div class="dropdown">
+            <button class="header-action-btn" data-bs-toggle="dropdown">
+                <i class="bi bi-plus-lg fs-5"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end glass-panel shadow-lg border-0 mt-3 rounded-4 p-2">
+                <li><a class="dropdown-item rounded-3 py-2" href="#" data-bs-toggle="modal" data-bs-target="#createProductModal"><i class="bi bi-phone me-2 text-warning"></i> Thêm sản phẩm</a></li>
+                <li><a class="dropdown-item rounded-3 py-2" href="#"><i class="bi bi-ticket-perforated me-2 text-success"></i> Tạo mã giảm giá</a></li>
+                <li><hr class="dropdown-divider opacity-10"></li>
+                <li><a class="dropdown-item rounded-3 py-2" href="/admin/broadcast/new"><i class="bi bi-megaphone me-2 text-primary"></i> Gửi thông báo hệ thống</a></li>
+            </ul>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="d-flex align-items-center gap-2 ms-2 bg-white rounded-pill p-1 pe-3 border shadow-sm" style="background: var(--sz-card-bg) !important;">
+            <img src="/images/default-avatar.png" 
+                 class="rounded-circle border" width="34" height="34" style="object-fit: cover;">
+            <div class="d-none d-lg-block">
+                <div class="fw-bold lh-1" style="font-size: 0.75rem;" th:text="${#authentication.name}">Admin</div>
+                <div class="text-success small" style="font-size: 0.6rem;"><i class="bi bi-patch-check-fill me-1"></i> Verified</div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('admin-theme', isDark ? 'dark' : 'light');
+            
+            // Re-emit event for charts if needed
+            window.dispatchEvent(new Event('themeChanged'));
+        }
+
+        // Logic nạp thông báo Ajax (Dùng chung)
+        function loadHeaderNotifications() {
+            fetch('/api/admin/notifications')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('notifList');
+                    const badge = document.getElementById('notifBadge');
+                    
+                    if (data.unreadCount > 0) {
+                        badge.innerText = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    if (data.notifications.length === 0) {
+                        list.innerHTML = '<div class="p-4 text-center text-muted small">Không có thông báo mới</div>';
+                        return;
+                    }
+
+                    list.innerHTML = data.notifications.map(n => `
+                        <div class="p-3 border-bottom notif-item ${n.isRead ? '' : 'unread'}" style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='/admin/notifications'">
+                            <div class="d-flex align-items-start gap-2">
+                                <div class="p-2 rounded-3 bg-light text-warning" style="font-size: 1rem;">
+                                    <i class="bi ${n.type === 'NEW_ORDER' ? 'bi-cart-check' : 'bi-bell'}"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold small text-dark">${n.title}</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">${n.message}</div>
+                                    <div class="text-muted mt-1" style="font-size: 0.6rem;">${n.timeAgo}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadHeaderNotifications);
+    </script>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Marketing & Voucher Analytics | SmartZone Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-glass-bg: rgba(255, 255, 255, 0.65);
+            --sz-glass-border: rgba(255, 255, 255, 0.4);
+            --sz-primary: #1A1C20;
+            --sz-text-muted: #6e6e73;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6f9;
+            color: var(--sz-primary);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(9, 32, 63, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(13, 110, 253, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content {
+            flex-grow: 1; padding: 30px 40px; height: 100vh; overflow-y: auto;
+        }
+
+        /* --- GLASSMORPHISM --- */
+        .sz-glass {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--sz-glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+        }
+        
+        .sz-glass:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+        }
+
+        .kpi-card {
+            padding: 1.5rem;
+            border-radius: 20px;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #1A1C20 0%, #434343 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--sz-text-muted);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+
+        /* ANIMATIONS */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.6s forwards cubic-bezier(0.16, 1, 0.3, 1); }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Chart Containers */
+        .chart-container { min-height: 350px; }
+
+        /* Table Styling */
+        .table-glass {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.75rem;
+        }
+
+        .table-glass thead th {
+            border: none;
+            background: rgba(226, 232, 240, 0.3);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: var(--sz-text-muted);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .table-glass tbody tr {
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        .table-glass tbody td {
+            padding: 1.25rem 1rem;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table-glass tbody tr td:first-child { border-radius: 1rem 0 0 1rem; }
+        .table-glass tbody tr td:last-child { border-radius: 0 1rem 1rem 0; }
+
+        .table-glass tbody tr:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(1.01);
+            z-index: 10;
+        }
+
+        .badge-pro {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .btn-glass {
+            background: var(--sz-glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--sz-glass-border);
+            color: var(--sz-primary);
+            font-weight: 700;
+            padding: 0.6rem 1.25rem;
+            border-radius: 12px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .btn-glass:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .alert-card {
+            border-left: 4px solid;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.4);
+            transition: transform 0.2s;
+        }
+        .alert-card:hover { transform: translateX(5px); }
+        .alert-card.DANGER { border-color: #ff4d4f; }
+        .alert-card.WARNING { border-color: #faad14; }
+        .alert-card.INFO { border-color: #1890ff; }
+    </style>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+        <main class="main-content">
+            <div class="container-fluid py-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
+                    <div>
+                        <h3 class="fw-bolder mb-1" style="font-family: 'Outfit'; font-size: 2.25rem;">Marketing & Voucher Analytics</h3>
+                        <p class="text-muted fw-500">Phân tích hiệu quả kinh tế (ROI) và hành vi khách hàng sử dụng Voucher.</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a th:href="@{/admin/analytics/marketing/marketing-export-csv}" class="btn-glass">
+                            <i class="bi bi-file-earmark-spreadsheet text-success"></i> Xuất Báo Cáo CSV
+                        </a>
+                        <button class="btn btn-primary bg-gradient shadow-sm rounded-3 px-4" onclick="location.reload()">
+                            <i class="bi bi-arrow-clockwise"></i> Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 8 Golden KPIs -->
+                <div class="row g-4 mb-5 fade-up delay-1">
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Tổng Doanh Thu (Voucher)</div>
+                            <div class="stat-value text-primary" th:text="${#numbers.formatDecimal(stats.totalRevenueGenerated, 1, 'POINT', 0, 'COMMA') + '₫'}">0₫</div>
+                            <div class="small text-success fw-bold"><i class="bi bi-arrow-up"></i> Từ các đơn có mã KM</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Tổng Ngân Sách Đã "Đốt"</div>
+                            <div class="stat-value text-danger" th:text="${#numbers.formatDecimal(stats.totalDiscountBurned, 1, 'POINT', 0, 'COMMA') + '₫'}">0₫</div>
+                            <div class="small text-danger fw-bold"><i class="bi bi-fire"></i> Tổng chi phí khuyến mãi</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">ROI Tổng Thể</div>
+                            <div class="stat-value text-success" th:text="${stats.overallROI + '%'}">0%</div>
+                            <div class="small text-muted fw-bold"><i class="bi bi-graph-up"></i> Tỷ suất lợi nhuận/chi phí</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">AOV Tăng Trưởng (Lift)</div>
+                            <div class="stat-value text-info" th:text="${'+' + stats.aovLift + '%'}">+0%</div>
+                            <div class="small text-muted fw-bold"><i class="bi bi-stars"></i> So với đơn không voucher</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Tổng Lượt Sử Dụng</div>
+                            <div class="stat-value" th:text="${#numbers.formatInteger(stats.totalUsageCount, 1, 'POINT')}">0</div>
+                            <div class="small text-muted fw-bold" th:text="${stats.totalActiveVouchers + ' Voucher đang chạy'}">0</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Độ Phủ (Saturation)</div>
+                            <div class="stat-value" th:text="${stats.voucherSaturation + '%'}">0%</div>
+                            <div class="small text-muted fw-bold">Tỷ lệ đơn hàng có dùng Voucher</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Khách Quay Lại (Retention)</div>
+                            <div class="stat-value" th:text="${#numbers.formatInteger(stats.retainedUsersCount, 1, 'POINT')}">0</div>
+                            <div class="small text-success fw-bold">Dùng mã rồi mua tiếp</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="sz-glass kpi-card h-100">
+                            <div class="stat-label">Cảnh Báo Marketing</div>
+                            <div class="stat-value text-danger" th:text="${#lists.size(stats.alerts)}">0</div>
+                            <div class="small text-danger fw-bold">Vấn đề cần xử lý gấp</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-4 mb-5 fade-up delay-2">
+                    <div class="col-lg-8">
+                        <div class="sz-glass p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bolder m-0" style="font-family: 'Outfit';"><i class="bi bi-clock-history me-2 text-primary"></i>Khung Giờ Vàng Sử Dụng Voucher</h5>
+                                <div class="badge bg-light text-dark rounded-pill px-3 py-2">Dữ liệu thực tế 24h</div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="peakHoursChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="sz-glass p-4 h-100">
+                            <h5 class="fw-bolder mb-4" style="font-family: 'Outfit';"><i class="bi bi-bell me-2 text-danger"></i>Cảnh Báo Thông Minh</h5>
+                            <div class="alert-list" style="max-height: 380px; overflow-y: auto;">
+                                <div th:each="alert : ${stats.alerts}" th:class="${'alert-card ' + alert.type}">
+                                    <div class="d-flex gap-3">
+                                        <div th:class="${'fs-4 text-' + (alert.type == 'DANGER' ? 'danger' : (alert.type == 'WARNING' ? 'warning' : 'info'))}">
+                                            <i th:class="${'bi ' + alert.icon}"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold mb-1" th:text="${alert.title}">Tiêu đề</div>
+                                            <div class="small text-muted" th:text="${alert.message}">Nội dung cảnh báo</div>
+                                            <a th:if="${alert.couponCode != null}" href="#" class="small text-decoration-none fw-bold mt-2 d-inline-block">Tối ưu ngay</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div th:if="${#lists.isEmpty(stats.alerts)}" class="text-center py-5">
+                                    <i class="bi bi-shield-check fs-1 text-success opacity-25"></i>
+                                    <p class="text-muted mt-2">Hệ thống đang hoạt động an toàn</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Tables Row -->
+                <div class="row g-4 mb-5 fade-up delay-3">
+                    <div class="col-md-6">
+                        <div class="sz-glass p-4 h-100">
+                            <h5 class="fw-bolder mb-4" style="font-family: 'Outfit';">Top 5 Voucher Hái Ra Tiền (Revenue)</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr class="text-muted small text-uppercase">
+                                            <th>Mã</th>
+                                            <th>Phần trăm</th>
+                                            <th>Doanh thu</th>
+                                            <th>ROI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="m : ${stats.topByRevenue}">
+                                            <td class="fw-bold text-primary" th:text="${m.code}">SUMMER24</td>
+                                            <td th:text="${m.discountDisplay}">15%</td>
+                                            <td class="fw-bold" th:text="${#numbers.formatDecimal(m.totalRevenue, 1, 'POINT', 0, 'COMMA') + '₫'}">0₫</td>
+                                            <td><span class="badge bg-success bg-opacity-10 text-success" th:text="${m.roi + '%'}">450%</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sz-glass p-4 h-100">
+                            <h5 class="fw-bolder mb-4" style="font-family: 'Outfit';">Top 5 Voucher Phổ Biến (Usage)</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr class="text-muted small text-uppercase">
+                                            <th>Mã</th>
+                                            <th>Lượt dùng</th>
+                                            <th>Tiến độ ngân sách</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="m : ${stats.topByUsage}">
+                                            <td class="fw-bold" th:text="${m.code}">WELCOME50</td>
+                                            <td th:text="${m.usageCount}">0</td>
+                                            <td>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-primary" th:style="${'width: ' + m.usagePercent + '%'}"></div>
+                                                </div>
+                                                <small class="text-muted" th:text="${m.usagePercent + '%'}"></small>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Audit Table -->
+                <div class="sz-glass p-4 fade-up delay-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bolder m-0" style="font-family: 'Outfit';"><i class="bi bi-table me-2 text-info"></i>Chi Tiết Phân Tích Toàn Bộ Voucher</h5>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3">Lọc nâng cao</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-glass">
+                            <thead>
+                                <tr>
+                                    <th>Mã Voucher</th>
+                                    <th>Loại & Phân Loại</th>
+                                    <th>Hiệu suất Dùng</th>
+                                    <th>Kinh tế (ROI)</th>
+                                    <th>Ngân sách</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="v : ${stats.allVouchers}">
+                                    <td>
+                                        <div class="fw-bold text-primary" th:text="${v.code}">CODE</div>
+                                        <small class="text-muted" th:text="${'ID: ' + v.couponId}"></small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold" th:text="${v.category}">Product</div>
+                                        <span class="badge bg-light text-dark" th:text="${v.discountType}">PERCENTAGE</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold"><span th:text="${v.usageCount}">0</span> lượt dùng</div>
+                                        <small class="text-muted" th:text="${'DT: ' + #numbers.formatDecimal(v.totalRevenue, 1, 'POINT', 0, 'COMMA') + '₫'}"></small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-success" th:text="${v.roi + '%'}">ROI</div>
+                                        <small class="text-muted" th:text="${'Giảm: ' + #numbers.formatDecimal(v.totalDiscount, 1, 'POINT', 0, 'COMMA') + '₫'}"></small>
+                                    </td>
+                                    <td style="width: 200px;">
+                                        <div class="progress mb-1" style="height: 6px; background: rgba(0,0,0,0.05);">
+                                            <div class="progress-bar bg-primary" th:style="${'width: ' + v.usagePercent + '%'}" th:classappend="${v.usagePercent > 90 ? 'bg-danger' : ''}"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span th:text="${v.usagePercent + '%'}">0%</span>
+                                            <span th:text="${v.daysRemaining + ' ngày'}"></span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span th:if="${v.status == 'ACTIVE'}" class="badge-pro bg-success bg-opacity-10 text-success">Hoạt động</span>
+                                        <span th:if="${v.status == 'EXPIRED'}" class="badge-pro bg-danger bg-opacity-10 text-danger">Hết hạn</span>
+                                        <span th:if="${v.status == 'PAUSED'}" class="badge-pro bg-warning bg-opacity-10 text-warning">Tạm dừng</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const peakDataRaw = /*[[${stats?.usageByHour}]]*/ [];
+        const labels = Array.from({ length: 24 }, (_, i) => i + "h");
+        const dataPoints = new Array(24).fill(0);
+
+        if (peakDataRaw && Array.isArray(peakDataRaw)) {
+            peakDataRaw.forEach(item => {
+                dataPoints[item.hour] = item.usageCount;
+            });
+        }
+
+        const ctx = document.getElementById('peakHoursChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Lượt sử dụng',
+                    data: dataPoints,
+                    borderColor: '#6366f1',
+                    borderWidth: 3,
+                    fill: true,
+                    backgroundColor: gradient,
+                    tension: 0.4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function (context) { return "Lượt dùng: " + context.parsed.y; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)', borderDash: [5, 5] },
+                        ticks: { font: { weight: 'bold' } }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>

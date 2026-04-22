@@ -6,10 +6,8 @@ import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
 import com.codegym.smartphonemanagement.model.*;
 import com.codegym.smartphonemanagement.model.dto.*;
 import com.codegym.smartphonemanagement.repository.seller.ProductRepository;
-import com.codegym.smartphonemanagement.repository.user.AnswerVoteRepository;
-import com.codegym.smartphonemanagement.repository.user.ProductAnswerRepository;
-import com.codegym.smartphonemanagement.repository.user.ProductQuestionRepository;
-import com.codegym.smartphonemanagement.repository.user.UserRepository;
+import com.codegym.smartphonemanagement.repository.user.*;
+import com.codegym.smartphonemanagement.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,6 +38,10 @@ public class ProductQuestionService {
     private final AnswerVoteRepository voteRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final LoyaltyAccountRepository loyaltyAccountRepository;
+    private final EmailService emailService;
+    private final com.codegym.smartphonemanagement.service.notification.AdminNotificationService adminNotificationService;
     
     // ==================== Public Methods ====================
     
@@ -81,6 +83,15 @@ public class ProductQuestionService {
         // Save question
         ProductQuestion savedQuestion = questionRepository.save(question);
         log.info("Question created successfully with ID: {} for product: {}", savedQuestion.getId(), productId);
+
+        // [NEW] Notify Admin
+        adminNotificationService.notify(
+                "Câu hỏi mới cho: " + product.getName(),
+                "Khách hàng " + getUserDisplayName(currentUser) + " vừa hỏi: \"" + requestDTO.getQuestionText() + "\"",
+                AdminNotificationType.NEW_QUESTION,
+                NotificationPriority.MEDIUM,
+                "/admin/qa?id=" + savedQuestion.getId()
+        );
         
         // Convert to DTO and return
         return convertToQuestionDTO(savedQuestion, currentUser.getId());
@@ -130,6 +141,21 @@ public class ProductQuestionService {
         ProductAnswer savedAnswer = answerRepository.save(answer);
         log.info("Answer created successfully with ID: {} for question: {}", savedAnswer.getId(), questionId);
         
+        // Gửi email thông báo cho khách hàng
+        try {
+            if (question.getUser().getEmail() != null) {
+                emailService.sendAnswerNotificationEmail(
+                        question.getUser().getEmail(),
+                        getUserDisplayName(question.getUser()),
+                        question.getProduct().getName(),
+                        question.getQuestionText(),
+                        requestDTO.getAnswerText()
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to send answer notification email: {}", e.getMessage());
+        }
+
         // Convert to DTO and return
         return convertToAnswerDTO(savedAnswer, currentUser.getId());
     }
@@ -358,8 +384,8 @@ public class ProductQuestionService {
                 .sum();
         
         log.debug("Total helpful votes: {}, Answer count: {}", totalHelpfulVotes, answerDTOs.size());
-        
-        return QuestionResponseDTO.builder()
+
+        QuestionResponseDTO dto = QuestionResponseDTO.builder()
                 .id(question.getId())
                 .productId(question.getProduct().getId())
                 .questionText(question.getQuestionText())
@@ -370,7 +396,21 @@ public class ProductQuestionService {
                 .hasAnswer(!answerDTOs.isEmpty())
                 .totalHelpfulVotes(totalHelpfulVotes)
                 .answerCount(answerDTOs.size())
+                .userPurchaseCount(orderRepository.countByUserId(question.getUser().getId()))
+                .tierLabel(MemberTier.BRONZE.getLabel())
+                .tierIcon(MemberTier.BRONZE.getIcon())
+                .tierColor(MemberTier.BRONZE.getColor())
                 .build();
+
+        // Enrich với Loyalty Tier nếu có
+        loyaltyAccountRepository.findByUserId(question.getUser().getId()).ifPresent(acc -> {
+            MemberTier tier = MemberTier.fromLifetimePoints(acc.getLifetimePoints());
+            dto.setTierLabel(tier.getLabel());
+            dto.setTierIcon(tier.getIcon());
+            dto.setTierColor(tier.getColor());
+        });
+
+        return dto;
     }
     
     /**

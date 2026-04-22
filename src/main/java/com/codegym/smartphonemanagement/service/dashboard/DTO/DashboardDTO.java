@@ -26,6 +26,7 @@ public class DashboardDTO {
     private long totalCoupons;
     private java.math.BigDecimal totalWalletBalance;
     private long pendingWithdrawalsCount;
+    private long pendingReviewsCount;
     
     // --- DỮ LIỆU BIỂU ĐỒ TRÒN (Payment Distribution) ---
     private List<String> paymentMethodLabels;
