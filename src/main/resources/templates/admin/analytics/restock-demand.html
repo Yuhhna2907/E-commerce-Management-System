@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Phân Tích Nhu Cầu Nhập Hàng - SmartZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sz-orange: #fbbd05;
+            --sz-dark: #1A1C20;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            background-color: #f0f2f5;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%);
+            font-family: 'Inter', sans-serif;
+            color: var(--sz-dark);
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: #8e8e93;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        .product-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .badge-out-of-stock {
+            background: #dc3545;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .notification-badge {
+            background: var(--sz-orange);
+            color: var(--sz-dark);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .export-btn {
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            border: none;
+            color: var(--sz-dark);
+        }
+
+        .page-link:hover {
+            background: var(--sz-orange);
+            color: white;
+        }
+
+        .page-item.active .page-link {
+            background: var(--sz-orange);
+            border-color: var(--sz-orange);
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        body.dark-mode .filter-section,
+        body.dark-mode .data-table {
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        body.dark-mode .table thead th {
+            background: rgba(51, 65, 85, 0.5);
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .table tbody td {
+            color: #e2e8f0;
+            border-color: rgba(71, 85, 105, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- SIDEBAR -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Analytics</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Nhu Cầu Nhập Hàng</li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-2">
+                    <i class="bi bi-box-seam text-danger me-2"></i>
+                    Phân Tích Nhu Cầu Nhập Hàng
+                </h2>
+                <p class="text-muted mb-0">Sản phẩm hết hàng với nhu cầu khách hàng cao nhất</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/admin/analytics/restock-demand/export/csv(categoryId=${param.categoryId})}" 
+                   class="btn btn-success export-btn">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>Xuất CSV
+                </a>
+                <a th:href="@{/admin/analytics/restock-demand/export/excel(categoryId=${param.categoryId})}" 
+                   class="btn btn-primary export-btn">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form method="get" th:action="@{/admin/analytics/restock-demand}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Danh Mục</label>
+                        <select name="categoryId" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="category : ${categories}" 
+                                    th:value="${category.id}" 
+                                    th:text="${category.name}"
+                                    th:selected="${param.categoryId != null && param.categoryId[0] == category.id.toString()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Sắp xếp theo</label>
+                        <select name="sortBy" class="form-select">
+                            <option value="notificationCount" th:selected="${param.sortBy == null || param.sortBy[0] == 'notificationCount'}">Số lượng đăng ký</option>
+                            <option value="productName" th:selected="${param.sortBy != null && param.sortBy[0] == 'productName'}">Tên sản phẩm</option>
+                            <option value="lastOutOfStockDate" th:selected="${param.sortBy != null && param.sortBy[0] == 'lastOutOfStockDate'}">Ngày hết hàng</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Thứ tự</label>
+                        <select name="sortDir" class="form-select">
+                            <option value="desc" th:selected="${param.sortDir == null || param.sortDir[0] == 'desc'}">Giảm dần</option>
+                            <option value="asc" th:selected="${param.sortDir != null && param.sortDir[0] == 'asc'}">Tăng dần</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Số dòng</label>
+                        <select name="size" class="form-select">
+                            <option value="10" th:selected="${param.size != null && param.size[0] == '10'}">10</option>
+                            <option value="25" th:selected="${param.size == null || param.size[0] == '25'}">25</option>
+                            <option value="50" th:selected="${param.size != null && param.size[0] == '50'}">50</option>
+                            <option value="100" th:selected="${param.size != null && param.size[0] == '100'}">100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-dark w-100">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sản Phẩm</th>
+                            <th>Danh Mục</th>
+                            <th>Trạng Thái</th>
+                            <th class="text-center">Số Đăng Ký</th>
+                            <th>Ngày Hết Hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${restockData.empty}">
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                Không có dữ liệu
+                            </td>
+                        </tr>
+                        <tr th:each="item : ${restockData.content}">
+                            <td class="fw-semibold" th:text="${item.productId}">1</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:src="${item.imageUrl}" alt="Product" class="product-img me-3">
+                                    <span class="fw-semibold" th:text="${item.productName}">Product Name</span>
+                                </div>
+                            </td>
+                            <td th:text="${item.categoryName}">Category</td>
+                            <td>
+                                <span class="badge-out-of-stock">Hết Hàng</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="notification-badge" th:text="${item.notificationCount}">0</span>
+                            </td>
+                            <td th:text="${#temporals.format(item.lastOutOfStockDate, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="p-3 border-top" th:if="${!restockData.empty}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        Hiển thị <strong th:text="${restockData.numberOfElements}">0</strong> trong tổng số 
+                        <strong th:text="${restockData.totalElements}">0</strong> bản ghi
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item" th:classappend="${restockData.first} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/analytics/restock-demand(page=${restockData.number - 1}, size=${restockData.size}, categoryId=${param.categoryId}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item" 
+                                th:each="i : ${#numbers.sequence(0, restockData.totalPages - 1)}"
+                                th:if="${i >= restockData.number - 2 && i <= restockData.number + 2}"
+                                th:classappend="${i == restockData.number} ? 'active'">
+                                <a class="page-link" 
+                                   th:href="@{/admin/analytics/restock-demand(page=${i}, size=${restockData.size}, categoryId=${param.categoryId}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}"
+                                   th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${restockData.last} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/analytics/restock-demand(page=${restockData.number + 1}, size=${restockData.size}, categoryId=${param.categoryId}, sortBy=${param.sortBy}, sortDir=${param.sortDir})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Dark mode support
+    const currentTheme = localStorage.getItem('adminTheme') || 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+</script>
+
+</body>
+</html>

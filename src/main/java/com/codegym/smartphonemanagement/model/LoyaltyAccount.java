@@ -36,8 +36,10 @@ public class LoyaltyAccount {
     @Builder.Default
     private Integer lifetimePoints = 0;
 
-    // FIX #13: Thêm version cho optimistic locking
-    @Version
+    // TEMPORARY FIX: Comment out @Version to avoid NullPointerException
+    // TODO: Properly initialize version column in database for all existing records
+    // @Version
+    // @Column(name = "version")
     private Long version;
 
     private LocalDateTime updatedAt;

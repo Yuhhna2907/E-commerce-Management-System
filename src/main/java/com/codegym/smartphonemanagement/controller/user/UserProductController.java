@@ -13,6 +13,8 @@ import com.codegym.smartphonemanagement.util.SecurityUtil;
 import com.codegym.smartphonemanagement.service.wishlist.IWishlistService;
 import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
 import com.codegym.smartphonemanagement.model.Product;
+import com.codegym.smartphonemanagement.model.PinnedProduct;
+import com.codegym.smartphonemanagement.repository.user.PinnedProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,6 +42,7 @@ public class UserProductController {
     private final IWishlistService wishlistService;
     private final RecommendationService recommendationService;
     private final UserRepository userRepository;
+    private final PinnedProductRepository pinnedProductRepository;
 
     private Long getCurrentUserId() {
         return SecurityUtil.getCurrentUserId(userRepository);
@@ -115,6 +118,18 @@ public class UserProductController {
         model.addAttribute("selectedOs", osList);
         model.addAttribute("inStockOnly", inStockOnly);
         model.addAttribute("sort", sort);
+
+        // Load pinned products for homepage display
+        // Requirements: 10.1, 10.2
+        try {
+            List<PinnedProduct> pinnedProducts = pinnedProductRepository.findAllByOrderByDisplayOrderAsc();
+            model.addAttribute("pinnedProducts", pinnedProducts);
+            model.addAttribute("hasPinnedProducts", !pinnedProducts.isEmpty());
+        } catch (Exception e) {
+            // Fail-safe: không ảnh hưởng trang nếu pinned products lỗi
+            model.addAttribute("pinnedProducts", List.of());
+            model.addAttribute("hasPinnedProducts", false);
+        }
 
         // Add wishlist product IDs for heart icon highlighting
         try {

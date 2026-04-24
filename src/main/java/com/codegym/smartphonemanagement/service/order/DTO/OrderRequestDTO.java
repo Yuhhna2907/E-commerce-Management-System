@@ -34,4 +34,5 @@ public class OrderRequestDTO {
     private PaymentMethod paymentMethod;
 
     private String couponCode;
+    private String shippingCouponCode;
 }

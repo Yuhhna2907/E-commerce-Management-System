@@ -21,9 +21,11 @@ public class Coupon {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Version
-    @Column(name = "version")
-    private Long version; // For optimistic locking to prevent race conditions
+    // TEMPORARY FIX: Comment out @Version to avoid NullPointerException
+    // TODO: Properly initialize version column in database for all existing records
+    // @Version
+    // @Column(name = "version")
+    // private Long version; // For optimistic locking to prevent race conditions
 
     @NotBlank(message = "Mã giảm giá không được rỗng")
     @Column(unique = true, nullable = false)

@@ -151,4 +151,36 @@ public interface ProductQuestionRepository extends JpaRepository<ProductQuestion
            "WHERE q.answers IS EMPTY " +
            "AND q.createdAt < :threshold")
     long countOverdueUnansweredQuestions(@Param("threshold") java.time.LocalDateTime threshold);
+    // --- ANALYTICS ---
+    @Query("SELECT q.product.id, COUNT(q.id) " +
+           "FROM ProductQuestion q WHERE q.createdAt >= :startDate AND q.createdAt <= :endDate " +
+           "GROUP BY q.product.id")
+    List<Object[]> countQuestionsByProductInPeriod(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    // Tính thời gian phản hồi trung bình (giây)
+    @Query(value = "SELECT AVG(TIMESTAMPDIFF(SECOND, q.created_at, a.min_created_at)) " +
+                   "FROM product_questions q " +
+                   "JOIN (SELECT question_id, MIN(created_at) as min_created_at FROM product_answers GROUP BY question_id) a " +
+                   "ON q.id = a.question_id " +
+                   "WHERE q.created_at >= :startDate AND q.created_at <= :endDate", 
+           nativeQuery = true)
+    Double findAvgResponseTimeInSeconds(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    // Tỷ lệ tuân thủ SLA (Số câu hỏi được trả lời trong vòng 24h)
+    @Query(value = "SELECT COUNT(q.id) " +
+                   "FROM product_questions q " +
+                   "JOIN (SELECT question_id, MIN(created_at) as min_created_at FROM product_answers GROUP BY question_id) a " +
+                   "ON q.id = a.question_id " +
+                   "WHERE q.created_at >= :startDate AND q.created_at <= :endDate " +
+                   "AND TIMESTAMPDIFF(HOUR, q.created_at, a.min_created_at) <= 24", 
+           nativeQuery = true)
+    Long countSlaCompliantQuestions(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    // Top 5 sản phẩm được hỏi nhiều nhất
+    @Query("SELECT q.product.id, q.product.name, COUNT(q.id) as qCount " +
+           "FROM ProductQuestion q " +
+           "WHERE q.createdAt >= :startDate AND q.createdAt <= :endDate " +
+           "GROUP BY q.product.id, q.product.name " +
+           "ORDER BY qCount DESC")
+    List<Object[]> findTopInquiredProducts(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate, org.springframework.data.domain.Pageable pageable);
 }

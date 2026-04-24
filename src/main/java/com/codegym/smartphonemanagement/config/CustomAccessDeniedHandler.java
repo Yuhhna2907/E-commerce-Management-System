@@ -47,6 +47,20 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         boolean isAuthenticated = auth != null && auth.isAuthenticated() 
                 && !auth.getPrincipal().equals("anonymousUser");
 
+        // Check if it's an AJAX request
+        String requestedWith = request.getHeader("X-Requested-With");
+        String acceptHeader = request.getHeader("Accept");
+        boolean isAjax = "XMLHttpRequest".equals(requestedWith) 
+                || (acceptHeader != null && acceptHeader.contains("application/json"))
+                || requestedUrl.startsWith("/api/");
+
+        if (isAjax) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":false,\"message\":\"Bạn không có quyền thực hiện hành động này!\",\"status\":403}");
+            return;
+        }
+
         if (isAuthenticated) {
             // Authenticated user tried to access forbidden resource
             response.sendRedirect("/error/403?url=" + requestedUrl);

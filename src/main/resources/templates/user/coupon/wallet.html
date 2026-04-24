@@ -10,6 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/mobile/bottom-navigation.css}">
     
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-meta}"></th:block>
+    
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.7);
@@ -264,6 +267,9 @@
 
 <!-- Mobile Bottom Navigation JavaScript -->
 <script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
+<!-- CSRF Auto-Injection -->
+<th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 
 </body>
 </html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khuyến Mãi Từ SmartZone</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f8f9fc; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="padding: 20px 0;">
+    <tr>
+        <td align="center">
+            
+            <!-- Email Container -->
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.05); max-width:600px; width:100%;">
+                
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="background: linear-gradient(135deg, #fbbd05, #f59e0b); padding: 30px;">
+                        <!-- You can replace with logo url -->
+                        <div style="background: #ffffff; width: 60px; height: 60px; border-radius: 12px; display: inline-block; line-height: 60px; text-align: center; color: #f59e0b; font-size: 28px; font-weight: bold; margin-bottom: 10px;">
+                            SZ
+                        </div>
+                        <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:bold; letter-spacing: -0.5px;">TIN TỨC & KHUYẾN MÃI</h1>
+                        <p style="color:rgba(255,255,255,0.9); margin:8px 0 0 0; font-size:15px;">SmartZone Enterprise</p>
+                    </td>
+                </tr>
+
+                <!-- Content Area -->
+                <tr>
+                    <td style="padding: 40px; color:#4a4a4a; line-height:1.6; font-size:16px;">
+                        
+                        <!-- Content provided by ADMIN -->
+                        <div style="margin-bottom: 30px; white-space: pre-line;">
+                            <span th:text="${content}">Nội dung email</span>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <div th:if="${actionLink != null and !actionLink.isEmpty()}" style="text-align: center; margin-top: 30px;">
+                            <a th:href="${actionLink}" style="display:inline-block; background-color:#0d6efd; color:#ffffff; text-decoration:none; padding:14px 28px; border-radius:8px; font-weight:bold; font-size:16px; box-shadow:0 4px 6px rgba(13, 110, 253, 0.2); transition:all 0.3s;">
+                                Xem Chi Tiết
+                            </a>
+                        </div>
+                        
+                    </td>
+                </tr>
+                
+                <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 0;">
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center" style="background-color:#fbfdff; padding: 25px; color:#888888; font-size:13px; line-height:1.5;">
+                        <p style="margin:0 0 10px 0; font-weight: 600; color: #555555;">© 2026 SmartZone Enterprise. Mọi quyền được bảo lưu.</p>
+                        <p style="margin:0;">Bạn nhận được email này vì bạn là thành viên của SmartZone.</p>
+                        <p style="margin:5px 0 0 0;"><a href="#" style="color:#0d6efd; text-decoration:none;">Từ chối nhận khuyến mãi</a></p>
+                    </td>
+                </tr>
+
+            </table>
+            <!-- End Email Container -->
+            
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

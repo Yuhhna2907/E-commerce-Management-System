@@ -1,6 +1,8 @@
 package com.codegym.smartphonemanagement.configuration;
 
 import com.codegym.smartphonemanagement.config.AdminSecurityInterceptor;
+import com.codegym.smartphonemanagement.interceptor.AnalyticsAuditInterceptor;
+import com.codegym.smartphonemanagement.interceptor.SearchLogInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -12,6 +14,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final AdminSecurityInterceptor adminSecurityInterceptor;
+    private final SearchLogInterceptor searchLogInterceptor;
+    private final AnalyticsAuditInterceptor analyticsAuditInterceptor;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -33,5 +37,14 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(adminSecurityInterceptor)
                 .addPathPatterns("/admin/**")
                 .excludePathPatterns("/login", "/css/**", "/js/**", "/images/**");
+        
+        // Register SearchLogInterceptor for product search tracking
+        registry.addInterceptor(searchLogInterceptor)
+                .addPathPatterns("/user/product/search");
+        
+        // Register AnalyticsAuditInterceptor for analytics page access auditing
+        // Requirements: 14.3, 14.4
+        registry.addInterceptor(analyticsAuditInterceptor)
+                .addPathPatterns("/admin/analytics/**");
     }
 }

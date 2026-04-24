@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<!-- Fragment for CSRF meta tags (include in <head>) -->
+<th:block th:fragment="csrf-meta">
+    <!-- CSRF Token Meta Tags -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</th:block>
+</head>
+
+<body>
+<!-- Fragment for CSRF auto-injection script (include before </body>) -->
+<th:block th:fragment="csrf-script">
+    <!-- CSRF Auto-Injection (must load before other scripts that use fetch) -->
+    <script th:src="@{/js/csrf-auto.js}"></script>
+</th:block>
+</body>
+</html>

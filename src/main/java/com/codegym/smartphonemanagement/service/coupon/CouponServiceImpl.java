@@ -37,7 +37,11 @@ public class CouponServiceImpl implements ICouponService {
         
         return couponRepository.findByStatus(CouponStatus.ACTIVE).stream()
                 .filter(c -> c.getEndDate().isAfter(now))
-                .filter(c -> c.getMaxUsageGlobal() == null || c.getCurrentUsageGlobal() < c.getMaxUsageGlobal())
+                .filter(c -> {
+                    if (c.getMaxUsageGlobal() == null) return true;
+                    Integer currentUsage = c.getCurrentUsageGlobal() != null ? c.getCurrentUsageGlobal() : 0;
+                    return currentUsage < c.getMaxUsageGlobal();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -159,9 +163,9 @@ public class CouponServiceImpl implements ICouponService {
      * Validate coupon usage limits (global and per-user)
      */
     private CouponValidationResult validateCouponUsage(Coupon coupon, User user, String code) {
-        // Check global usage limit
-        if (coupon.getMaxUsageGlobal() != null && 
-            coupon.getCurrentUsageGlobal() >= coupon.getMaxUsageGlobal()) {
+        // Check global usage limit (null-safe)
+        Integer currentUsage = coupon.getCurrentUsageGlobal() != null ? coupon.getCurrentUsageGlobal() : 0;
+        if (coupon.getMaxUsageGlobal() != null && currentUsage >= coupon.getMaxUsageGlobal()) {
             return buildInvalidResult("Mã đã hết lượt sử dụng");
         }
 
@@ -289,38 +293,67 @@ public class CouponServiceImpl implements ICouponService {
     @Override
     @Transactional
     public void applyDiscountToOrder(Order order) {
+        BigDecimal totalOrderDiscount = BigDecimal.ZERO;
+        
         // Áp dụng Shipping Coupon
         if (order.getShippingCouponCode() != null && !order.getShippingCouponCode().isEmpty()) {
-            Coupon shipCoupon = couponRepository.findByCodeWithProducts(order.getShippingCouponCode()).orElse(null);
-            if (shipCoupon != null && shipCoupon.getCouponCategory() == CouponCategory.FREE_SHIPPING) {
-                BigDecimal shipDiscount = calculateDiscountAmount(shipCoupon, order);
-                order.setShippingDiscount(shipDiscount);
-                incrementCouponUsageWithRetry(shipCoupon, order.getShippingCouponCode());
+            String shipCode = order.getShippingCouponCode();
+            // Safety check: if code contains commas (due to multiple inputs), take the first non-empty part
+            if (shipCode.contains(",")) {
+                shipCode = java.util.Arrays.stream(shipCode.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .findFirst()
+                        .orElse("");
+            }
+            
+            if (!shipCode.isEmpty()) {
+                Coupon shipCoupon = couponRepository.findByCodeWithProducts(shipCode).orElse(null);
+                if (shipCoupon != null && shipCoupon.getCouponCategory() == CouponCategory.FREE_SHIPPING) {
+                    BigDecimal shipDiscount = calculateDiscountAmount(shipCoupon, order);
+                    order.setShippingDiscount(shipDiscount);
+                    totalOrderDiscount = totalOrderDiscount.add(shipDiscount);
+                    incrementCouponUsageWithRetry(shipCoupon, shipCode);
+                }
             }
         }
 
         // Áp dụng Order Coupon
-        if (order.getCouponCode() == null || order.getCouponCode().isEmpty()) {
-            return;
-        }
-
-        log.debug("Applying coupon '{}' to order ID: {}", order.getCouponCode(), order.getId());
-        
-        Coupon coupon = couponRepository.findByCodeWithProducts(order.getCouponCode())
-                .orElseThrow(() -> new EntityNotFoundException("Coupon không tồn tại"));
-
-        BigDecimal totalDiscount = calculateDiscountAmount(coupon, order);
-        order.setTotalDiscount(totalDiscount);
-
-        if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
-            if (coupon.getCouponCategory() == CouponCategory.PRODUCT_DISCOUNT) {
-                allocateDiscountToItems(coupon, order, totalDiscount);
+        if (order.getCouponCode() != null && !order.getCouponCode().isEmpty()) {
+            String orderCode = order.getCouponCode();
+            // Safety check: if code contains commas (due to multiple inputs), take the first non-empty part
+            if (orderCode.contains(",")) {
+                orderCode = java.util.Arrays.stream(orderCode.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .findFirst()
+                        .orElse("");
             }
-            incrementCouponUsageWithRetry(coupon, order.getCouponCode());
             
-            log.info("Successfully applied coupon '{}' with discount {} to order ID: {}", 
-                    order.getCouponCode(), totalDiscount, order.getId());
+            if (!orderCode.isEmpty()) {
+                log.debug("Applying coupon '{}' to order ID: {}", orderCode, order.getId());
+                
+                final String finalOrderCode = orderCode;
+                Coupon coupon = couponRepository.findByCodeWithProducts(orderCode)
+                        .orElseThrow(() -> new EntityNotFoundException("Coupon không tồn tại: " + finalOrderCode));
+
+                BigDecimal orderDiscount = calculateDiscountAmount(coupon, order);
+                totalOrderDiscount = totalOrderDiscount.add(orderDiscount);
+
+                if (orderDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                    if (coupon.getCouponCategory() == CouponCategory.PRODUCT_DISCOUNT) {
+                        allocateDiscountToItems(coupon, order, orderDiscount);
+                    }
+                    incrementCouponUsageWithRetry(coupon, orderCode);
+                    
+                    log.info("Successfully applied coupon '{}' with discount {} to order ID: {}", 
+                            orderCode, orderDiscount, order.getId());
+                }
+            }
         }
+        
+        // Set total discount (bao gồm cả shipping discount và order discount)
+        order.setTotalDiscount(totalOrderDiscount);
     }
     
     private void allocateDiscountToItems(Coupon coupon, Order order, BigDecimal totalDiscount) {
@@ -379,11 +412,18 @@ public class CouponServiceImpl implements ICouponService {
     private void incrementCouponUsage(Coupon coupon) {
         // Double-check usage limit before incrementing
         if (coupon.getMaxUsageGlobal() != null && 
+            coupon.getCurrentUsageGlobal() != null &&
             coupon.getCurrentUsageGlobal() >= coupon.getMaxUsageGlobal()) {
             throw new BadRequestException("Mã giảm giá đã hết lượt sử dụng");
         }
         
-        coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() + 1);
+        // Null-safe: treat null as 0
+        Integer currentUsage = coupon.getCurrentUsageGlobal();
+        if (currentUsage == null) {
+            currentUsage = 0;
+        }
+        
+        coupon.setCurrentUsageGlobal(currentUsage + 1);
         couponRepository.save(coupon);
         
         log.debug("Incremented usage count for coupon ID: {} to {}", 
@@ -400,8 +440,14 @@ public class CouponServiceImpl implements ICouponService {
         Coupon coupon = couponRepository.findByCode(couponCode)
                 .orElseThrow(() -> new EntityNotFoundException("Coupon không tồn tại"));
         
-        if (coupon.getCurrentUsageGlobal() > 0) {
-            coupon.setCurrentUsageGlobal(coupon.getCurrentUsageGlobal() - 1);
+        // Null-safe: treat null as 0
+        Integer currentUsage = coupon.getCurrentUsageGlobal();
+        if (currentUsage == null) {
+            currentUsage = 0;
+        }
+        
+        if (currentUsage > 0) {
+            coupon.setCurrentUsageGlobal(currentUsage - 1);
             couponRepository.save(coupon);
             
             log.info("Restored voucher usage for coupon '{}', new count: {}", 
@@ -469,9 +515,12 @@ public class CouponServiceImpl implements ICouponService {
         for (Coupon coupon : activeCoupons) {
             boolean shouldExpire = false;
             
-            // Reached usage limit
-            if (coupon.getMaxUsageGlobal() != null && coupon.getCurrentUsageGlobal() >= coupon.getMaxUsageGlobal()) {
-                shouldExpire = true;
+            // Reached usage limit (null-safe)
+            if (coupon.getMaxUsageGlobal() != null) {
+                Integer currentUsage = coupon.getCurrentUsageGlobal() != null ? coupon.getCurrentUsageGlobal() : 0;
+                if (currentUsage >= coupon.getMaxUsageGlobal()) {
+                    shouldExpire = true;
+                }
             }
             
             // Passed end date

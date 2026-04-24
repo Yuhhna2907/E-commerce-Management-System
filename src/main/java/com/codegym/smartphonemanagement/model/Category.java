@@ -27,6 +27,9 @@ public class Category {
     private Boolean active = true;
 
     @JsonIgnore // Chống vòng lặp vô tận khi render JSON
-    @OneToMany(mappedBy = "category", fetch = FetchType.EAGER) // EAGER để lấy được size() ở HTML
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY) // Changed to LAZY for performance
     private List<Product> products;
+    
+    @Transient // Not persisted to DB
+    private Long productCount; // For displaying product count in UI
 }

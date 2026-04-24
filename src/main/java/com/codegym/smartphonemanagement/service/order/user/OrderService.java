@@ -11,12 +11,13 @@ import com.codegym.smartphonemanagement.exception.UnauthorizedAccessException;
 import com.codegym.smartphonemanagement.exception.InsufficientStockException;
 import com.codegym.smartphonemanagement.exception.InvalidOrderStatusException;
 import com.codegym.smartphonemanagement.exception.BadRequestException;
+import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.codegym.smartphonemanagement.service.NotificationService;
 import com.codegym.smartphonemanagement.service.loyalty.ILoyaltyPointService;
-import com.codegym.smartphonemanagement.service.recommendation.RecommendationService;
+import com.codegym.smartphonemanagement.service.notification.AdminNotificationService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -37,10 +38,12 @@ public class OrderService implements IOrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderHistoryRepository orderHistoryRepository;
     private final RefundRequestRepository refundRequestRepository;
+    private final SearchLogRepository searchLogRepository;
     private final ICartService cartService;
     private final ICouponService couponService;
     private final NotificationService notificationService;
     private final RecommendationService recommendationService;
+    private final AdminNotificationService adminNotificationService;
     private final ILoyaltyPointService loyaltyPointService;
 
     // ======================= CONSTANTS =======================
@@ -80,6 +83,12 @@ public class OrderService implements IOrderService {
     @Override
     @Transactional
     public OrderResponseDTO createOrder(Long userId, OrderRequestDTO orderDTO) {
+        log.info("=== CREATE ORDER START ===");
+        log.info("User ID: {}", userId);
+        log.info("Payment Method: {}", orderDTO.getPaymentMethod());
+        log.info("Coupon Code: {}", orderDTO.getCouponCode());
+        log.info("Shipping Coupon Code: {}", orderDTO.getShippingCouponCode());
+        
         // 1. Validate cart
         Cart cart = validateAndGetCart(userId);
         User user = getUserById(userId);
@@ -88,9 +97,15 @@ public class OrderService implements IOrderService {
         BigDecimal subtotal = calculateCartSubtotal(cart);
         BigDecimal shippingFee = calculateShippingFee(orderDTO.getProvince());
         
+        log.info("Subtotal: {}", subtotal);
+        log.info("Shipping Fee: {}", shippingFee);
+        
         // 3. Create order
         Order order = buildOrder(user, orderDTO, subtotal, shippingFee);
+        log.info("Order built - Total Price before save: {}", order.getTotalPrice());
+        
         Order savedOrder = orderRepository.save(order);
+        log.info("Order saved - ID: {}, Total Price: {}", savedOrder.getId(), savedOrder.getTotalPrice());
 
         // 4. Process order items and update stock
         List<OrderItem> orderItems = processOrderItems(cart, savedOrder);
@@ -98,7 +113,12 @@ public class OrderService implements IOrderService {
         savedOrder.setItems(orderItems);
 
         // 5. Apply discount
+        log.info("Applying discount...");
+        log.info("Order Coupon Code: '{}', Shipping Coupon Code: '{}'", 
+                savedOrder.getCouponCode(), savedOrder.getShippingCouponCode());
         applyDiscountToOrder(savedOrder);
+        log.info("After discount - Total Price: {}, Total Discount: {}", 
+                savedOrder.getTotalPrice(), savedOrder.getTotalDiscount());
 
         // 6. Clear cart
         cartItemRepository.deleteAllByCartId(cart.getId());
@@ -106,6 +126,16 @@ public class OrderService implements IOrderService {
         // 7. Record history
         saveHistory(savedOrder, null, OrderStatus.PENDING, "SYSTEM", "Đơn hàng được tạo");
 
+        // [NEW] 8. Notify Admin
+        adminNotificationService.notify(
+                "Đơn hàng mới #" + savedOrder.getId(),
+                "Khách hàng " + user.getFullName() + " vừa đặt một đơn hàng mới trị giá " + savedOrder.getTotalPrice() + " đ.",
+                AdminNotificationType.NEW_ORDER,
+                NotificationPriority.HIGH,
+                "/admin/orders?id=" + savedOrder.getId()
+        );
+
+        log.info("=== CREATE ORDER END - Order ID: {} ===", savedOrder.getId());
         return mapToResponseDTO(savedOrder);
     }
 
@@ -153,6 +183,7 @@ public class OrderService implements IOrderService {
                 .status(OrderStatus.PENDING)
                 .paymentMethod(orderDTO.getPaymentMethod())
                 .couponCode(orderDTO.getCouponCode())
+                .shippingCouponCode(orderDTO.getShippingCouponCode())
                 .build();
     }
 
@@ -173,15 +204,29 @@ public class OrderService implements IOrderService {
     private OrderItem createOrderItemAndUpdateStock(CartItem cartItem, Order order) {
         ProductVariant variant = cartItem.getProductVariant();
         
+        // Null-safe: treat null stockQuantity as 0
+        int currentStock = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
+        
         // Validate stock
-        if (variant.getStockQuantity() < cartItem.getQuantity()) {
+        if (currentStock < cartItem.getQuantity()) {
             throw new InsufficientStockException(
                     "Sản phẩm " + variant.getVariantName() + " không đủ hàng!");
         }
 
         // Update stock
-        variant.setStockQuantity(variant.getStockQuantity() - cartItem.getQuantity());
+        variant.setStockQuantity(currentStock - cartItem.getQuantity());
         productVariantRepository.save(variant);
+
+        // [NEW] Check Low Stock
+        if (variant.getStockQuantity() <= 5) {
+            adminNotificationService.notify(
+                    "Cảnh báo hết hàng: " + variant.getVariantName(),
+                    "Sản phẩm " + variant.getVariantName() + " chỉ còn lại " + variant.getStockQuantity() + " chiếc trong kho.",
+                    AdminNotificationType.LOW_STOCK,
+                    NotificationPriority.MEDIUM,
+                    "/admin/products?search=" + variant.getVariantName()
+            );
+        }
 
         // Create order item
         return OrderItem.builder()
@@ -198,18 +243,17 @@ public class OrderService implements IOrderService {
         couponService.applyDiscountToOrder(order);
         orderItemRepository.saveAll(order.getItems());
 
-        // Recalculate total price
-        if (order.getTotalDiscount() != null && order.getTotalDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal subtotal = calculateOrderSubtotal(order);
-            BigDecimal finalPrice = subtotal.add(order.getShippingFee()).subtract(order.getTotalDiscount());
-            
-            if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
-                finalPrice = BigDecimal.ZERO;
-            }
-            
-            order.setTotalPrice(finalPrice);
-            orderRepository.save(order);
+        // Always recalculate total price (even if no discount)
+        BigDecimal subtotal = calculateOrderSubtotal(order);
+        BigDecimal totalDiscount = order.getTotalDiscount() != null ? order.getTotalDiscount() : BigDecimal.ZERO;
+        BigDecimal finalPrice = subtotal.add(order.getShippingFee()).subtract(totalDiscount);
+        
+        if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
+            finalPrice = BigDecimal.ZERO;
         }
+        
+        order.setTotalPrice(finalPrice);
+        orderRepository.save(order);
     }
 
     private BigDecimal calculateOrderSubtotal(Order order) {
@@ -318,6 +362,9 @@ public class OrderService implements IOrderService {
         
         // Award loyalty points
         awardLoyaltyPoints(order);
+        
+        // Track search conversion
+        trackSearchConversion(order);
     }
 
     private void updateRecommendations(Order order) {
@@ -357,6 +404,42 @@ public class OrderService implements IOrderService {
                 order.getUser(), message,
                 NotificationType.ORDER_STATUS_CHANGED,
                 "/user/loyalty");
+    }
+
+    /**
+     * Track search conversion when order is completed
+     * Updates SearchLog entries where user searched within last 30 minutes before order
+     */
+    private void trackSearchConversion(Order order) {
+        try {
+            // Only track for authenticated users
+            if (order.getUser() == null || order.getUser().getId() == null) {
+                return;
+            }
+            
+            // Find search logs from last 30 minutes that haven't been converted yet
+            LocalDateTime thirtyMinutesAgo = LocalDateTime.now().minusMinutes(30);
+            List<SearchLog> recentSearches = searchLogRepository.findRecentSearchesByUser(
+                    order.getUser().getId(),
+                    thirtyMinutesAgo
+            );
+            
+            // Update all recent searches as converted
+            if (!recentSearches.isEmpty()) {
+                LocalDateTime now = LocalDateTime.now();
+                recentSearches.forEach(searchLog -> {
+                    searchLog.setConverted(true);
+                    searchLog.setConversionTimestamp(now);
+                });
+                searchLogRepository.saveAll(recentSearches);
+                
+                log.info("Marked {} search logs as converted for user {} on order #{}",
+                        recentSearches.size(), order.getUser().getId(), order.getId());
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the order completion
+            log.error("Failed to track search conversion for order #{}", order.getId(), e);
+        }
     }
 
     private void handleOrderRefunded(Order order) {

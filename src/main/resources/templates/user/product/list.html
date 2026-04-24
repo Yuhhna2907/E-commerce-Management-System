@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Smartphone Store - Mua sắm đỉnh cao</title>
+    
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="fragments/base-scripts :: csrf-meta"></th:block>
+    
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -317,6 +321,102 @@
         @keyframes skeleton-shimmer {
             0% { background-position: 100% 0; }
             100% { background-position: -100% 0; }
+        }
+
+        /* Pinned Products Section Styles */
+        /* Requirements: 10.3, 10.4, 10.5 */
+        .pinned-products-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Featured Product Card */
+        .featured-product {
+            position: relative;
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 251, 235, 0.65));
+        }
+
+        .featured-product:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 30px 60px -15px rgba(245, 158, 11, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Featured Badge */
+        .featured-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            animation: pulse-featured 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-featured {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+            }
+        }
+
+        .featured-badge i {
+            font-size: 0.9rem;
+        }
+
+        /* Out of Stock Badge for Pinned Products */
+        .featured-product .out-of-stock-badge {
+            background: rgba(239, 68, 68, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .section-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .featured-badge {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
         }
 
         /* Back to Top Button */
@@ -1270,6 +1370,110 @@
         
         <!-- Pull-to-Refresh Content -->
         <div class="pull-to-refresh__content">
+            
+            <!-- Featured/Pinned Products Section -->
+            <!-- Requirements: 10.1, 10.2, 10.3, 10.4, 10.5 -->
+            <div class="pinned-products-section mb-5" th:if="${hasPinnedProducts}">
+                <div class="section-header mb-4">
+                    <h2 class="section-title">
+                        <i class="bi bi-star-fill text-warning me-2"></i>
+                        Sản Phẩm Nổi Bật
+                    </h2>
+                    <p class="section-subtitle text-muted">Được chọn lọc đặc biệt cho bạn</p>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3 d-flex" th:each="pinnedProduct : ${pinnedProducts}">
+                        <div class="product-card w-100 featured-product" th:with="product=${pinnedProduct.product}" th:attr="data-id=${product.id}">
+                            
+                            <!-- Featured Badge -->
+                            <div class="featured-badge">
+                                <i class="bi bi-star-fill"></i>
+                                <span>Nổi Bật</span>
+                            </div>
+                            
+                            <!-- Skeleton Loader -->
+                            <div class="skeleton-loader">
+                                <div class="skeleton-item skeleton-image"></div>
+                                <div class="skeleton-item skeleton-title"></div>
+                                <div class="skeleton-item skeleton-price"></div>
+                                <div class="skeleton-item skeleton-buttons"></div>
+                            </div>
+                            
+                            <button class="btn-wishlist shadow-sm" 
+                                    th:classappend="${wishlistProductIds != null and wishlistProductIds.contains(product.id)} ? 'active' : ''"
+                                    th:onclick="|toggleWishlist(event, ${product.id}, this)|" 
+                                    title="Thêm vào bộ sưu tập">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                            
+                            <!-- Out of Stock Badge -->
+                            <div class="out-of-stock-badge" th:if="${product.stock == 0}">
+                                <i class="bi bi-x-circle-fill me-1"></i>
+                                Hết Hàng
+                            </div>
+                            
+                            <a th:href="@{/user/products/{id}(id=${product.id})}" class="product-link">
+                                <div class="product-image-wrapper">
+                                    <img th:src="${product.imageUrl}" 
+                                         th:alt="${product.name}" 
+                                         class="product-image"
+                                         loading="lazy">
+                                </div>
+                                
+                                <div class="product-info">
+                                    <h3 class="product-name" th:text="${product.name}">Product Name</h3>
+                                    
+                                    <div class="product-rating" th:if="${product.averageRating != null and product.averageRating > 0}">
+                                        <div class="stars">
+                                            <i class="bi bi-star-fill" th:each="i : ${#numbers.sequence(1, product.averageRating)}"></i>
+                                            <i class="bi bi-star-half" th:if="${product.averageRating % 1 >= 0.5 and product.averageRating % 1 < 1}"></i>
+                                            <i class="bi bi-star" th:each="i : ${#numbers.sequence(1, 5 - product.averageRating)}"></i>
+                                        </div>
+                                        <span class="rating-count" th:text="'(' + ${product.totalReviews} + ')'"></span>
+                                    </div>
+                                    
+                                    <div class="product-price">
+                                        <span class="price-current" th:text="${#numbers.formatDecimal(product.discountPrice != null ? product.discountPrice : product.price, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
+                                        <span class="price-original" th:if="${product.discountPrice != null}" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
+                                        <span class="discount-badge" th:if="${product.discountPrice != null}" th:text="'-' + ${#numbers.formatDecimal((1 - product.discountPrice / product.price) * 100, 0, 'COMMA', 0, 'POINT')} + '%'">-0%</span>
+                                    </div>
+                                    
+                                    <div class="product-specs">
+                                        <span class="spec-item" th:if="${product.ram != null}">
+                                            <i class="bi bi-memory"></i>
+                                            <span th:text="${product.ram}">RAM</span>
+                                        </span>
+                                        <span class="spec-item" th:if="${product.storage != null}">
+                                            <i class="bi bi-device-ssd"></i>
+                                            <span th:text="${product.storage}">Storage</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <div class="product-actions">
+                                <button class="btn-action btn-compare" 
+                                        th:onclick="|addToCompare(${product.id})|"
+                                        title="So sánh">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>So sánh</span>
+                                </button>
+                                <button class="btn-action btn-quick-view" 
+                                        th:onclick="|showQuickView(${product.id})|"
+                                        title="Xem nhanh">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Xem nhanh</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Divider -->
+                <hr class="my-5" style="border-top: 2px dashed rgba(0,0,0,0.1);">
+            </div>
+            
             <!-- Product Grid -->
             <div class="row g-5 align-items-stretch">
                 <!-- Results Count Badge - Only show when filters are applied -->
@@ -1360,17 +1564,16 @@
                             </div>
                         </div>
 
-                        <button type="button"
+                        <a th:href="@{/user/products/{id}(id=${product.id})}"
                                 class="btn w-100 btn-buy btn-shimmer d-flex align-items-center justify-content-center m-0"
-                                th:disabled="${product.stock <= 0}"
-                                th:onclick="|addToCart(${product.id}, this)|">
+                                th:classappend="${product.stock <= 0} ? 'disabled' : ''">
                             <span th:if="${product.stock > 0}">
                                 <i class="bi bi-bag-heart-fill me-2 fs-5"></i> SỞ HỮU NGAY
                             </span>
                             <span th:unless="${product.stock > 0}">
                                 <i class="bi bi-slash-circle me-2 fs-5"></i> NGỪNG KINH DOANH
                             </span>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1878,6 +2081,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/csrf-utils.js}"></script>
 <script th:inline="javascript">
     // Set authentication status from backend
     const isUserAuthenticated = /*[[${isAuthenticated}]]*/ false;
@@ -1962,12 +2166,37 @@
         btnElement.disabled = true;
         btnElement.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang thêm...';
 
-        fetch('/user/cart/add', {
+        fetchWithCsrf('/user/cart/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productId: productId, quantity: 1 })
         })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error('AUTH_BLOCKED');
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!response.ok) {
+                    let errorMessage = 'Không thể thêm vào giỏ.';
+                    if (contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } else {
+                        const errorText = await response.text();
+                        if (errorText && !errorText.trim().startsWith('<')) {
+                            errorMessage = errorText;
+                        }
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Phản hồi từ máy chủ không hợp lệ.');
+                }
+
+                return response.json();
+            })
             .then(data => {
                 // Re-enable button and restore original content
                 btnElement.disabled = false;
@@ -2000,7 +2229,7 @@
                     const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
                     cartModal.show();
                 } else {
-                    alert("Lỗi: " + data.message);
+                    showToast("Lỗi: " + data.message, 'error');
                 }
             })
             .catch(error => {
@@ -2010,7 +2239,7 @@
                 btnElement.disabled = false;
                 btnElement.innerHTML = originalContent;
 
-                alert("Uy tín, không thể kết nối server lúc này!");
+                showToast("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.", 'error');
             });
     }
 
@@ -2189,7 +2418,7 @@
             })
             .catch(error => {
                 console.error('Error fetching product:', error);
-                alert('Không thể tải thông tin sản phẩm!');
+                showToast('Không thể tải thông tin sản phẩm!', 'error');
             });
     }
 
@@ -2654,6 +2883,9 @@
 
 <!-- Mobile Bottom Navigation JavaScript -->
 <script th:src="@{/js/mobile/BottomNavigation.js}"></script>
+
+<!-- CSRF Auto-Injection -->
+<th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 
 <!-- Pull-to-Refresh JavaScript (Task 3.3) -->
 <script th:src="@{/js/mobile/PullToRefresh.js}"></script>

@@ -15,22 +15,32 @@
     <!-- Toastify cho thông báo đẹp hơn -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-meta}"></th:block>
+    
     <style>
-        :root {
-            --sz-glass-bg: rgba(255, 255, 255, 0.7);
-            --sz-glass-border: rgba(255, 255, 255, 0.4);
-            --sz-primary: #1A1C20;
-            --sz-text-muted: #86868b;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f5f7;
-            color: var(--sz-primary);
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
             background-image: radial-gradient(circle at 0% 0%, rgba(255, 193, 7, 0.05) 0%, transparent 50%),
                               radial-gradient(circle at 100% 100%, rgba(13, 110, 253, 0.05) 0%, transparent 50%);
             background-attachment: fixed;
+            transition: all 0.3s ease;
         }
+
+        /* Dark Mode Overrides cho Review Center */
+        body.dark-mode .bento-card { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .glass-table-container { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .custom-table tbody tr { background: rgba(255,255,255,0.02); }
+        body.dark-mode .custom-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode .bg-light { background-color: rgba(255,255,255,0.05) !important; }
+        body.dark-mode .form-control { background-color: rgba(255,255,255,0.08) !important; color: #f1f5f9; }
+        body.dark-mode .form-select { background-color: rgba(255,255,255,0.08) !important; color: #f1f5f9; }
+        body.dark-mode .collapse.bg-light { background-color: rgba(0,0,0,0.2) !important; }
+        body.dark-mode .star-rating-empty i { color: rgba(255,255,255,0.1); }
 
         .admin-layout { display: flex; min-height: 100vh; }
         .main-content {
@@ -43,8 +53,9 @@
 
         /* BENTO CARDS */
         .bento-card {
-            background: var(--sz-glass-bg);
+            background: var(--sz-glass);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--sz-glass-border);
             border-radius: 24px;
             padding: 30px;
@@ -100,7 +111,8 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        
+        <!-- GLOBAL HEADER -->
+        <!-- HEADER TRANG -->
         <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
             <div>
                 <a th:href="@{/admin/dashboard}" class="text-decoration-none fw-bold text-muted mb-2 d-block"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
@@ -116,7 +128,9 @@
                 <div class="bento-card bg-white d-flex flex-column justify-content-between p-4">
                     <div class="d-flex justify-content-between">
                         <i class="bi bi-stars fs-3 text-warning mb-2"></i>
-                        <span class="badge bg-light text-dark fw-bold border">Rating Hệ Thống</span>
+                        <span class="badge rounded-pill fw-bold shadow-sm px-3 py-2" style="background: rgba(251, 189, 5, 0.1); color: #b45309; border: 1px solid rgba(251, 189, 5, 0.2);">
+                            <i class="bi bi-graph-up-arrow me-1"></i> Rating Hệ Thống
+                        </span>
                     </div>
                     <div class="mt-2">
                         <h1 class="display-5 fw-bolder mb-0 text-dark">
@@ -156,29 +170,44 @@
                     <span class="fw-bold text-danger opacity-75 small text-uppercase">Bình luận bị khóa</span>
                 </div>
             </div>
-            <div class="col-md-8 fade-up" style="animation-delay: 0.2s;">
+            <div class="col-12 fade-up" style="animation-delay: 0.2s;">
                 <!-- Filter Bento -->
-                <div class="bento-card bg-white p-4 d-flex flex-column justify-content-center">
-                    <h6 class="fw-bold text-muted mb-3 text-uppercase" style="letter-spacing: 1px;"><i class="bi bi-funnel-fill me-1"></i> Bộ Lọc Kép</h6>
+                <div class="bento-card bg-white p-4 d-flex flex-column justify-content-center border-0 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-muted mb-0 text-uppercase" style="letter-spacing: 1px;"><i class="bi bi-funnel-fill me-1"></i> Bộ Lọc Kép &amp; Sắp Xếp</h6>
+                        <a th:href="@{/admin/reviews}" class="btn btn-sm btn-light rounded-pill px-3 fw-bold border-0 text-muted shadow-none">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Làm mới bộ lọc
+                        </a>
+                    </div>
                     <form method="get" th:action="@{/admin/reviews}" class="row g-3 align-items-center">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="position-relative">
                                 <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                                 <input type="text" name="keyword" class="form-control bg-light border-0 rounded-pill ps-5 fw-bold py-2 shadow-none" placeholder="Tìm theo tên SP, User, hoặc Nội dung..." th:value="${keyword}">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <select name="rating" class="form-select bg-light border-0 fw-bold rounded-pill text-secondary py-2 shadow-none" onchange="this.form.submit()">
                                 <option value="" class="fw-bold">Tất cả sao</option>
-                                <option value="5" th:selected="${rating == 5}">⭐⭐⭐⭐⭐ (5 Tuyệt vời)</option>
-                                <option value="4" th:selected="${rating == 4}">⭐⭐⭐⭐ (4 Tốt)</option>
-                                <option value="3" th:selected="${rating == 3}">⭐⭐⭐ (3 Tạm ổn)</option>
-                                <option value="2" th:selected="${rating == 2}">⭐⭐ (2 Kém)</option>
-                                <option value="1" th:selected="${rating == 1}">⭐ (1 Tệ hại)</option>
+                                <option value="5" th:selected="${rating == 5}">⭐⭐⭐⭐⭐ (5-T.Vời)</option>
+                                <option value="4" th:selected="${rating == 4}">⭐⭐⭐⭐ (4-Tốt)</option>
+                                <option value="3" th:selected="${rating == 3}">⭐⭐⭐ (3-Ổn)</option>
+                                <option value="2" th:selected="${rating == 2}">⭐⭐ (2-Kém)</option>
+                                <option value="1" th:selected="${rating == 1}">⭐ (1-Tệ)</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold w-100 py-2">Quét Dữ Liệu <i class="bi bi-radar ms-1"></i></button>
+                        <div class="col-md-3">
+                            <select name="sort" class="form-select bg-light border-0 fw-bold rounded-pill text-secondary py-2 shadow-none" onchange="this.form.submit()">
+                                <option value="newest" th:selected="${sort == 'newest' || sort == null}">📅 Mới nhất trước</option>
+                                <option value="oldest" th:selected="${sort == 'oldest'}">⏳ Cũ nhất trước</option>
+                                <option value="highest" th:selected="${sort == 'highest'}">📈 Sao cao nhất</option>
+                                <option value="lowest" th:selected="${sort == 'lowest'}">📉 Sao thấp nhất</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold w-100 py-2 shadow-sm">
+                                QUÉT DỮ LIỆU <i class="bi bi-radar ms-1"></i>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -380,5 +409,8 @@
         });
     }
 </script>
+
+<!-- CSRF Auto-Injection Script -->
+<th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 </body>
 </html>

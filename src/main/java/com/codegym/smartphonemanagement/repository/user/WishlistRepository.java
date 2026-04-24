@@ -28,5 +28,12 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
      * Delete all wishlist items for a user
      */
     void deleteByUserId(Long userId);
+    
+    /**
+     * Count wishlist entries per product for analytics
+     * Returns list of [product_id, count] pairs
+     */
+    @Query("SELECT w.product.id, COUNT(w.id) FROM Wishlist w GROUP BY w.product.id")
+    List<Object[]> countByProduct();
 }
 

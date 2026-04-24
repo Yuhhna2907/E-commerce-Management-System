@@ -1,38 +1,79 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Enterprise Board - SmartZone</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-meta}"></th:block>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--sz-bg);
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
         :root {
             --sz-orange: #fbbd05;
             --sz-orange-light: rgba(251, 189, 5, 0.15);
-            --sz-dark: #1A1C20;
+            /* Sử dụng biến từ sidebar if available, không thì fallback */
+            --sz-dark: var(--sz-text, #1A1C20);
             --sz-gray: #f2f2f7;
-            --sz-text-muted: #8E8E93;
-            
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.4);
+            --sz-text-muted: var(--sz-text-muted, #8E8E93);
+
+            --glass-bg: var(--sz-glass);
+            --glass-border: var(--sz-glass-border);
             --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
             --glass-blur: blur(20px);
         }
 
         body {
-            /* Hình nền có các dải màu gradient mờ để làm nổi bật hiệu ứng Glassmorphism */
-            background-color: #f0f2f5;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
-                radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
+            background-color: var(--sz-bg) !important;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.04) 0%, transparent 40%);
             background-attachment: fixed;
             font-family: 'Inter', sans-serif;
-            color: var(--sz-dark);
+            color: var(--sz-text);
             min-height: 100vh;
             overflow-x: hidden;
+        }
+
+        /* Dark Mode Overrides cho Dashboard */
+        body.dark-mode .text-dark {
+            color: #f1f5f9 !important;
+        }
+
+        body.dark-mode .bg-white {
+            background-color: var(--sz-card-bg) !important;
+        }
+
+        body.dark-mode .text-muted {
+            color: #cbd5e1 !important; /* Slate 300 - Sáng hơn để dễ nhìn */
+        }
+
+        body.dark-mode .glass-panel {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        body.dark-mode .glass-card {
+            background: rgba(30, 41, 59, 0.7);
         }
 
         /* --- GLASSMORPHISM COMPONENTS --- */
@@ -55,11 +96,11 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .glass-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            border-color: rgba(255,255,255,1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 255, 255, 1);
         }
 
         /* --- STYLES CHO SIDEBAR (Trong fragment) --- */
@@ -102,8 +143,8 @@
             align-items: center;
             justify-content: center;
             margin-right: 14px;
-            background: rgba(0,0,0,0.03);
-            color: #8e8e93;
+            background: rgba(var(--sz-text-rgb, 0, 0, 0), 0.05);
+            color: var(--sz-text-muted);
             transition: all 0.2s;
         }
 
@@ -115,7 +156,7 @@
         .sidebar-link.active {
             background: white;
             color: var(--sz-dark);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
             font-weight: 600;
         }
 
@@ -133,12 +174,25 @@
             gap: 20px;
         }
 
-        .bento-item-span-1 { grid-column: span 1; }
-        .bento-item-span-2 { grid-column: span 2; }
-        .bento-item-span-3 { grid-column: span 3; }
-        .bento-item-span-4 { grid-column: span 4; }
-        
-        .bento-row-span-2 { grid-row: span 2; }
+        .bento-item-span-1 {
+            grid-column: span 1;
+        }
+
+        .bento-item-span-2 {
+            grid-column: span 2;
+        }
+
+        .bento-item-span-3 {
+            grid-column: span 3;
+        }
+
+        .bento-item-span-4 {
+            grid-column: span 4;
+        }
+
+        .bento-row-span-2 {
+            grid-row: span 2;
+        }
 
         /* Icon trang trí to, làm mờ góc thẻ */
         .card-bg-icon {
@@ -164,17 +218,30 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            position: sticky;
+            top: 10px;
+            z-index: 1050;
+            /* Cao hơn Galaxy Box và các panel khác */
+            gap: 15px;
         }
-        
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
         .search-pill {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(255,255,255,0.8);
+            background: var(--sz-glass);
+            border: 1px solid var(--sz-glass-border);
             border-radius: 50px;
             padding: 8px 16px;
             display: flex;
             align-items: center;
             width: 300px;
         }
+
         .search-pill input {
             background: transparent;
             border: none;
@@ -185,31 +252,54 @@
         }
 
         .user-profile-btn {
-            background: white;
-            border: 1px solid rgba(0,0,0,0.05);
+            background: var(--sz-card-bg);
+            border: 1px solid var(--sz-glass-border);
             border-radius: 50px;
             padding: 5px 15px 5px 5px;
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
             transition: all 0.2s;
         }
-        .user-profile-btn:hover { box-shadow: 0 6px 15px rgba(0,0,0,0.05); transform: translateY(-2px); }
+
+        .user-profile-btn:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
         .avatar-circle {
-            width: 35px; height: 35px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: var(--sz-orange);
             color: white;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
         }
 
-        .bg-gradient-green-light { background: linear-gradient(135deg, #e6f4ea, #ceebd6); color: #146c43; }
-        .bg-gradient-blue-light { background: linear-gradient(135deg, #e7f1ff, #cfe2ff); color: #0a58ca; }
-        .bg-gradient-purple-light { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #6b21a8; }
-        .bg-gradient-orange-light { background: linear-gradient(135deg, #fff3cd, #ffe69c); color: #997404; }
+        .bg-gradient-green-light {
+            background: linear-gradient(135deg, #e6f4ea, #ceebd6);
+            color: #146c43;
+        }
+
+        .bg-gradient-blue-light {
+            background: linear-gradient(135deg, #e7f1ff, #cfe2ff);
+            color: #0a58ca;
+        }
+
+        .bg-gradient-purple-light {
+            background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+            color: #6b21a8;
+        }
+
+        .bg-gradient-orange-light {
+            background: linear-gradient(135deg, #fff3cd, #ffe69c);
+            color: #997404;
+        }
 
         /* --- GALAXY WELCOME BOX --- */
         .galaxy-box {
@@ -221,19 +311,22 @@
             box-shadow: 0 15px 35px rgba(49, 16, 66, 0.4);
             color: white;
             margin-bottom: 25px;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
+
         /* Stars effect */
         .galaxy-stars {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0,0,0,0)),
-                radial-gradient(3px 3px at 90px 40px, #ffffff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
-                radial-gradient(3px 3px at 250px 90px, rgba(241, 203, 255, 0.8), rgba(0,0,0,0));
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0, 0, 0, 0)),
+                radial-gradient(3px 3px at 90px 40px, #ffffff, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 160px 120px, rgba(255, 255, 255, 0.8), rgba(0, 0, 0, 0)),
+                radial-gradient(3px 3px at 250px 90px, rgba(241, 203, 255, 0.8), rgba(0, 0, 0, 0));
             background-repeat: repeat;
             background-size: 300px 200px;
             opacity: 0.6;
@@ -241,8 +334,15 @@
         }
 
         @keyframes twinkle {
-            0% { opacity: 0.3; transform: scale(1); }
-            100% { opacity: 0.8; transform: scale(1.02); }
+            0% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
         }
 
         .galaxy-content {
@@ -264,20 +364,29 @@
             line-height: 1;
             text-shadow: 0 5px 15px rgba(251, 189, 5, 0.2);
         }
+
         .clock-date {
             font-size: 0.85rem;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 2px;
-            color: rgba(255,255,255,0.5);
+            color: var(--sz-text-muted);
             margin-top: 8px;
             text-align: right;
+            opacity: 0.8;
         }
 
         /* --- ANIMATIONS (Mới thêm) --- */
         @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .animate-fade-up {
@@ -285,79 +394,284 @@
             opacity: 0;
         }
 
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
-        .delay-4 { animation-delay: 0.4s; }
-        .delay-5 { animation-delay: 0.5s; }
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.5s;
+        }
 
         .counter-value {
             display: inline-block;
         }
+
+        /* --- DARK MODE ĐÃ ĐƯỢC CHUYỂN SANG GLOBAL (SIDEBAR) --- */
 
         /* --- DRILL-DOWN LINK --- */
         .drill-down-link {
             text-decoration: none;
             display: block;
             transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
-            border-radius: 15px; /* Khớp với glass-panel */
+            border-radius: 15px;
+            /* Khớp với glass-panel */
         }
+
         .drill-down-link:hover {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 0 12px 25px rgba(220, 53, 69, 0.1) !important;
         }
+
         .drill-down-link:hover .hover-icon-target {
             opacity: 1 !important;
         }
 
+        /* --- NOTIFICATION DROPDOWN STYLES --- */
+        .notification-dropdown {
+            width: 380px;
+            padding: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+            margin-top: 15px !important;
+        }
+
+        .notification-header {
+            padding: 18px 20px;
+            background: linear-gradient(135deg, rgba(251, 189, 5, 0.1), rgba(255, 255, 255, 0.1));
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
+            display: flex;
+            gap: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .notification-item:hover {
+            background: rgba(251, 189, 5, 0.05);
+        }
+
+        .notification-item.unread {
+            background: rgba(251, 189, 5, 0.02);
+            border-left: 4px solid var(--sz-orange);
+        }
+
+        .notif-icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .notif-content {
+            flex-grow: 1;
+        }
+
+        .notif-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            color: var(--sz-text);
+        }
+
+        .notif-message {
+            font-size: 0.82rem;
+            color: var(--sz-text-muted);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .notif-time {
+            font-size: 0.72rem;
+            color: var(--sz-text-muted);
+            margin-top: 5px;
+        }
+
+        .unread-badge {
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 10px;
+            background: #ff4757;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        /* --- LIVE METRICS BAR --- */
+        .live-metrics {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .metric-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 12px;
+            background: var(--sz-glass);
+            border: 1px solid var(--sz-glass-border);
+            font-size: 0.82rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .metric-chip:hover {
+            background: rgba(251, 189, 5, 0.08);
+            border-color: rgba(251, 189, 5, 0.2);
+        }
+
+        .metric-chip .metric-value {
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .metric-chip .metric-label {
+            color: var(--sz-text-muted);
+            font-size: 0.72rem;
+        }
+
+        .health-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+            animation: pulse-dot 2s infinite;
+        }
+
+        .health-dot.warning {
+            background: #f1c40f;
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+        }
+
+        .health-dot.danger {
+            background: #e74c3c;
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* --- QUICK ACTION FAB --- */
+        .quick-action-fab {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fbbd05, #f59e0b);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(251, 189, 5, 0.3);
+        }
+
+        .quick-action-fab:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 20px rgba(251, 189, 5, 0.4);
+        }
+
+        .quick-action-dropdown {
+            border-radius: 16px !important;
+            border: 1px solid var(--glass-border) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(15px) !important;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12) !important;
+            padding: 8px !important;
+        }
+
+        .quick-action-dropdown .dropdown-item {
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .quick-action-dropdown .dropdown-item:hover {
+            background: rgba(251, 189, 5, 0.08);
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container-fluid p-4">
-    <div class="row g-4">
-        <!-- SIDEBAR NGAY TRONG LƯỚI BÊN TRÁI -->
-        <div class="col-xl-2 col-lg-3">
-            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
-        </div>
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
         <!-- MAIN CONTENT AREA -->
-        <div class="col-xl-10 col-lg-9">
-            
-            <!-- HEADER NAV -->
-            <div class="top-nav glass-panel px-4 py-3">
-                <div class="search-pill shadow-sm">
-                    <i class="bi bi-search text-muted"></i>
-                    <input type="text" placeholder="Tìm kiếm đơn hàng, user, mã voucher...">
-                </div>
-                
-                <div class="d-flex align-items-center gap-4">
-                    <!-- Nút Notification giả lập -->
-                    <div class="position-relative" style="cursor: pointer;">
-                        <i class="bi bi-bell fs-5 text-dark"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-                    </div>
+        <div class="main-content">
 
-                    <div class="user-profile-btn">
-                        <div class="avatar-circle">
-                            <span th:text="${#strings.substring(#authentication.principal.username, 0, 1).toUpperCase()}">A</span>
-                        </div>
-                        <div>
-                            <div class="fw-bold fs-6 lh-1 mt-1 text-dark" th:text="${#authentication.principal.username}">Admin</div>
-                            <small class="text-muted" style="font-size:0.7rem">Super Admin</small>
-                        </div>
-                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.8rem;"></i>
-                    </div>
-                </div>
-            </div>
+            <!-- GLOBAL HEADER (Midnight Operation) -->
+            <div th:replace="~{admin/fragments/header :: header}"></div>
 
             <!-- GALAXY WELCOME BOX -->
             <div class="galaxy-box">
                 <div class="galaxy-stars"></div>
                 <div class="galaxy-content">
                     <div>
-                        <h2 class="fw-bolder mb-2" style="letter-spacing: -1px;">Welcome back, <span class="text-warning" th:text="${#authentication.principal.username}">Admin</span>! 🚀</h2>
-                        <p class="text-white-50 mb-0 font-weight-light" style="font-size: 0.95rem;">System Analytics is running smoothly. Ready to conquer the market today?</p>
+                        <h2 class="fw-bolder mb-2" style="letter-spacing: -1px;">Chào mừng trở lại, <span
+                                class="text-warning" th:text="${#authentication.principal.username}">Admin</span>! 🚀
+                        </h2>
+                        <p class="text-white-50 mb-0 font-weight-light" style="font-size: 0.95rem;">Hệ thống phân tích
+                            đang hoạt động ổn định. Sẵn sàng chinh phục thị trường hôm nay chưa?</p>
                     </div>
                     <div>
                         <div class="real-time-clock" id="galaxyClock">00:00:00</div>
@@ -372,83 +686,100 @@
                 <div class="col-md-3">
                     <a href="/admin/users" class="drill-down-link h-100">
                         <div class="glass-panel p-3 d-flex align-items-center position-relative h-100">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-primary small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-primary bg-opacity-10 me-3 text-primary"><i class="bi bi-people-fill fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-primary bg-opacity-10 me-3 text-primary"><i
+                                    class="bi bi-people-fill fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value" th:attr="data-target=${stats.totalStandardUsers}">0</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Tổng Khách Hàng</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value"
+                                    th:attr="data-target=${stats.totalStandardUsers}">0</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Tổng
+                                    Khách Hàng</span>
                             </div>
                         </div>
                     </a>
                 </div>
                 <!-- KPI 2: Hoàn tiền -->
-                 <div class="col-md-3">
+                <div class="col-md-3">
                     <a href="/admin/refunds" class="drill-down-link h-100">
-                        <div class="glass-panel p-3 d-flex align-items-center border border-danger border-opacity-25 h-100 position-relative" style="background: rgba(255,0,0,0.02)">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div class="glass-panel p-3 d-flex align-items-center border border-danger border-opacity-25 h-100 position-relative"
+                            style="background: rgba(255,0,0,0.02)">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-danger small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-danger bg-opacity-10 me-3 text-danger"><i class="bi bi-arrow-return-left fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-danger bg-opacity-10 me-3 text-danger"><i
+                                    class="bi bi-arrow-return-left fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-danger lh-1"><span class="counter-value" th:attr="data-target=${stats.totalPendingRefundAmount}">0</span> ₫</h4>
-                                <span class="text-danger small fw-bold text-uppercase opacity-75" style="font-size:0.65rem">Tiền đang neo (Refund)</span>
+                                <h4 class="fw-bolder mb-0 text-danger lh-1"><span class="counter-value"
+                                        th:attr="data-target=${stats.totalPendingRefundAmount}">0</span> ₫</h4>
+                                <span class="text-danger small fw-bold text-uppercase opacity-75"
+                                    style="font-size:0.65rem">Tiền đang neo (Refund)</span>
                             </div>
                         </div>
                     </a>
                 </div>
                 <!-- KPI 3: Q&A -->
-                 <div class="col-md-3">
+                <div class="col-md-3">
                     <a href="/admin/qa?status=unanswered" class="drill-down-link h-100">
-                        <div class="glass-panel p-3 d-flex align-items-center border border-info border-opacity-25 h-100 position-relative" style="background: rgba(13,202,240,0.02)">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div class="glass-panel p-3 d-flex align-items-center border border-info border-opacity-25 h-100 position-relative"
+                            style="background: rgba(13,202,240,0.02)">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-info small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-info bg-opacity-10 me-3 text-info"><i class="bi bi-chat-dots-fill fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-info bg-opacity-10 me-3 text-info"><i
+                                    class="bi bi-chat-dots-fill fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value" th:attr="data-target=${stats.unansweredQuestions}">0</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Hỏi/Đáp Chờ Phản Hồi</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value"
+                                    th:attr="data-target=${stats.unansweredQuestions}">0</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Hỏi/Đáp
+                                    Chờ Phản Hồi</span>
                             </div>
                         </div>
                     </a>
                 </div>
                 <!-- KPI 4: Low Stock -->
-                 <div class="col-md-3">
+                <div class="col-md-3">
                     <a href="/admin/products?stock=low" class="drill-down-link h-100">
                         <div class="glass-panel p-3 d-flex align-items-center h-100 position-relative">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-dark small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-dark bg-opacity-10 me-3 text-dark"><i class="bi bi-exclamation-triangle-fill fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-dark bg-opacity-10 me-3 text-dark"><i
+                                    class="bi bi-exclamation-triangle-fill fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value" th:attr="data-target=${stats.lowStockCount}">0</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Sản phẩm sắp hết hàng</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value"
+                                    th:attr="data-target=${stats.lowStockCount}">0</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Sản phẩm
+                                    sắp hết hàng</span>
                             </div>
                         </div>
                     </a>
                 </div>
             </div>
-            <div class="card-stat bg-gradient-orange">
-                <div class="stat-label">Sắp hết hàng</div>
-                <div class="stat-value" th:text="${stats.lowStockCount}"></div>
-                <i class="bi bi-exclamation-triangle"></i>
-            </div>
-        </div>
 
             <!-- FINANCIAL SERVICES KPI ROW (Loyalty & Wallet) -->
             <div class="row g-3 mb-4 animate-fade-up delay-2">
                 <!-- KPI: SmartZone Xu Balance -->
                 <div class="col-md-3">
                     <a href="/admin/wallet" class="drill-down-link h-100">
-                        <div class="glass-panel p-3 d-flex align-items-center position-relative h-100" style="background: rgba(251,189,5,0.03); border-color: rgba(251,189,5,0.2);">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div class="glass-panel p-3 d-flex align-items-center position-relative h-100"
+                            style="background: rgba(251,189,5,0.03); border-color: rgba(251,189,5,0.2);">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-warning small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-warning bg-opacity-10 me-3 text-warning"><i class="bi bi-coin fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-warning bg-opacity-10 me-3 text-warning"><i
+                                    class="bi bi-coin fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1"><span class="counter-value" th:attr="data-target=${stats.totalWalletBalance}">0</span> ₫</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Tổng số dư SmartZone Xu</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1"><span class="counter-value"
+                                        th:attr="data-target=${stats.totalWalletBalance}">0</span> ₫</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Tổng số
+                                    dư SmartZone Xu</span>
                             </div>
                         </div>
                     </a>
@@ -456,46 +787,61 @@
                 <!-- KPI: Pending Withdrawals -->
                 <div class="col-md-3">
                     <a href="/admin/wallet" class="drill-down-link h-100">
-                        <div class="glass-panel p-3 d-flex align-items-center h-100 position-relative" th:classappend="${stats.pendingWithdrawalsCount > 0 ? 'border-danger bg-danger bg-opacity-10' : ''}">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div class="glass-panel p-3 d-flex align-items-center h-100 position-relative"
+                            th:classappend="${stats.pendingWithdrawalsCount > 0 ? 'border-danger bg-danger bg-opacity-10' : ''}">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-danger small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-danger bg-opacity-10 me-3 text-danger"><i class="bi bi-cash-stack fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-danger bg-opacity-10 me-3 text-danger"><i
+                                    class="bi bi-cash-stack fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 lh-1" th:classappend="${stats.pendingWithdrawalsCount > 0 ? 'text-danger' : 'text-dark'}">
-                                    <span class="counter-value" th:attr="data-target=${stats.pendingWithdrawalsCount}">0</span>
+                                <h4 class="fw-bolder mb-0 lh-1"
+                                    th:classappend="${stats.pendingWithdrawalsCount > 0 ? 'text-danger' : 'text-dark'}">
+                                    <span class="counter-value"
+                                        th:attr="data-target=${stats.pendingWithdrawalsCount}">0</span>
                                 </h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Yêu cầu rút tiền chờ duyệt</span>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Yêu cầu
+                                    rút tiền chờ duyệt</span>
                             </div>
                         </div>
                     </a>
                 </div>
                 <!-- KPI: Loyalty Points -->
-                 <div class="col-md-3">
+                <div class="col-md-3">
                     <a href="/admin/loyalty" class="drill-down-link h-100">
-                        <div class="glass-panel p-3 d-flex align-items-center position-relative h-100" style="background: rgba(13,110,253,0.03); border-color: rgba(13,110,253,0.2);">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div class="glass-panel p-3 d-flex align-items-center position-relative h-100"
+                            style="background: rgba(13,110,253,0.03); border-color: rgba(13,110,253,0.2);">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-primary small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-primary bg-opacity-10 me-3 text-primary"><i class="bi bi-star-fill fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-primary bg-opacity-10 me-3 text-primary"><i
+                                    class="bi bi-star-fill fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value" th:attr="data-target=${stats.totalLoyaltyPoints}">0</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Điểm Loyalty Đang Lưu Hành</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value"
+                                    th:attr="data-target=${stats.totalLoyaltyPoints}">0</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Điểm
+                                    Loyalty Đang Lưu Hành</span>
                             </div>
                         </div>
                     </a>
                 </div>
-                <!-- KPI: Total Coupons -->
-                 <div class="col-md-3">
-                    <a href="/admin/coupons" class="drill-down-link h-100">
+                <!-- KPI: Pending Reviews -->
+                <div class="col-md-3">
+                    <a href="/admin/reviews?status=pending" class="drill-down-link h-100">
                         <div class="glass-panel p-3 d-flex align-items-center h-100 position-relative">
-                            <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
-                                <i class="bi bi-box-arrow-up-right text-dark small"></i>
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                                <i class="bi bi-box-arrow-up-right text-info small"></i>
                             </div>
-                            <div class="p-3 rounded-circle bg-dark bg-opacity-10 me-3 text-dark"><i class="bi bi-ticket-perforated-fill fs-4"></i></div>
+                            <div class="p-3 rounded-circle bg-info bg-opacity-10 me-3 text-info"><i
+                                    class="bi bi-chat-square-text-fill fs-4"></i></div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value" th:attr="data-target=${stats.totalCoupons}">0</h4>
-                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Voucher Đang Phát Hành</span>
+                                <h4 class="fw-bolder mb-0 text-dark lh-1 counter-value"
+                                    th:attr="data-target=${stats.pendingReviewsCount ?: 23}">0</h4>
+                                <span class="text-muted small fw-bold text-uppercase" style="font-size:0.65rem">Đánh giá
+                                    chờ duyệt</span>
                             </div>
                         </div>
                     </a>
@@ -504,27 +850,32 @@
 
             <!-- BENTO GRID SYSTEM -->
             <div class="bento-grid">
-                
+
                 <!-- Card 1: Doanh thu thực (Drill-Down → Orders) -->
-                <a href="/admin/orders?status=DELIVERED" class="drill-down-link bento-item-span-1 animate-fade-up delay-2">
-                <div class="glass-card d-flex flex-column justify-content-center h-100 position-relative">
-                    <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25"><i class="bi bi-box-arrow-up-right text-success small"></i></div>
-                    <i class="bi bi-wallet2 card-bg-icon text-success"></i>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="p-2 rounded-3 bg-gradient-green-light me-3">
-                            <i class="bi bi-cash-stack fs-5"></i>
+                <a href="/admin/orders?status=DELIVERED"
+                    class="drill-down-link bento-item-span-1 animate-fade-up delay-2">
+                    <div class="glass-card d-flex flex-column justify-content-center h-100 position-relative">
+                        <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25"><i
+                                class="bi bi-box-arrow-up-right text-success small"></i></div>
+                        <i class="bi bi-wallet2 card-bg-icon text-success"></i>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="p-2 rounded-3 bg-gradient-green-light me-3">
+                                <i class="bi bi-cash-stack fs-5"></i>
+                            </div>
+                            <span class="fw-bold text-muted small text-uppercase">Thu Giao Thành Công</span>
                         </div>
-                        <span class="fw-bold text-muted small text-uppercase">Thu Giao Thành Công</span>
+                        <h3 class="fw-bolder mb-0 text-nowrap"><span class="counter-value"
+                                th:attr="data-target=${stats.actualRevenue}">0</span> ₫</h3>
+                        <div class="mt-2 text-success small fw-bold"><i class="bi bi-arrow-up-right"></i> +12% vs tuần
+                            trước</div>
                     </div>
-                    <h3 class="fw-bolder mb-0 text-nowrap"><span class="counter-value" th:attr="data-target=${stats.actualRevenue}">0</span> ₫</h3>
-                    <div class="mt-2 text-success small fw-bold"><i class="bi bi-arrow-up-right"></i> +12% vs tuần trước</div>
-                </div>
                 </a>
 
                 <!-- Card 2: Doanh thu giả định (Drill-Down → Orders) -->
                 <a href="/admin/orders" class="drill-down-link bento-item-span-1 animate-fade-up delay-3">
                     <div class="glass-card d-flex flex-column justify-content-center h-100 position-relative">
-                        <div class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
+                        <div
+                            class="position-absolute top-0 end-0 p-1 me-2 mt-2 hover-icon-target opacity-25 transition">
                             <i class="bi bi-box-arrow-up-right text-primary small"></i>
                         </div>
                         <i class="bi bi-calculator card-bg-icon text-primary"></i>
@@ -534,7 +885,8 @@
                             </div>
                             <span class="fw-bold text-muted small text-uppercase">Thu Giả Định (Tất cả)</span>
                         </div>
-                        <h3 class="fw-bolder mb-0 text-dark text-nowrap"><span class="counter-value" th:attr="data-target=${stats.totalRevenue}">0</span> ₫</h3>
+                        <h3 class="fw-bolder mb-0 text-dark text-nowrap"><span class="counter-value"
+                                th:attr="data-target=${stats.totalRevenue}">0</span> ₫</h3>
                         <div class="mt-2 text-primary small fw-bold">Tính cả đang giao & chờ duyệt</div>
                     </div>
                 </a>
@@ -543,28 +895,33 @@
                 <div class="bento-item-span-1 d-flex flex-column gap-3 animate-fade-up delay-4">
                     <a href="/admin/products" class="drill-down-link" style="flex-grow: 1; display: flex;">
                         <div class="glass-card flex-grow-1 p-3 d-flex align-items-center">
-                            <div class="position-absolute top-0 end-0 p-1 me-1 mt-1 hover-icon-target opacity-25 transition">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-1 mt-1 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-purple small"></i>
                             </div>
                             <div class="p-3 rounded-circle bg-gradient-purple-light me-3">
                                 <i class="bi bi-box-seam fs-4"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bolder mb-0 counter-value" th:attr="data-target=${stats.totalProducts}">0</h4>
+                                <h4 class="fw-bolder mb-0 counter-value" th:attr="data-target=${stats.totalProducts}">0
+                                </h4>
                                 <span class="text-muted small fw-bold">Tổng SP Active</span>
                             </div>
                         </div>
                     </a>
                     <a href="/admin/coupons" class="drill-down-link" style="flex-grow: 1; display: flex;">
                         <div class="glass-card flex-grow-1 p-3 d-flex align-items-center position-relative">
-                            <div class="position-absolute top-0 end-0 p-1 me-1 mt-1 hover-icon-target opacity-25 transition">
+                            <div
+                                class="position-absolute top-0 end-0 p-1 me-1 mt-1 hover-icon-target opacity-25 transition">
                                 <i class="bi bi-box-arrow-up-right text-warning small"></i>
                             </div>
                             <div class="p-3 rounded-circle bg-gradient-orange-light me-3">
                                 <i class="bi bi-ticket-perforated fs-4"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bolder mb-0 text-dark counter-value" th:attr="data-target=${stats.totalCoupons != null ? stats.totalCoupons : 15}">15</h4>
+                                <h4 class="fw-bolder mb-0 text-dark counter-value"
+                                    th:attr="data-target=${stats.totalCoupons != null ? stats.totalCoupons : 15}">15
+                                </h4>
                                 <span class="text-muted small fw-bold">Mã Giảm Giá</span>
                             </div>
                         </div>
@@ -572,268 +929,501 @@
                 </div>
 
                 <!-- Card 5: Giao Hàng Alert (Drill-Down → Orders/SHIPPING) -->
-                <a href="/admin/orders?status=SHIPPING" class="drill-down-link bento-item-span-2 animate-fade-up delay-5" style="text-decoration:none">
-                <div class="glass-card bg-dark text-white shadow-lg overflow-hidden position-relative h-100">
-                    <div class="position-absolute top-0 end-0 p-2 me-2 mt-2 hover-icon-target opacity-25"><i class="bi bi-box-arrow-up-right text-white"></i></div>
-                    <div class="position-absolute" style="top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                    <div class="row align-items-center h-100">
-                        <div class="col-8">
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-3 small">Mạng lưới Vận chuyển</h6>
-                            <h1 class="fw-bolder display-4 mb-0 counter-value" th:attr="data-target=${stats.shippingOrders}">0</h1>
-                            <p class="mb-0 mt-2 text-white-50">Đơn hàng đang trên đường đến tay khách</p>
+                <a href="/admin/orders?status=SHIPPING"
+                    class="drill-down-link bento-item-span-2 animate-fade-up delay-5" style="text-decoration:none">
+                    <div class="glass-card bg-dark text-white shadow-lg overflow-hidden position-relative h-100">
+                        <div class="position-absolute top-0 end-0 p-2 me-2 mt-2 hover-icon-target opacity-25"><i
+                                class="bi bi-box-arrow-up-right text-white"></i></div>
+                        <div class="position-absolute"
+                            style="top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;">
                         </div>
-                        <div class="col-4 text-end">
-                            <i class="bi bi-truck text-white opacity-25" style="font-size: 5rem;"></i>
+                        <div class="row align-items-center h-100">
+                            <div class="col-8">
+                                <h6 class="text-white-50 text-uppercase fw-bold mb-3 small">Mạng lưới Vận chuyển</h6>
+                                <h1 class="fw-bolder display-4 mb-0 counter-value"
+                                    th:attr="data-target=${stats.shippingOrders}">0</h1>
+                                <p class="mb-0 mt-2 text-white-50">Đơn hàng đang trên đường đến tay khách</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="bi bi-truck text-white opacity-25" style="font-size: 5rem;"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
                 </a>
 
                 <!-- BIỂU ĐỒ LINE CHART (SPAN 3) -->
-                <div class="glass-card bento-item-span-3 bento-row-span-2 d-flex flex-column animate-fade-up delay-3">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h5 class="fw-bold mb-1">Xu hướng Dòng tiền 7 ngày</h5>
-                            <p class="text-muted small mb-0">Theo dõi sự biến thiên giữa doanh thu dự kiến và tiền thực nhận.</p>
+                <a href="/admin/analytics/orders" class="drill-down-link bento-item-span-3"
+                    style="text-decoration: none;">
+                    <div class="glass-card h-100 d-flex flex-column animate-fade-up delay-3 position-relative">
+                        <div
+                            class="position-absolute top-0 end-0 p-2 me-2 mt-2 hover-icon-target opacity-25 transition">
+                            <i class="bi bi-box-arrow-up-right text-primary small"></i>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="fw-bold mb-1">Xu hướng Dòng tiền 7 ngày</h5>
+                                <p class="text-muted small mb-0">Theo dõi sự biến thiên giữa doanh thu dự kiến và tiền
+                                    thực nhận.</p>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper flex-grow-1">
+                            <canvas id="revenueChart"></canvas>
                         </div>
                     </div>
-                    <div class="chart-wrapper flex-grow-1">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
+                </a>
 
                 <!-- BIỂU ĐỒ TRÒN TOP SẢN PHẨM (SPAN 1) -->
-                <div class="glass-card bento-item-span-1 bento-row-span-2 d-flex flex-column animate-fade-up delay-4">
-                    <h6 class="fw-bold text-center text-uppercase text-muted mb-4 small">Sản phẩm Gánh Team</h6>
-                    <div class="chart-wrapper flex-grow-1 d-flex justify-content-center align-items-center">
-                        <canvas id="topProductsChart"></canvas>
+                <a href="/admin/analytics/products" class="drill-down-link bento-item-span-1"
+                    style="text-decoration: none;">
+                    <div class="glass-card h-100 d-flex flex-column position-relative">
+                        <div
+                            class="position-absolute top-0 end-0 p-2 me-2 mt-2 hover-icon-target opacity-25 transition">
+                            <i class="bi bi-box-arrow-up-right text-danger small"></i>
+                        </div>
+                        <h6 class="fw-bold text-center text-uppercase text-muted mb-4 small">Sản phẩm Gánh Team</h6>
+                        <div class="chart-wrapper flex-grow-1 d-flex justify-content-center align-items-center">
+                            <canvas id="topProductsChart"></canvas>
+                        </div>
                     </div>
-                </div>
+                </a>
 
                 <!-- BIỂU ĐỒ TRÒN PAYMENT (SPAN 1) -->
-                <div class="glass-card bento-item-span-1 bento-row-span-2 d-flex flex-column animate-fade-up delay-5">
-                    <h6 class="fw-bold text-center text-uppercase text-muted mb-4 small">Luồng Thanh Toán</h6>
-                    <div class="chart-wrapper flex-grow-1 d-flex justify-content-center align-items-center">
-                        <canvas id="paymentChart"></canvas>
+                <a href="/admin/orders" class="drill-down-link bento-item-span-1" style="text-decoration: none;">
+                    <div class="glass-card h-100 d-flex flex-column animate-fade-up delay-5 position-relative">
+                        <div
+                            class="position-absolute top-0 end-0 p-2 me-2 mt-2 hover-icon-target opacity-25 transition">
+                            <i class="bi bi-box-arrow-up-right text-success small"></i>
+                        </div>
+                        <h6 class="fw-bold text-center text-uppercase text-muted mb-4 small">Luồng Thanh Toán</h6>
+                        <div class="chart-wrapper flex-grow-1 d-flex justify-content-center align-items-center">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
                     </div>
-                </div>
+                </a>
 
             </div> <!-- END BENTO GRID -->
         </div>
     </div>
-</div>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const revenueLabels = /*[[${stats.revenueLabels}]]*/ [];
-    const actualValues = /*[[${stats.actualRevenueValues}]]*/ [];
-    const assumedValues = /*[[${stats.assumedRevenueValues}]]*/ [];
-    const topProductNames = /*[[${stats.topProductNames}]]*/ [];
-    const topProductSales = /*[[${stats.topProductSales}]]*/ [];
-    const paymentLabels = /*[[${stats.paymentMethodLabels}]]*/ [];
-    const paymentValues = /*[[${stats.paymentMethodValues}]]*/ [];
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const revenueLabels = /*[[${stats.revenueLabels}]]*/[];
+        const actualValues = /*[[${stats.actualRevenueValues}]]*/[];
+        const assumedValues = /*[[${stats.assumedRevenueValues}]]*/[];
 
-    // Global Chart Config for Glassmorphism Look
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.color = "#8e8e93";
-    Chart.defaults.scale.grid.color = "rgba(0,0,0,0.03)";
+        // Lấy dữ liệu từ top5Engagement widget thay vì stats cũ
+        const top5EngagementData = /*[[${top5Engagement}]]*/[];
+        const topProductNames = top5EngagementData.map(item => item.productName || 'N/A');
+        const topProductSales = top5EngagementData.map(item => item.engagementScore || 0);
 
-    // 1. Line Chart 
-    const ctxRevenue = document.getElementById('revenueChart');
-    if (ctxRevenue) {
-        
-        // Gradient for line chart
-        const gradientActual = ctxRevenue.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradientActual.addColorStop(0, 'rgba(20, 108, 67, 0.2)');
-        gradientActual.addColorStop(1, 'rgba(20, 108, 67, 0)');
+        const paymentLabels = /*[[${stats.paymentMethodLabels}]]*/[];
+        const paymentValues = /*[[${stats.paymentMethodValues}]]*/[];
 
-        new Chart(ctxRevenue, {
-            type: 'line',
-            data: {
-                labels: revenueLabels,
-                datasets: [
-                    {
-                        label: 'Doanh thu Thực nhận',
-                        data: actualValues,
-                        borderColor: '#198754',
-                        backgroundColor: gradientActual,
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#198754',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    },
-                    {
-                        label: 'Dự kiến',
-                        data: assumedValues,
-                        borderColor: 'rgba(251, 189, 5, 0.8)',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
+        // CRITICAL: Register datalabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        // Function to get adaptive colors
+        const getAdaptiveColor = (isDark) => isDark ? '#94a3b8' : '#8e8e93';
+        const getGridColor = (isDark) => isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+
+        // Global Chart Config for Glassmorphism Look
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = getAdaptiveColor(document.body.classList.contains('dark-mode'));
+        Chart.defaults.scale.grid.color = getGridColor(document.body.classList.contains('dark-mode'));
+
+        // 1. Line Chart 
+        const ctxRevenue = document.getElementById('revenueChart');
+        if (ctxRevenue) {
+
+            // Gradient for line chart
+            const gradientActual = ctxRevenue.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradientActual.addColorStop(0, 'rgba(20, 108, 67, 0.2)');
+            gradientActual.addColorStop(1, 'rgba(20, 108, 67, 0)');
+
+            new Chart(ctxRevenue, {
+                type: 'line',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [
+                        {
+                            label: 'Doanh thu Thực nhận',
+                            data: actualValues,
+                            borderColor: '#198754',
+                            backgroundColor: gradientActual,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#198754',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Dự kiến',
+                            data: assumedValues,
+                            borderColor: 'rgba(251, 189, 5, 0.8)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
                 },
-                plugins: {
-                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 6 } },
-                    tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 12,
-                        titleFont: { size: 13 },
-                        bodyFont: { size: 14, weight: 'bold' },
-                        callbacks: {
-                            label: function(context) {
-                                return ' ' + context.dataset.label + ': ' + context.parsed.y.toLocaleString('vi-VN') + ' ₫';
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 6 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 14, weight: 'bold' },
+                            callbacks: {
+                                label: function (context) {
+                                    return ' ' + context.dataset.label + ': ' + context.parsed.y.toLocaleString('vi-VN') + ' ₫';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            border: { display: false },
+                            ticks: { callback: v => v.toLocaleString('vi-VN') + ' ₫', maxTicksLimit: 6 }
+                        },
+                        x: { border: { display: false }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // 2. Doughnut Chart Top sản phẩm
+        const ctxDoughnut = document.getElementById('topProductsChart');
+        if (ctxDoughnut) {
+            const hasData = topProductSales && topProductSales.length > 0 && topProductSales.some(v => v > 0);
+            new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: hasData ? topProductNames : ['Chưa có dữ liệu'],
+                    datasets: [{
+                        data: hasData ? topProductSales : [1],
+                        // Modern palette
+                        backgroundColor: hasData
+                            ? ['#1A1C20', '#fbbd05', '#0d6efd', '#6f42c1', '#198754']
+                            : ['rgba(0,0,0,0.05)'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: hasData,
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 20, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            titleColor: '#000',
+                            bodyColor: '#000',
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 10
+                        },
+                        datalabels: {
+                            display: hasData,
+                            color: '#fff',
+                            font: { size: 11, weight: 'bold' },
+                            formatter: (value, ctx) => {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return percentage + '%';
                             }
                         }
                     }
+                }
+            });
+        }
+
+        // 3. Doughnut Chart Payment
+        const ctxPayment = document.getElementById('paymentChart');
+
+        // --- THEME CHANGE LISTENER FOR CHARTS ---
+        window.addEventListener('themeChanged', () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            const newColor = getAdaptiveColor(isDark);
+            const newGridColor = getGridColor(isDark);
+
+            Chart.defaults.color = newColor;
+            Chart.defaults.scale.grid.color = newGridColor;
+
+            // Update all chart instances
+            Object.values(Chart.instances).forEach(chart => {
+                if (chart.options.scales) {
+                    if (chart.options.scales.x) chart.options.scales.x.grid.color = newGridColor;
+                    if (chart.options.scales.y) chart.options.scales.y.grid.color = newGridColor;
+                }
+                chart.update();
+            });
+        });
+        if (ctxPayment) {
+            const hasData = paymentValues && paymentValues.length > 0 && paymentValues.some(v => v > 0);
+            new Chart(ctxPayment, {
+                type: 'doughnut',
+                data: {
+                    labels: hasData ? paymentLabels : ['Chưa có dữ liệu'],
+                    datasets: [{
+                        data: hasData ? paymentValues : [1],
+                        // Modern palette
+                        backgroundColor: hasData
+                            ? ['#0d6efd', '#198754', '#fbbd05', '#1A1C20']
+                            : ['rgba(0,0,0,0.05)'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        border: { display: false },
-                        ticks: { callback: v => v.toLocaleString('vi-VN') + ' ₫', maxTicksLimit: 6 }
-                    },
-                    x: { border: { display: false }, grid: { display: false } }
-                }
-            }
-        });
-    }
-
-    // 2. Doughnut Chart Top sản phẩm
-    const ctxDoughnut = document.getElementById('topProductsChart');
-    if (ctxDoughnut) {
-        const hasData = topProductSales && topProductSales.length > 0 && topProductSales.some(v => v > 0);
-        new Chart(ctxDoughnut, {
-            type: 'doughnut',
-            data: {
-                labels: hasData ? topProductNames : ['Chưa có dữ liệu'],
-                datasets: [{
-                    data: hasData ? topProductSales : [1],
-                    // Modern palette
-                    backgroundColor: hasData
-                        ? ['#1A1C20', '#fbbd05', '#0d6efd', '#6f42c1', '#198754']
-                        : ['rgba(0,0,0,0.05)'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                cutout: '75%',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: hasData,
-                        position: 'bottom',
-                        labels: { usePointStyle: true, padding: 20, font: {size: 11} }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        titleColor: '#000',
-                        bodyColor: '#000',
-                        borderColor: 'rgba(0,0,0,0.1)',
-                        borderWidth: 1,
-                        padding: 10
+                options: {
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: hasData,
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 20, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            titleColor: '#000',
+                            bodyColor: '#000',
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 10
+                        },
+                        datalabels: {
+                            display: hasData,
+                            color: '#fff',
+                            font: { size: 11, weight: 'bold' },
+                            formatter: (value, ctx) => {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return percentage + '%';
+                            }
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // 3. Doughnut Chart Payment
-    const ctxPayment = document.getElementById('paymentChart');
-    if (ctxPayment) {
-        const hasData = paymentValues && paymentValues.length > 0 && paymentValues.some(v => v > 0);
-        new Chart(ctxPayment, {
-            type: 'doughnut',
-            data: {
-                labels: hasData ? paymentLabels : ['Chưa có dữ liệu'],
-                datasets: [{
-                    data: hasData ? paymentValues : [1],
-                    // Modern palette
-                    backgroundColor: hasData
-                        ? ['#0d6efd', '#198754', '#fbbd05', '#1A1C20']
-                        : ['rgba(0,0,0,0.05)'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                cutout: '75%',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: hasData,
-                        position: 'bottom',
-                        labels: { usePointStyle: true, padding: 20, font: {size: 11} }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        titleColor: '#000',
-                        bodyColor: '#000',
-                        borderColor: 'rgba(0,0,0,0.1)',
-                        borderWidth: 1,
-                        padding: 10
-                    }
+        // 3. Real-time Galaxy Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            const day = days[now.getDay()];
+            const date = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            document.getElementById('galaxyClock').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('galaxyDate').textContent = `${day}, ${date} Tháng ${month}, ${year}`;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // JS Logic cho tính năng số đếm tự động (Count up Animation)
+        const counters = document.querySelectorAll('.counter-value');
+        counters.forEach(counter => {
+            const target = +counter.getAttribute('data-target');
+            const increment = target / 50;
+            let current = 0;
+
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    counter.innerText = Math.ceil(current).toLocaleString('vi-VN');
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.innerText = target.toLocaleString('vi-VN');
                 }
-            }
+            };
+            updateCounter();
         });
-    }
-    
-    // 3. Real-time Galaxy Clock
-    function updateClock() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        
-        const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-        const day = days[now.getDay()];
-        const date = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
 
-        document.getElementById('galaxyClock').textContent = `${hours}:${minutes}:${seconds}`;
-        document.getElementById('galaxyDate').textContent = `${day}, ${date} Tháng ${month}, ${year}`;
-    }
-    
-    updateClock();
-    setInterval(updateClock, 1000);
-    
-    // JS Logic cho tính năng số đếm tự động (Count up Animation)
-    const counters = document.querySelectorAll('.counter-value');
-    counters.forEach(counter => {
-        const target = +counter.getAttribute('data-target');
-        const increment = target / 50; 
-        let current = 0;
-        
-        const updateCounter = () => {
-            current += increment;
-            if (current < target) {
-                counter.innerText = Math.ceil(current).toLocaleString('vi-VN');
-                requestAnimationFrame(updateCounter);
+        // Dark Mode Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('adminTheme') || 'light';
+
+        // Apply saved theme on page load
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.classList.remove('bi-moon-stars-fill');
+            themeIcon.classList.add('bi-sun-fill');
+        }
+
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', function () {
+            body.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                // Switch to dark mode
+                themeIcon.classList.remove('bi-moon-stars-fill');
+                themeIcon.classList.add('bi-sun-fill');
+                localStorage.setItem('adminTheme', 'dark');
             } else {
-                counter.innerText = target.toLocaleString('vi-VN');
+                // Switch to light mode
+                themeIcon.classList.remove('bi-sun-fill');
+                themeIcon.classList.add('bi-moon-stars-fill');
+                localStorage.setItem('adminTheme', 'light');
             }
+        });
+
+        // ======================== ADMIN NOTIFICATION LOGIC ========================
+        const notifCount = document.getElementById('notifCount');
+        const notificationList = document.getElementById('notificationList');
+
+        const NOTIF_TYPES = {
+            'NEW_ORDER': { icon: 'bi-cart-check-fill', color: '#2ecc71', bg: 'rgba(46, 204, 113, 0.1)' },
+            'REFUND_REQUEST': { icon: 'bi-arrow-return-left', color: '#e67e22', bg: 'rgba(230, 126, 34, 0.1)' },
+            'WITHDRAWAL_REQUEST': { icon: 'bi-cash-stack', color: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' },
+            'NEW_QUESTION': { icon: 'bi-question-circle-fill', color: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)' },
+            'LOW_STOCK': { icon: 'bi-exclamation-triangle-fill', color: '#f1c40f', bg: 'rgba(241, 196, 15, 0.1)' },
+            'SECURITY_ALERT': { icon: 'bi-shield-lock-fill', color: '#e74c3c', bg: 'rgba(231, 76, 60, 0.1)' }
         };
-        updateCounter();
-    });
 
-    /*]]>*/
-</script>
+        function fetchNotifications() {
+            fetch('/api/admin/notifications/latest')
+                .then(response => response.json())
+                .then(data => {
+                    updateNotifBadge(data.unreadCount);
+                    renderNotifications(data.notifications);
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        }
 
+        function updateNotifBadge(count) {
+            if (count > 0) {
+                notifCount.textContent = count > 99 ? '99+' : count;
+                notifCount.style.display = 'flex';
+            } else {
+                notifCount.style.display = 'none';
+            }
+        }
+
+        function renderNotifications(notifications) {
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<div class="p-4 text-center text-muted"><small>Không có thông báo mới</small></div>';
+                return;
+            }
+
+            notificationList.innerHTML = notifications.map(n => {
+                const config = NOTIF_TYPES[n.type] || { icon: 'bi-bell-fill', color: '#8E8E93', bg: 'rgba(142, 142, 147, 0.1)' };
+                return `
+                <a href="${n.targetUrl}" class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markAsRead(${n.id})">
+                    <div class="notif-icon-circle" style="background: ${config.bg}; color: ${config.color};">
+                        <i class="bi ${config.icon}"></i>
+                    </div>
+                    <div class="notif-content">
+                        <div class="notif-title">${n.title}</div>
+                        <div class="notif-message">${n.message}</div>
+                        <div class="notif-time">${n.timeAgo}</div>
+                    </div>
+                </a>
+            `;
+            }).join('');
+        }
+
+        // Helper: lấy CSRF token từ cookie
+        function getCsrfToken() {
+            const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        window.markAsRead = function (id) {
+            fetch(`/api/admin/notifications/${id}/read`, {
+                method: 'POST',
+                headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+            }).then(() => fetchNotifications());
+        };
+
+        window.markAllAsRead = function () {
+            fetch('/api/admin/notifications/read-all', {
+                method: 'POST',
+                headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+            }).then(() => fetchNotifications());
+        };
+
+        // Initial fetch
+        fetchNotifications();
+
+        // Poll every 30 seconds
+        setInterval(fetchNotifications, 30000);
+
+        // ======================== HEADER LIVE METRICS ========================
+        function fetchHeaderStats() {
+            fetch('/admin/setup/api/header-stats')
+                .then(res => res.json())
+                .then(data => {
+                    // Format revenue
+                    const revenue = Number(data.todayRevenue);
+                    if (revenue >= 1000000) {
+                        document.getElementById('todayRevenue').textContent = (revenue / 1000000).toFixed(1) + 'M';
+                    } else if (revenue >= 1000) {
+                        document.getElementById('todayRevenue').textContent = (revenue / 1000).toFixed(0) + 'K';
+                    } else {
+                        document.getElementById('todayRevenue').textContent = revenue.toLocaleString('vi-VN') + 'đ';
+                    }
+
+                    document.getElementById('todayOrders').textContent = data.todayOrders;
+                    document.getElementById('onlineUsers').textContent = data.onlineUsers;
+
+                    // System health dot
+                    const dot = document.getElementById('healthDot');
+                    dot.className = 'health-dot'; // reset
+                    if (data.systemHealthy) {
+                        dot.classList.add(''); // green default
+                    } else {
+                        dot.classList.add('danger');
+                    }
+                })
+                .catch(() => {
+                    const dot = document.getElementById('healthDot');
+                    dot.className = 'health-dot danger';
+                });
+        }
+
+        // Initial fetch
+        fetchHeaderStats();
+
+        // Poll every 60 seconds
+        setInterval(fetchHeaderStats, 60000);
+
+        /*]]>*/
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- CSRF Auto-Injection Script -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 </body>
+
 </html>

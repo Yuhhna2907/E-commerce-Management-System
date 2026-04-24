@@ -16,6 +16,20 @@
             --sz-orange: #fbbd05;
         }
 
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #f0f2f5;
@@ -83,8 +97,9 @@
         /* Status Badges */
         .status-badge { padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
         .status-badge.PENDING { background: rgba(255, 193, 7, 0.1); color: #d39e00; }
-        .status-badge.APPROVED { background: rgba(25, 135, 84, 0.1); color: #198754; }
-        .status-badge.REJECTED { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+        .status-badge.COMPLETED { background: rgba(25, 135, 84, 0.1); color: #198754; }
+        .status-badge.FAILED { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+        .status-badge.PROCESSING { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
 
         /* Pagination */
         .page-link { border-radius: 10px !important; border: none; font-weight: 600; margin: 0 3px; transition: all 0.2s; }
@@ -101,15 +116,12 @@
 </head>
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0 mx-3 my-3">
+    <div class="admin-layout">
         <!-- SIDEBAR -->
-        <div class="col-auto" style="width: 260px;">
-            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
-        </div>
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
-        <!-- MAIN -->
-        <div class="col ps-4 pe-2">
+        <!-- MAIN CONTENT AREA -->
+        <div class="main-content">
 
             <!-- HEADER -->
             <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
@@ -201,10 +213,10 @@
                 <a th:href="@{/admin/refunds(status='PENDING', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
                     <i class="bi bi-hourglass-split"></i> Chờ duyệt
                 </a>
-                <a th:href="@{/admin/refunds(status='APPROVED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'APPROVED'} ? 'active'">
+                <a th:href="@{/admin/refunds(status='COMPLETED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'COMPLETED'} ? 'active'">
                     <i class="bi bi-check-circle-fill"></i> Đã duyệt
                 </a>
-                <a th:href="@{/admin/refunds(status='REJECTED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'REJECTED'} ? 'active'">
+                <a th:href="@{/admin/refunds(status='FAILED', dateFrom=${dateFrom}, dateTo=${dateTo})}" class="filter-pill" th:classappend="${currentStatus?.name() == 'FAILED'} ? 'active'">
                     <i class="bi bi-x-circle-fill"></i> Đã từ chối
                 </a>
             </div>
@@ -243,7 +255,8 @@
                                     <span class="fw-bolder fs-6 text-danger" th:text="${#numbers.formatDecimal(r.totalRefundAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                                 </td>
                                 <td>
-                                    <span th:class="'status-badge ' + ${r.status}" th:text="${r.status}"></span>
+                                    <span th:class="'status-badge ' + ${r.status}"
+                                          th:text="${r.status == 'PENDING' ? 'Chờ duyệt' : (r.status == 'COMPLETED' ? 'Đã duyệt' : (r.status == 'FAILED' ? 'Đã từ chối' : (r.status == 'PROCESSING' ? 'Đang xử lý' : r.status)))}"></span>
                                 </td>
                                 <td class="text-end">
                                     <th:block th:if="${r.status == 'PENDING'}">
@@ -297,7 +310,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- APPROVE MODAL -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">

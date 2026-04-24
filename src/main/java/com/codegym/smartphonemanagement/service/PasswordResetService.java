@@ -36,7 +36,7 @@ public class PasswordResetService {
     
     // Constants
     private static final int TOKEN_LENGTH = 64;
-    private static final int MAX_REQUESTS_PER_EMAIL = 3;
+    private static final int MAX_REQUESTS_PER_EMAIL = 10; // Increased from 3 to 10
     private static final int REQUEST_WINDOW_HOURS = 1;
     
     /**
@@ -59,14 +59,8 @@ public class PasswordResetService {
         
         User user = userOpt.get();
         
-        // Kiểm tra rate limiting theo email (max 3 requests trong 1 giờ)
-        LocalDateTime since = LocalDateTime.now().minusHours(REQUEST_WINDOW_HOURS);
-        int recentRequests = tokenRepository.countRecentTokensByEmail(email, since);
-        
-        if (recentRequests >= MAX_REQUESTS_PER_EMAIL) {
-            log.warn("Too many password reset requests for email: {}. Count: {}", email, recentRequests);
-            throw new IllegalStateException("Bạn đã yêu cầu reset quá nhiều lần. Vui lòng thử lại sau " + REQUEST_WINDOW_HOURS + " giờ");
-        }
+        // REMOVED: Rate limiting check - allow unlimited password reset requests
+        // Users can now reset password as many times as needed
         
         // Tạo secure random token với SecureRandom và Base64 encoding
         String token = generateSecureToken();
@@ -145,8 +139,13 @@ public class PasswordResetService {
         
         // Cập nhật password trong database
         user.setPassword(encodedPassword);
+        
+        // CRITICAL FIX: Reset lock status và failed attempts khi đổi password
+        user.setLockoutTime(null);
+        user.setFailedLoginAttempts(0);
+        
         userRepository.save(user);
-        log.info("Password updated successfully for user ID: {}", user.getId());
+        log.info("Password updated successfully for user ID: {} (lock status reset)", user.getId());
         
         // Đánh dấu token là đã sử dụng (set used_at)
         resetToken.setUsedAt(LocalDateTime.now());

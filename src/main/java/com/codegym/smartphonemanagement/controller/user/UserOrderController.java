@@ -64,23 +64,40 @@ public class UserOrderController {
 
         OrderRequestDTO requestDto = new OrderRequestDTO();
         
+        // Product/order coupon
         String appliedCoupon = (String) session.getAttribute("APPLIED_COUPON");
         java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
+        
+        // Shipping coupon
+        String appliedShippingCoupon = (String) session.getAttribute("APPLIED_SHIPPING_COUPON");
+        java.math.BigDecimal shippingDiscountAmt = (java.math.BigDecimal) session.getAttribute("SHIPPING_DISCOUNT_AMT");
         
         if (appliedCoupon != null) {
             requestDto.setCouponCode(appliedCoupon);
             model.addAttribute("appliedCouponCode", appliedCoupon);
-            model.addAttribute("discountAmt", discountAmt);
-            
-            // Recalculate total for display
-            java.math.BigDecimal currentTotal = cart.getTotalPrice().subtract(discountAmt);
-            if (currentTotal.compareTo(java.math.BigDecimal.ZERO) < 0) {
-                 currentTotal = java.math.BigDecimal.ZERO;
-            }
-            model.addAttribute("totalAfterDiscount", currentTotal);
+            model.addAttribute("discountAmt", discountAmt != null ? discountAmt : java.math.BigDecimal.ZERO);
         } else {
-            model.addAttribute("totalAfterDiscount", cart.getTotalPrice());
+            model.addAttribute("discountAmt", java.math.BigDecimal.ZERO);
         }
+        
+        if (appliedShippingCoupon != null) {
+            requestDto.setShippingCouponCode(appliedShippingCoupon);
+            model.addAttribute("appliedShippingCouponCode", appliedShippingCoupon);
+            model.addAttribute("shippingDiscountAmt", shippingDiscountAmt != null ? shippingDiscountAmt : java.math.BigDecimal.ZERO);
+        } else {
+            model.addAttribute("shippingDiscountAmt", java.math.BigDecimal.ZERO);
+        }
+        
+        // Calculate total after all discounts
+        java.math.BigDecimal totalDiscount = java.math.BigDecimal.ZERO;
+        if (discountAmt != null) totalDiscount = totalDiscount.add(discountAmt);
+        if (shippingDiscountAmt != null) totalDiscount = totalDiscount.add(shippingDiscountAmt);
+        
+        java.math.BigDecimal currentTotal = cart.getTotalPrice().subtract(totalDiscount);
+        if (currentTotal.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            currentTotal = java.math.BigDecimal.ZERO;
+        }
+        model.addAttribute("totalAfterDiscount", currentTotal);
 
         model.addAttribute("cart", cart);
         model.addAttribute("orderRequest", requestDto);
@@ -126,6 +143,32 @@ public class UserOrderController {
             // Lấy lại giỏ hàng để hiển thị lại trang checkout nếu có lỗi
             CartResponseDTO cart = cartService.getCartByUserId(userId);
             model.addAttribute("cart", cart);
+            
+            // Re-populate discount attributes so the order summary renders correctly
+            jakarta.servlet.http.HttpSession session = request.getSession();
+            java.math.BigDecimal discountAmt = (java.math.BigDecimal) session.getAttribute("DISCOUNT_AMT");
+            java.math.BigDecimal shippingDiscountAmt = (java.math.BigDecimal) session.getAttribute("SHIPPING_DISCOUNT_AMT");
+            
+            model.addAttribute("discountAmt", discountAmt != null ? discountAmt : java.math.BigDecimal.ZERO);
+            model.addAttribute("shippingDiscountAmt", shippingDiscountAmt != null ? shippingDiscountAmt : java.math.BigDecimal.ZERO);
+            model.addAttribute("appliedCouponCode", session.getAttribute("APPLIED_COUPON"));
+            model.addAttribute("appliedShippingCouponCode", session.getAttribute("APPLIED_SHIPPING_COUPON"));
+            
+            java.math.BigDecimal totalDiscount = java.math.BigDecimal.ZERO;
+            if (discountAmt != null) totalDiscount = totalDiscount.add(discountAmt);
+            if (shippingDiscountAmt != null) totalDiscount = totalDiscount.add(shippingDiscountAmt);
+            java.math.BigDecimal total = cart.getTotalPrice().subtract(totalDiscount);
+            model.addAttribute("totalAfterDiscount", total.compareTo(java.math.BigDecimal.ZERO) < 0 ? java.math.BigDecimal.ZERO : total);
+            
+            model.addAttribute("savedAddresses", userProfileService.getAddresses(userId));
+            
+            // Breadcrumbs
+            List<BreadcrumbItem> breadcrumbs = new ArrayList<>();
+            breadcrumbs.add(BreadcrumbItem.builder().label("Trang chủ").url("/user/products").active(false).build());
+            breadcrumbs.add(BreadcrumbItem.builder().label("Giỏ hàng").url("/user/cart").active(false).build());
+            breadcrumbs.add(BreadcrumbItem.builder().label("Thanh toán").url(null).active(true).build());
+            model.addAttribute("breadcrumbs", breadcrumbs);
+            
             // Trả về thẳng view checkout (không redirect để giữ message lỗi)
             return "user/order/checkout";
         }
@@ -137,6 +180,13 @@ public class UserOrderController {
             if (orderDTO.getPaymentMethod() == PaymentMethod.VNPAY) {
                 // Tạo URL thanh toán VNPAY và redirect
                 String ipAddress = com.codegym.smartphonemanagement.config.payment.VNPAYConfig.getIpAddress(request);
+                
+                // Debug logging
+                System.out.println("=== DEBUG VNPAY PAYMENT ===");
+                System.out.println("Order ID: " + savedOrder.getId());
+                System.out.println("Total Price: " + savedOrder.getTotalPrice());
+                System.out.println("IP Address: " + ipAddress);
+                
                 String paymentUrl = vnPayService.createPaymentUrl(savedOrder.getId(), savedOrder.getTotalPrice(), ipAddress);
                 return "redirect:" + paymentUrl;
             }
@@ -144,6 +194,8 @@ public class UserOrderController {
             return "redirect:/user/order/success/" + savedOrder.getId();
         } catch (Exception e) {
             // Lỗi nghiệp vụ (ví dụ: đang thanh toán thì món đó bị người khác mua mất)
+            System.err.println("=== ERROR IN CHECKOUT ===");
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/user/cart";
         }

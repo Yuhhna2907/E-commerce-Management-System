@@ -744,14 +744,18 @@
         }
     }
 
-    // Popular searches data (fallback nếu không có history)
-    const popularSearches = [
-        { keyword: 'iPhone 15 Pro Max', icon: 'bi-apple', meta: 'Flagship Apple' },
-        { keyword: 'Samsung Galaxy S24', icon: 'bi-phone', meta: 'Flagship Samsung' },
-        { keyword: 'Xiaomi 14', icon: 'bi-lightning-charge', meta: 'Hiệu năng cao' },
-        { keyword: 'Oppo Find X7', icon: 'bi-camera', meta: 'Chuyên nhiếp ảnh' },
-        { keyword: 'iPhone 14', icon: 'bi-apple', meta: 'Giá tốt' },
-        { keyword: 'Samsung A54', icon: 'bi-phone', meta: 'Tầm trung' }
+    // Trending searches data - Top 10 từ khóa phổ biến
+    const trendingSearches = [
+        { keyword: 'iPhone 15 Pro Max', icon: 'bi-apple', meta: 'Flagship Apple 2024', trend: 'hot' },
+        { keyword: 'Samsung Galaxy S24 Ultra', icon: 'bi-phone', meta: 'AI Phone mới nhất', trend: 'hot' },
+        { keyword: 'Xiaomi 14 Pro', icon: 'bi-lightning-charge', meta: 'Hiệu năng đỉnh cao', trend: 'rising' },
+        { keyword: 'Oppo Find X7 Pro', icon: 'bi-camera', meta: 'Camera chuyên nghiệp', trend: 'rising' },
+        { keyword: 'iPhone 14 Pro', icon: 'bi-apple', meta: 'Giá tốt nhất', trend: 'stable' },
+        { keyword: 'Samsung Galaxy A54', icon: 'bi-phone', meta: 'Tầm trung hot', trend: 'stable' },
+        { keyword: 'Xiaomi Redmi Note 13', icon: 'bi-lightning-charge', meta: 'Giá rẻ bất ngờ', trend: 'rising' },
+        { keyword: 'Oppo Reno 11', icon: 'bi-camera', meta: 'Selfie đẹp lung linh', trend: 'stable' },
+        { keyword: 'iPhone 13', icon: 'bi-apple', meta: 'Giảm giá sốc', trend: 'stable' },
+        { keyword: 'Samsung Galaxy Z Fold 5', icon: 'bi-phone', meta: 'Màn hình gập cao cấp', trend: 'hot' }
     ];
 
     let searchTimeout;
@@ -794,33 +798,44 @@
                     </button>
                 `;
             } else {
-                header.innerHTML = '<i class="bi bi-fire me-2"></i><span>Tìm kiếm phổ biến</span>';
+                header.innerHTML = '<i class="bi bi-fire me-2 text-danger"></i><span>🔥 Trending Search - Top 10 Từ Khóa Hot</span>';
             }
         }
         
-        // Render history or popular searches
+        // Render history or trending searches
         const items = history.length > 0 
             ? history.map(item => ({
                 keyword: item.keyword,
                 icon: 'bi-clock-history',
-                meta: 'Đã tìm gần đây'
+                meta: 'Đã tìm gần đây',
+                trend: null
             }))
-            : popularSearches;
+            : trendingSearches;
         
-        list.innerHTML = items.map(item => `
-            <a href="/user/products?keyword=${encodeURIComponent(item.keyword)}" 
-               class="suggestion-item"
-               onclick="saveToSearchHistory('${item.keyword.replace(/'/g, "\\'")}')">
-                <div class="suggestion-icon">
-                    <i class="${item.icon}"></i>
-                </div>
-                <div class="suggestion-content">
-                    <div class="suggestion-title">${item.keyword}</div>
-                    <div class="suggestion-meta">${item.meta}</div>
-                </div>
-                <i class="bi bi-arrow-right suggestion-arrow"></i>
-            </a>
-        `).join('');
+        list.innerHTML = items.map(item => {
+            // Trend badge
+            let trendBadge = '';
+            if (item.trend === 'hot') {
+                trendBadge = '<span class="badge bg-danger ms-2" style="font-size: 0.65rem; padding: 2px 6px;">🔥 HOT</span>';
+            } else if (item.trend === 'rising') {
+                trendBadge = '<span class="badge bg-success ms-2" style="font-size: 0.65rem; padding: 2px 6px;">📈 Đang lên</span>';
+            }
+            
+            return `
+                <a href="/user/products?keyword=${encodeURIComponent(item.keyword)}" 
+                   class="suggestion-item"
+                   onclick="saveToSearchHistory('${item.keyword.replace(/'/g, "\\'")}')">
+                    <div class="suggestion-icon">
+                        <i class="${item.icon}"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <div class="suggestion-title">${item.keyword}${trendBadge}</div>
+                        <div class="suggestion-meta">${item.meta}</div>
+                    </div>
+                    <i class="bi bi-arrow-right suggestion-arrow"></i>
+                </a>
+            `;
+        }).join('');
         
         dropdown.classList.add('show');
     }

@@ -42,8 +42,9 @@ public class SzWallet {
     @Builder.Default
     private BigDecimal totalOut = BigDecimal.ZERO;
 
-    @Version
-    private Long version;
+    // TEMPORARY FIX: Comment out @Version to avoid NullPointerException
+    // @Version
+    // private Long version;
 
     private LocalDateTime updatedAt;
 

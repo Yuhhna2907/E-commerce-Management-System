@@ -1,42 +1,148 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Trung Tâm Xử Lý Đơn Hàng - SmartZone Enterprise</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-meta}"></th:block>
     <style>
-        :root {
-            --sz-orange: #fbbd05;
-            --sz-dark: #1A1C20;
-            --sz-gray: #f2f2f7;
-            --sz-text-muted: #8E8E93;
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.4);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-            --glass-blur: blur(20px);
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 40px;
+            min-width: 0;
+            /* Ngăn chặn nội dung làm vỡ layout flex */
         }
 
         body {
-            background-color: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
             background-image:
                 radial-gradient(circle at 10% 20%, rgba(251, 189, 5, 0.08) 0%, transparent 40%),
                 radial-gradient(circle at 90% 10%, rgba(13, 110, 253, 0.06) 0%, transparent 40%),
                 radial-gradient(circle at 50% 80%, rgba(111, 66, 193, 0.08) 0%, transparent 50%);
             background-attachment: fixed;
-            font-family: 'Inter', sans-serif;
-            color: var(--sz-dark);
             min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark Mode Overrides cho Order Center */
+        body.dark-mode .glass-panel {
+            background: var(--sz-glass);
+            border-color: var(--sz-glass-border);
+        }
+
+        body.dark-mode .glass-card {
+            background: var(--sz-card-bg);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .search-bar,
+        body.dark-mode .date-input {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #f1f5f9 !important;
+        }
+
+        body.dark-mode .filter-pill:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .filter-pill.active {
+            background: linear-gradient(135deg, #fbbd05, #f59e0b);
+            color: #000;
+            border-color: #fbbd05;
+            box-shadow: 0 4px 15px rgba(251, 189, 5, 0.4);
+        }
+
+        body.dark-mode .pill-count {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .order-table tbody tr {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        body.dark-mode .order-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .text-dark {
+            color: #f1f5f9 !important;
+        }
+
+        body.dark-mode .bg-light {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        body.dark-mode .btn-action {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .btn-light {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #cbd5e1;
+        }
+
+        body.dark-mode .toast-glass {
+            background: #1e293b;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .badge-pending {
+            background: rgba(249, 115, 22, 0.15);
+            color: #fb923c;
+            border-color: rgba(249, 115, 22, 0.2);
+        }
+
+        body.dark-mode .badge-confirmed {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        body.dark-mode .badge-shipping {
+            background: rgba(139, 92, 246, 0.15);
+            color: #c4b5fd;
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        body.dark-mode .badge-delivered {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        body.dark-mode .badge-cancelled {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
         }
 
         .glass-panel {
-            background: var(--glass-bg);
+            background: var(--sz-glass);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--sz-glass-border);
             border-radius: 24px;
             box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
         }
 
         .glass-card {
@@ -52,36 +158,69 @@
 
         .glass-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
         }
 
         /* KPI Mini Card */
-        .kpi-mini { transition: all 0.3s; cursor: default; }
-        .kpi-mini:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.06) !important; }
+        .kpi-mini {
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .kpi-mini:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06) !important;
+        }
 
         /* Search Bar */
         .search-bar {
-            border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 10px 16px;
-            font-size: 0.88rem; font-weight: 500; background: white; transition: all 0.2s; width: 260px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            background: white;
+            transition: all 0.2s;
+            width: 260px;
         }
-        .search-bar:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 3px rgba(251,189,5,0.15); outline: none; }
+
+        .search-bar:focus {
+            border-color: var(--sz-orange);
+            box-shadow: 0 0 0 3px rgba(251, 189, 5, 0.15);
+            outline: none;
+        }
 
         .date-input {
-            border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px 12px;
-            font-size: 0.82rem; font-weight: 600; background: white; transition: all 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: white;
+            transition: all 0.2s;
         }
-        .date-input:focus { border-color: var(--sz-orange); box-shadow: 0 0 0 3px rgba(251,189,5,0.15); outline: none; }
+
+        .date-input:focus {
+            border-color: var(--sz-orange);
+            box-shadow: 0 0 0 3px rgba(251, 189, 5, 0.15);
+            outline: none;
+        }
 
         /* Filter Pills */
-        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
         .filter-pill {
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 50px;
             font-weight: 600;
             font-size: 0.78rem;
-            background: rgba(255,255,255,0.7);
-            border: 1px solid rgba(0,0,0,0.06);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.06);
             color: #6e6e73;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: inline-flex;
@@ -89,105 +228,300 @@
             gap: 5px;
             backdrop-filter: blur(5px);
         }
-        .filter-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); color: var(--sz-dark); }
-        .filter-pill.active { background: var(--sz-dark); color: white; border-color: var(--sz-dark); box-shadow: 0 6px 20px rgba(26,28,32,0.2); }
-        .pill-count {
-            background: rgba(0,0,0,0.08); padding: 1px 7px; border-radius: 20px;
-            font-size: 0.68rem; font-weight: 700;
+
+        .filter-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            color: var(--sz-dark);
         }
-        .filter-pill.active .pill-count { background: rgba(255,255,255,0.2); }
+
+        .filter-pill.active {
+            background: linear-gradient(135deg, #fbbd05, #f59e0b);
+            color: #1A1C20 !important;
+            border-color: #fbbd05;
+            box-shadow: 0 6px 18px rgba(251, 189, 5, 0.3);
+        }
+
+        .pill-count {
+            background: rgba(0, 0, 0, 0.08);
+            padding: 1px 7px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+
+        .filter-pill.active .pill-count {
+            background: rgba(0, 0, 0, 0.1);
+            color: #000;
+        }
 
         /* Table */
-        .order-table { border-collapse: separate; border-spacing: 0 8px; }
+        .order-table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
         .order-table thead th {
-            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--sz-text-muted); border: none; padding: 10px 16px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--sz-text-muted);
+            border: none;
+            padding: 10px 16px;
         }
+
         .order-table tbody tr {
-            background: white; border-radius: 16px; transition: all 0.25s ease;
+            background: white;
+            border-radius: 16px;
+            transition: all 0.25s ease;
         }
-        .order-table tbody tr:hover { transform: translateX(3px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
-        .order-table tbody td { padding: 14px 16px; border: none; vertical-align: middle; }
-        .order-table tbody td:first-child { border-radius: 16px 0 0 16px; }
-        .order-table tbody td:last-child { border-radius: 0 16px 16px 0; }
+
+        .order-table tbody tr:hover {
+            transform: translateX(3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .order-table tbody td {
+            padding: 14px 16px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .order-table tbody td:first-child {
+            border-radius: 16px 0 0 16px;
+        }
+
+        .order-table tbody td:last-child {
+            border-radius: 0 16px 16px 0;
+        }
 
         /* Status Badges */
         .badge-status {
-            padding: 5px 12px; border-radius: 10px; font-weight: 700;
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid transparent;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid transparent;
         }
-        .badge-pending { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-        .badge-confirmed { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-        .badge-shipping { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
-        .badge-delivered { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-        .badge-cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-        .badge-refund_requested { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
-        .badge-refunded { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
-        .badge-partial_refunded { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+
+        .badge-pending {
+            background: #fff7ed;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+
+        .badge-confirmed {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .badge-shipping {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border-color: #ddd6fe;
+        }
+
+        .badge-delivered {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        .badge-cancelled {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .badge-refund_requested {
+            background: #fdf2f8;
+            color: #be185d;
+            border-color: #fbcfe8;
+        }
+
+        .badge-refunded {
+            background: #fdf2f8;
+            color: #be185d;
+            border-color: #fbcfe8;
+        }
+
+        .badge-partial_refunded {
+            background: #fdf2f8;
+            color: #be185d;
+            border-color: #fbcfe8;
+        }
 
         /* Action Buttons */
         .btn-action {
-            width: 32px; height: 32px;
-            display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 10px; border: 1px solid rgba(0,0,0,0.06);
-            background: white; color: #6e6e73;
-            transition: all 0.2s; cursor: pointer; font-size: 0.85rem;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            background: white;
+            color: #6e6e73;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 0.85rem;
         }
-        .btn-action:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .btn-action.confirm { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
-        .btn-action.ship { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
-        .btn-action.deliver { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
-        .btn-action.cancel { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-action.confirm {
+            color: #047857;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .btn-action.ship {
+            color: #1d4ed8;
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .btn-action.deliver {
+            color: #047857;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .btn-action.cancel {
+            color: #b91c1c;
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
 
         /* Spinning */
-        .btn-action.loading { pointer-events: none; opacity: 0.5; }
-        .btn-action.loading i { animation: spin 0.6s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-action.loading {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .btn-action.loading i {
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Pagination */
-        .page-link { border-radius: 10px !important; border: none; font-weight: 600; margin: 0 2px; transition: all 0.2s; }
-        .page-item.active .page-link { background: var(--sz-dark); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .page-link:hover { background: rgba(0,0,0,0.06); }
+        .page-link {
+            border-radius: 10px !important;
+            border: none;
+            font-weight: 600;
+            margin: 0 2px;
+            transition: all 0.2s;
+        }
+
+        .page-item.active .page-link {
+            background: var(--sz-dark);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .page-link:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
 
         /* Animations */
-        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         /* Toast */
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
         .toast-glass {
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.6); border-radius: 16px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
         }
 
         /* Row fade effect for AJAX */
-        .row-updating { opacity: 0.4; pointer-events: none; transition: opacity 0.3s; }
-        .row-updated { animation: flashGreen 0.8s ease; }
-        @keyframes flashGreen {
-            0% { background: #ecfdf5; } 100% { background: white; }
+        .row-updating {
+            opacity: 0.4;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
+
+        .row-updated {
+            animation: flashGreen 0.8s ease;
+        }
+
+        @keyframes flashGreen {
+            0% {
+                background: #ecfdf5;
+            }
+
+            100% {
+                background: white;
+            }
+        }
+        /* --- ANIMATION --- */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+        .main-content { flex-grow: 1; padding: 20px 40px; min-width: 0; }
     </style>
 </head>
+
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0 mx-3 my-3">
+    <div class="admin-layout">
         <!-- SIDEBAR -->
-        <div class="col-auto" style="width: 260px;">
-            <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
-        </div>
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
-        <!-- MAIN CONTENT -->
-        <div class="col ps-4 pe-2">
+        <div class="main-content">
+            <!-- HEADER TRANG -->
             <!-- PAGE HEADER -->
             <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
                 <div>
                     <h2 class="fw-bolder mb-1" style="letter-spacing: -0.5px;">Trung Tâm Xử Lý Đơn Hàng</h2>
-                    <p class="text-muted mb-0 small fw-medium">Theo dõi, xác nhận và vận chuyển đơn hàng theo thời gian thực.</p>
+                    <p class="text-muted mb-0 small fw-medium">Theo dõi, xác nhận và vận chuyển đơn hàng theo thời gian
+                        thực.</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                     <span class="badge bg-dark bg-opacity-10 text-dark rounded-pill px-3 py-2 fw-bold">
@@ -198,7 +532,7 @@
                     </a>
                     <!-- EXPORT CSV -->
                     <a th:href="@{/admin/orders/export(status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                       class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold">
+                        class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold">
                         <i class="bi bi-download me-1"></i> Xuất CSV
                     </a>
                 </div>
@@ -208,7 +542,8 @@
             <div class="row g-3 mb-4 fade-up delay-1">
                 <div class="col">
                     <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
-                        <div class="p-2 rounded-3 bg-warning bg-opacity-10 text-warning me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <div class="p-2 rounded-3 bg-warning bg-opacity-10 text-warning me-3 d-flex align-items-center justify-content-center"
+                            style="width:40px;height:40px;">
                             <i class="bi bi-hourglass-split fs-5"></i>
                         </div>
                         <div>
@@ -219,7 +554,8 @@
                 </div>
                 <div class="col">
                     <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
-                        <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center"
+                            style="width:40px;height:40px;">
                             <i class="bi bi-check-circle-fill fs-5"></i>
                         </div>
                         <div>
@@ -230,7 +566,8 @@
                 </div>
                 <div class="col">
                     <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
-                        <div class="p-2 rounded-3 bg-info bg-opacity-10 text-info me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <div class="p-2 rounded-3 bg-info bg-opacity-10 text-info me-3 d-flex align-items-center justify-content-center"
+                            style="width:40px;height:40px;">
                             <i class="bi bi-truck fs-5"></i>
                         </div>
                         <div>
@@ -241,7 +578,8 @@
                 </div>
                 <div class="col">
                     <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
-                        <div class="p-2 rounded-3 bg-success bg-opacity-10 text-success me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <div class="p-2 rounded-3 bg-success bg-opacity-10 text-success me-3 d-flex align-items-center justify-content-center"
+                            style="width:40px;height:40px;">
                             <i class="bi bi-house-check-fill fs-5"></i>
                         </div>
                         <div>
@@ -252,7 +590,8 @@
                 </div>
                 <div class="col">
                     <div class="glass-card p-3 d-flex align-items-center kpi-mini h-100">
-                        <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-danger me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-danger me-3 d-flex align-items-center justify-content-center"
+                            style="width:40px;height:40px;">
                             <i class="bi bi-x-octagon-fill fs-5"></i>
                         </div>
                         <div>
@@ -263,69 +602,102 @@
                 </div>
             </div>
 
-            <!-- SEARCH + DATE RANGE BAR -->
-            <div class="glass-panel p-3 mb-4 fade-up delay-2">
-                <form method="get" action="/admin/orders" class="d-flex align-items-center gap-3 flex-wrap">
+            <!-- SEARCH + DATE RANGE + SORT BAR -->
+            <div class="glass-panel p-4 mb-4 fade-up delay-2 shadow-sm border-0">
+                <form method="get" action="/admin/orders" class="row g-3 align-items-center">
                     <input type="hidden" name="status" th:value="${currentStatus}" th:if="${currentStatus != null}">
-                    <div class="position-relative flex-grow-1" style="max-width: 280px;">
-                        <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
-                        <input type="text" name="keyword" class="search-bar w-100 ps-5" placeholder="Tìm mã đơn, tên, SĐT..."
-                               th:value="${keyword}" autocomplete="off">
+                    
+                    <!-- Search Field -->
+                    <div class="col-md-4">
+                        <div class="position-relative">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" name="keyword" class="search-bar w-100 ps-5 fw-bold"
+                                placeholder="Tìm mã đơn, tên, SĐT..." th:value="${keyword}" autocomplete="off">
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-calendar-range text-primary"></i>
-                        <input type="date" name="dateFrom" class="date-input" th:value="${dateFrom}">
-                        <span class="text-muted small">→</span>
-                        <input type="date" name="dateTo" class="date-input" th:value="${dateTo}">
+
+                    <!-- Date Range Field -->
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-2 bg-light rounded-pill px-3 py-1">
+                            <i class="bi bi-calendar-range text-primary"></i>
+                            <input type="date" name="dateFrom" class="date-input border-0 bg-transparent fw-bold" th:value="${dateFrom}" style="outline: none;">
+                            <span class="text-muted small">→</span>
+                            <input type="date" name="dateTo" class="date-input border-0 bg-transparent fw-bold" th:value="${dateTo}" style="outline: none;">
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-dark btn-sm rounded-pill px-4 fw-bold">
-                        <i class="bi bi-funnel-fill me-1"></i> Lọc
-                    </button>
-                    <a href="/admin/orders" class="btn btn-light btn-sm rounded-pill px-3 fw-bold border">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
+
+                    <!-- Sort Field -->
+                    <div class="col-md-2">
+                        <select name="sort" class="form-select bg-light border-0 fw-bold rounded-pill text-secondary shadow-none" style="padding: 0.6rem 1rem;" onchange="this.form.submit()">
+                            <option value="newest" th:selected="${sort == 'newest' || sort == null}">📅 Mới nhất</option>
+                            <option value="oldest" th:selected="${sort == 'oldest'}">⏳ Cũ nhất</option>
+                            <option value="highestPrice" th:selected="${sort == 'highestPrice'}">💰 Giá cao nhất</option>
+                            <option value="lowestPrice" th:selected="${sort == 'lowestPrice'}">💸 Giá thấp nhất</option>
+                        </select>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-dark rounded-pill px-0 fw-bold flex-grow-1 shadow-sm">
+                            LỌC <i class="bi bi-funnel-fill ms-1"></i>
+                        </button>
+                        <a href="/admin/orders" class="btn btn-light rounded-pill px-3 fw-bold border shadow-none" title="Làm mới">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
                 </form>
             </div>
 
             <!-- FILTER PILLS with BADGE COUNTS -->
             <div class="filter-pills mb-4 fade-up delay-2">
                 <a th:href="@{/admin/orders(keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus == null} ? 'active'">
-                    <i class="bi bi-grid-3x3-gap-fill"></i> Tất cả <span class="pill-count" th:text="${countAll}">0</span>
+                    class="filter-pill" th:classappend="${currentStatus == null} ? 'active'">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Tất cả <span class="pill-count"
+                        th:text="${countAll}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='PENDING', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
-                    <i class="bi bi-hourglass-split"></i> Chờ xác nhận <span class="pill-count" th:text="${countPending}">0</span>
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'PENDING'} ? 'active'">
+                    <i class="bi bi-hourglass-split"></i> Chờ xác nhận <span class="pill-count"
+                        th:text="${countPending}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='CONFIRMED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'CONFIRMED'} ? 'active'">
-                    <i class="bi bi-check-circle"></i> Đã xác nhận <span class="pill-count" th:text="${countConfirmed}">0</span>
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'CONFIRMED'} ? 'active'">
+                    <i class="bi bi-check-circle"></i> Đã xác nhận <span class="pill-count"
+                        th:text="${countConfirmed}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='SHIPPING', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'SHIPPING'} ? 'active'">
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'SHIPPING'} ? 'active'">
                     <i class="bi bi-truck"></i> Đang giao <span class="pill-count" th:text="${countShipping}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='DELIVERED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'DELIVERED'} ? 'active'">
-                    <i class="bi bi-house-check"></i> Đã giao <span class="pill-count" th:text="${countDelivered}">0</span>
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'DELIVERED'} ? 'active'">
+                    <i class="bi bi-house-check"></i> Đã giao <span class="pill-count"
+                        th:text="${countDelivered}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='CANCELLED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'CANCELLED'} ? 'active'">
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'CANCELLED'} ? 'active'">
                     <i class="bi bi-x-circle"></i> Đã hủy <span class="pill-count" th:text="${countCancelled}">0</span>
                 </a>
                 <a th:href="@{/admin/orders(status='REFUND_REQUESTED', keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
-                   class="filter-pill" th:classappend="${currentStatus?.name() == 'REFUND_REQUESTED'} ? 'active'">
-                    <i class="bi bi-arrow-return-left"></i> Yêu cầu hoàn <span class="pill-count" th:text="${countRefundRequested}">0</span>
+                    class="filter-pill" th:classappend="${currentStatus?.name() == 'REFUND_REQUESTED'} ? 'active'">
+                    <i class="bi bi-arrow-return-left"></i> Yêu cầu hoàn <span class="pill-count"
+                        th:text="${countRefundRequested}">0</span>
                 </a>
             </div>
 
             <!-- FLASH -->
-            <div th:if="${message}" class="alert alert-success alert-dismissible fade show glass-card border-success border-opacity-25 py-3 mb-4" role="alert" style="background: rgba(236, 253, 245, 0.9);">
-                <i class="bi bi-check-circle-fill me-2 text-success"></i> <span class="fw-bold" th:text="${message}"></span>
+            <div th:if="${message}"
+                class="alert alert-success alert-dismissible fade show glass-card border-success border-opacity-25 py-3 mb-4"
+                role="alert" style="background: rgba(236, 253, 245, 0.9);">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i> <span class="fw-bold"
+                    th:text="${message}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show glass-card border-danger border-opacity-25 py-3 mb-4" role="alert" style="background: rgba(254, 242, 242, 0.9);">
-                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> <span class="fw-bold" th:text="${error}"></span>
+            <div th:if="${error}"
+                class="alert alert-danger alert-dismissible fade show glass-card border-danger border-opacity-25 py-3 mb-4"
+                role="alert" style="background: rgba(254, 242, 242, 0.9);">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> <span class="fw-bold"
+                    th:text="${error}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
@@ -349,52 +721,65 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 36px; height: 36px;">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                                        style="width: 36px; height: 36px;">
                                         <i class="bi bi-person-fill text-primary small"></i>
                                     </div>
                                     <div>
                                         <div class="fw-bold text-dark small" th:text="${order.customerName}">Name</div>
-                                        <div class="text-muted" style="font-size:0.72rem"><i class="bi bi-telephone-fill me-1"></i> <span th:text="${order.receiverPhone}">Phone</span></div>
+                                        <div class="text-muted" style="font-size:0.72rem"><i
+                                                class="bi bi-telephone-fill me-1"></i> <span
+                                                th:text="${order.receiverPhone}">Phone</span></div>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="fw-bolder text-danger" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                                <span class="fw-bolder text-danger"
+                                    th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0
+                                    ₫</span>
                             </td>
                             <td>
-                                <span th:id="'badge-' + ${order.id}" class="badge-status" th:classappend="'badge-' + ${order.status.toLowerCase()}" th:text="${order.statusDisplay}">Status</span>
+                                <span th:id="'badge-' + ${order.id}" class="badge-status"
+                                    th:classappend="'badge-' + ${order.status.toLowerCase()}"
+                                    th:text="${order.statusDisplay}">Status</span>
                             </td>
                             <td>
                                 <div class="small fw-medium text-muted">
                                     <i class="bi bi-calendar3 me-1"></i>
                                     <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy')}">01/01</span>
                                 </div>
-                                <div class="text-muted" style="font-size: 0.68rem;" th:text="${#temporals.format(order.createdAt, 'HH:mm')}">00:00</div>
+                                <div class="text-muted" style="font-size: 0.68rem;"
+                                    th:text="${#temporals.format(order.createdAt, 'HH:mm')}">00:00</div>
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center" th:id="'actions-' + ${order.id}">
                                     <!-- View -->
-                                    <a th:href="@{/admin/orders/detail/{id}(id=${order.id})}" class="btn-action" title="Xem chi tiết">
+                                    <a th:href="@{/admin/orders/detail/{id}(id=${order.id})}" class="btn-action"
+                                        title="Xem chi tiết">
                                         <i class="bi bi-eye-fill"></i>
                                     </a>
                                     <!-- Confirm (AJAX) -->
                                     <button th:if="${order.status == 'PENDING'}" class="btn-action confirm"
-                                            th:data-id="${order.id}" data-action="confirm" title="Xác nhận" onclick="ajaxAction(this)">
+                                        th:data-id="${order.id}" data-action="confirm" title="Xác nhận"
+                                        onclick="ajaxAction(this)">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <!-- Ship (AJAX) -->
                                     <button th:if="${order.status == 'CONFIRMED'}" class="btn-action ship"
-                                            th:data-id="${order.id}" data-action="ship" title="Giao hàng" onclick="ajaxAction(this)">
+                                        th:data-id="${order.id}" data-action="ship" title="Giao hàng"
+                                        onclick="ajaxAction(this)">
                                         <i class="bi bi-truck"></i>
                                     </button>
                                     <!-- Deliver (AJAX) -->
                                     <button th:if="${order.status == 'SHIPPING'}" class="btn-action deliver"
-                                            th:data-id="${order.id}" data-action="deliver" title="Đã giao" onclick="ajaxAction(this)">
+                                        th:data-id="${order.id}" data-action="deliver" title="Đã giao"
+                                        onclick="ajaxAction(this)">
                                         <i class="bi bi-house-check"></i>
                                     </button>
                                     <!-- Cancel (AJAX) -->
-                                    <button th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}" class="btn-action cancel"
-                                            th:data-id="${order.id}" data-action="cancel" title="Hủy đơn" onclick="ajaxAction(this)">
+                                    <button th:if="${order.status == 'PENDING' or order.status == 'CONFIRMED'}"
+                                        class="btn-action cancel" th:data-id="${order.id}" data-action="cancel"
+                                        title="Hủy đơn" onclick="ajaxAction(this)">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
@@ -416,22 +801,27 @@
                 <nav th:if="${totalPages > 1}" class="mt-4">
                     <ul class="pagination justify-content-center gap-1 mb-0">
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                            <a class="page-link"
+                                th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                         </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
-                            <a class="page-link" th:text="${i + 1}" th:href="@{/admin/orders(page=${i}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">1</a>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:text="${i + 1}"
+                                th:href="@{/admin/orders(page=${i}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">1</a>
                         </li>
                         <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
+                            <a class="page-link"
+                                th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}">
                                 <i class="bi bi-chevron-right"></i>
                             </a>
                         </li>
                     </ul>
                     <div class="text-center mt-2">
                         <span class="small text-muted fw-medium">
-                            Trang <strong th:text="${currentPage + 1}">1</strong> / <strong th:text="${totalPages}">1</strong>
+                            Trang <strong th:text="${currentPage + 1}">1</strong> / <strong
+                                th:text="${totalPages}">1</strong>
                             — <span th:text="${totalElements}">0</span> đơn hàng
                         </span>
                     </div>
@@ -439,97 +829,101 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- TOAST -->
-<div class="toast-container">
-    <div id="actionToast" class="toast toast-glass border-0" role="alert">
-        <div class="toast-body fw-bold d-flex align-items-center gap-2 py-3 px-4">
-            <i id="toastIcon" class="bi bi-check-circle-fill text-success fs-5"></i>
-            <span id="toastMsg">Thao tác thành công!</span>
+    <!-- TOAST -->
+    <div class="toast-container">
+        <div id="actionToast" class="toast toast-glass border-0" role="alert">
+            <div class="toast-body fw-bold d-flex align-items-center gap-2 py-3 px-4">
+                <i id="toastIcon" class="bi bi-check-circle-fill text-success fs-5"></i>
+                <span id="toastMsg">Thao tác thành công!</span>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // ======================== AJAX STATUS UPDATES ========================
-    const BADGE_CLASSES = {
-        'PENDING': 'badge-pending',
-        'CONFIRMED': 'badge-confirmed',
-        'SHIPPING': 'badge-shipping',
-        'DELIVERED': 'badge-delivered',
-        'CANCELLED': 'badge-cancelled',
-        'REFUND_REQUESTED': 'badge-refund_requested',
-    };
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ======================== AJAX STATUS UPDATES ========================
+        const BADGE_CLASSES = {
+            'PENDING': 'badge-pending',
+            'CONFIRMED': 'badge-confirmed',
+            'SHIPPING': 'badge-shipping',
+            'DELIVERED': 'badge-delivered',
+            'CANCELLED': 'badge-cancelled',
+            'REFUND_REQUESTED': 'badge-refund_requested',
+        };
 
-    function ajaxAction(btn) {
-        const id = btn.dataset.id;
-        const action = btn.dataset.action;
+        function ajaxAction(btn) {
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
 
-        if (action === 'cancel' && !confirm('Hủy đơn hàng #' + id + '? Sẽ hoàn kho + voucher.')) return;
+            if (action === 'cancel' && !confirm('Hủy đơn hàng #' + id + '? Sẽ hoàn kho + voucher.')) return;
 
-        const row = document.getElementById('row-' + id);
-        const badge = document.getElementById('badge-' + id);
-        const actionsDiv = document.getElementById('actions-' + id);
+            const row = document.getElementById('row-' + id);
+            const badge = document.getElementById('badge-' + id);
+            const actionsDiv = document.getElementById('actions-' + id);
 
-        // Loading state
-        btn.classList.add('loading');
-        btn.querySelector('i').className = 'bi bi-arrow-repeat';
-        row.classList.add('row-updating');
+            // Loading state
+            btn.classList.add('loading');
+            btn.querySelector('i').className = 'bi bi-arrow-repeat';
+            row.classList.add('row-updating');
 
-        fetch('/admin/orders/api/' + id + '/' + action, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            row.classList.remove('row-updating');
+            fetch('/admin/orders/api/' + id + '/' + action, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    row.classList.remove('row-updating');
 
-            if (data.success) {
-                // Update badge
-                Object.values(BADGE_CLASSES).forEach(c => badge.classList.remove(c));
-                badge.classList.add(BADGE_CLASSES[data.newStatus] || 'badge-pending');
-                badge.textContent = data.newStatusDisplay;
+                    if (data.success) {
+                        // Update badge
+                        Object.values(BADGE_CLASSES).forEach(c => badge.classList.remove(c));
+                        badge.classList.add(BADGE_CLASSES[data.newStatus] || 'badge-pending');
+                        badge.textContent = data.newStatusDisplay;
 
-                // Remove action buttons (except eye)
-                const eyeBtn = actionsDiv.querySelector('a');
-                actionsDiv.innerHTML = '';
-                if (eyeBtn) actionsDiv.appendChild(eyeBtn);
+                        // Remove action buttons (except eye)
+                        const eyeBtn = actionsDiv.querySelector('a');
+                        actionsDiv.innerHTML = '';
+                        if (eyeBtn) actionsDiv.appendChild(eyeBtn);
 
-                // Add new relevant buttons
-                if (data.newStatus === 'CONFIRMED') {
-                    actionsDiv.innerHTML += `<button class="btn-action ship" data-id="${id}" data-action="ship" title="Giao hàng" onclick="ajaxAction(this)"><i class="bi bi-truck"></i></button>`;
-                    actionsDiv.innerHTML += `<button class="btn-action cancel" data-id="${id}" data-action="cancel" title="Hủy đơn" onclick="ajaxAction(this)"><i class="bi bi-x-lg"></i></button>`;
-                } else if (data.newStatus === 'SHIPPING') {
-                    actionsDiv.innerHTML += `<button class="btn-action deliver" data-id="${id}" data-action="deliver" title="Đã giao" onclick="ajaxAction(this)"><i class="bi bi-house-check"></i></button>`;
-                }
+                        // Add new relevant buttons
+                        if (data.newStatus === 'CONFIRMED') {
+                            actionsDiv.innerHTML += `<button class="btn-action ship" data-id="${id}" data-action="ship" title="Giao hàng" onclick="ajaxAction(this)"><i class="bi bi-truck"></i></button>`;
+                            actionsDiv.innerHTML += `<button class="btn-action cancel" data-id="${id}" data-action="cancel" title="Hủy đơn" onclick="ajaxAction(this)"><i class="bi bi-x-lg"></i></button>`;
+                        } else if (data.newStatus === 'SHIPPING') {
+                            actionsDiv.innerHTML += `<button class="btn-action deliver" data-id="${id}" data-action="deliver" title="Đã giao" onclick="ajaxAction(this)"><i class="bi bi-house-check"></i></button>`;
+                        }
 
-                // Flash row
-                row.classList.add('row-updated');
-                setTimeout(() => row.classList.remove('row-updated'), 800);
+                        // Flash row
+                        row.classList.add('row-updated');
+                        setTimeout(() => row.classList.remove('row-updated'), 800);
 
-                showToast(data.message, true);
-            } else {
-                showToast(data.message || 'Có lỗi xảy ra', false);
-            }
-        })
-        .catch(err => {
-            row.classList.remove('row-updating');
-            showToast('Lỗi kết nối: ' + err.message, false);
-        });
-    }
+                        showToast(data.message, true);
+                    } else {
+                        showToast(data.message || 'Có lỗi xảy ra', false);
+                    }
+                })
+                .catch(err => {
+                    row.classList.remove('row-updating');
+                    showToast('Lỗi kết nối: ' + err.message, false);
+                });
+        }
 
-    function showToast(msg, success) {
-        const toast = document.getElementById('actionToast');
-        const icon = document.getElementById('toastIcon');
-        const text = document.getElementById('toastMsg');
+        function showToast(msg, success) {
+            const toast = document.getElementById('actionToast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMsg');
 
-        icon.className = success ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-exclamation-triangle-fill text-danger fs-5';
-        text.textContent = msg;
+            icon.className = success ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-exclamation-triangle-fill text-danger fs-5';
+            text.textContent = msg;
 
-        new bootstrap.Toast(toast, { delay: 3000 }).show();
+            new bootstrap.Toast(toast, { delay: 3000 }).show();
     }
 </script>
+    </div> <!-- Close main-content -->
+</div> <!-- Close admin-layout -->
+
+<!-- CSRF Auto-Injection Script -->
+<th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 </body>
 </html>

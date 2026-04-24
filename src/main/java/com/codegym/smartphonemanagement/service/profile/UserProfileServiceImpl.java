@@ -73,6 +73,7 @@ public class UserProfileServiceImpl implements IUserProfileService {
         
         if (dto.getEmail() != null) {
             validateEmail(dto.getEmail());
+            validateEmailUniqueness(dto.getEmail(), user.getId());
             user.setEmail(dto.getEmail());
         }
         
@@ -220,6 +221,12 @@ public class UserProfileServiceImpl implements IUserProfileService {
         }
         if (email.length() > 100) {
             throw new BadRequestException("Email không được quá 100 ký tự");
+        }
+    }
+
+    private void validateEmailUniqueness(String email, Long currentUserId) {
+        if (userRepository.existsByEmailAndIdNot(email, currentUserId)) {
+            throw new BadRequestException("Email nÃ y Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng bá»Ÿi tÃ i khoáº£n khÃ¡c");
         }
     }
 

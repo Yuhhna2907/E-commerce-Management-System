@@ -10,41 +10,48 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- CSRF Meta Tags -->
+    <th:block th:replace="~{fragments/base-scripts :: csrf-meta}"></th:block>
 
     <style>
-        :root {
-            --sz-glass-bg: rgba(255, 255, 255, 0.75);
-            --sz-glass-border: rgba(255, 255, 255, 0.4);
-            --sz-primary: #1A1C20;
-            --sz-text-muted: #6e6e73;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background: #f4f6f9;
-            color: var(--sz-primary);
+            background-color: var(--sz-bg) !important;
+            color: var(--sz-text);
             overflow-x: hidden;
-            /* Nền phảng phất chút màu xanh tím nhẹ phía sau */
             background-image: radial-gradient(circle at 10% 20%, rgba(9, 32, 63, 0.05) 0%, transparent 40%),
                               radial-gradient(circle at 90% 80%, rgba(13, 110, 253, 0.05) 0%, transparent 40%);
-            background-attachment: fixed;
+            background-attachment: scroll;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        /* --- DARK MODE OVERRIDES CHO SẢN PHẨM --- */
+        body.dark-mode .custom-table tbody tr { background: var(--sz-card-bg); border-color: rgba(255,255,255,0.05); }
+        body.dark-mode .custom-table tbody td { color: #cbd5e1; }
+        body.dark-mode .bg-white { background-color: var(--sz-card-bg) !important; }
+        body.dark-mode .text-dark { color: #f1f5f9 !important; }
+        body.dark-mode .glass-panel { background: var(--sz-glass); }
+        body.dark-mode .filter-select { border-left-color: rgba(255,255,255,0.1); }
 
         /* --- LAYOUT CHUNG --- */
         .admin-layout { display: flex; min-height: 100vh; }
         .main-content {
             flex-grow: 1; padding: 30px 40px; height: 100vh; overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         /* --- GLASSMORPHISM --- */
         .glass-panel {
-            background: var(--sz-glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: var(--sz-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--sz-glass-border);
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+            transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* --- BENTO GRID CARDS --- */
@@ -57,9 +64,12 @@
             overflow: hidden;
             border-radius: 24px;
             height: 100%;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+            background: var(--sz-card-bg);
+            border: 1px solid var(--sz-glass-border);
+            transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .bento-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        .bento-card:hover { box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
         
         .stat-icon-bg {
             position: absolute; right: -15px; bottom: -25px;
@@ -92,8 +102,8 @@
 
         /* --- FLOATING FILTER BAR --- */
         .floating-filter {
-            background: var(--sz-glass-bg);
-            backdrop-filter: blur(15px);
+            background: var(--sz-glass);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--sz-glass-border);
             border-radius: 100px;
             padding: 10px 20px;
@@ -114,10 +124,14 @@
             letter-spacing: 1px; padding: 0 20px 10px 20px; font-weight: 700;
         }
         .custom-table tbody tr {
-            background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.2s;
+            background: var(--sz-card-bg); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+            color: var(--sz-text);
         }
         .custom-table tbody tr:hover {
-            transform: scale(1.005); box-shadow: 0 8px 25px rgba(0,0,0,0.06); position: relative; z-index: 10;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.05);
         }
         .custom-table tbody td { border: none; padding: 15px 20px; vertical-align: middle; }
         .custom-table tbody tr td:first-child { border-radius: 16px 0 0 16px; }
@@ -139,15 +153,34 @@
 
         /* --- MODAL TRẢI NGHIỆM --- */
         .modal-content { border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
-        .modal-header { background: var(--sz-glass-bg) !important; backdrop-filter: blur(10px); border-bottom: 1px solid var(--sz-glass-border); padding: 20px 30px;}
+        .modal-header { background: var(--sz-glass-bg) !important; backdrop-filter: blur(8px); border-bottom: 1px solid var(--sz-glass-border); padding: 20px 30px;}
         .modal-body { padding: 30px; }
         .form-floating > label { color: #6e6e73; font-weight: 500; }
         .img-preview { border-radius: 15px; border: 2px dashed #d2d2d7; width: 100%; height: 200px; object-fit: contain; }
 
-        /* ANIMATIONS */
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-up { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
-        .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; }
+        /* --- ANIMATION --- */
+        .fade-up { opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fade-up,
+            .delay-1,
+            .delay-2,
+            .delay-3 {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .custom-table tbody tr,
+            .bento-card,
+            .glass-panel {
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -157,8 +190,7 @@
     <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
     <div class="main-content">
-        
-        <!-- HEADER -->
+        <!-- HEADER TRANG -->
         <div class="d-flex justify-content-between align-items-center mb-5 fade-up">
             <div>
                 <h2 class="fw-bolder mb-1" style="font-family: 'Outfit';">Quản Lý Sản Phẩm</h2>
@@ -659,6 +691,548 @@
         localStorage.setItem("adminSearchHistory", JSON.stringify(history));
     }
 
+    // ============= THỐNG KÊ SẢN PHẨM TAB SWITCHING =============
+    document.querySelectorAll('[data-stats-tab]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active from all buttons
+            document.querySelectorAll('[data-stats-tab]').forEach(b => b.classList.remove('active'));
+            // Add active to clicked button
+            this.classList.add('active');
+            
+            // Hide all tab contents
+            document.querySelectorAll('[data-stats-content]').forEach(content => content.style.display = 'none');
+            // Show selected tab content
+            const tabName = this.getAttribute('data-stats-tab');
+            document.querySelector(`[data-stats-content="${tabName}"]`).style.display = 'block';
+            
+            // Load data for the selected tab
+            loadStatsData(tabName);
+        });
+    });
+
+    // Load initial stats data
+    loadStatsData('sales');
+
+    function loadStatsData(tabName) {
+        if (tabName === 'sales') {
+            loadTopSelling();
+            loadLowSelling();
+            loadTopRevenue();
+        } else if (tabName === 'stock') {
+            loadLowStock();
+            loadHighStock();
+            loadOutOfStock();
+        } else if (tabName === 'engagement') {
+            loadMostWishlisted();
+            loadMostViewed();
+            loadTopRated();
+            loadMostQuestions();
+        } else if (tabName === 'conversion') {
+            loadConversionData();
+        } else if (tabName === 'comparison') {
+            loadComparisonData();
+        } else if (tabName === 'trends') {
+            loadTrendsData();
+        } else if (tabName === 'segments') {
+            loadSegmentsData();
+        } else if (tabName === 'risks') {
+            loadRisksData();
+        }
+    }
+
+    // ============= SAMPLE DATA FUNCTIONS =============
+    function loadTopSelling() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', sold: 245, trend: '+12%' },
+            { name: 'Samsung Galaxy S24 Ultra', sold: 198, trend: '+8%' },
+            { name: 'iPhone 14 Pro', sold: 167, trend: '+5%' },
+            { name: 'Xiaomi 14 Pro', sold: 134, trend: '+15%' },
+            { name: 'OPPO Find X7', sold: 112, trend: '+3%' },
+            { name: 'Vivo X100 Pro', sold: 98, trend: '+7%' },
+            { name: 'Realme GT 5', sold: 87, trend: '+2%' },
+            { name: 'OnePlus 12', sold: 76, trend: '+4%' },
+            { name: 'Google Pixel 8 Pro', sold: 65, trend: '+6%' },
+            { name: 'Nothing Phone 2', sold: 54, trend: '+1%' }
+        ];
+        renderProductList('topSellingList', sampleData, 'sold', 'success');
+    }
+
+    function loadLowSelling() {
+        const sampleData = [
+            { name: 'Nokia XR21', sold: 3, trend: '-5%' },
+            { name: 'Sony Xperia 1 V', sold: 5, trend: '-3%' },
+            { name: 'Asus ROG Phone 7', sold: 7, trend: '-2%' },
+            { name: 'Motorola Edge 40', sold: 9, trend: '-4%' },
+            { name: 'HTC U23 Pro', sold: 11, trend: '-1%' },
+            { name: 'LG Wing 5G', sold: 13, trend: '-6%' },
+            { name: 'BlackBerry KEY3', sold: 15, trend: '-2%' },
+            { name: 'Sharp Aquos R8', sold: 17, trend: '-3%' },
+            { name: 'Meizu 20 Pro', sold: 19, trend: '-1%' },
+            { name: 'ZTE Axon 50', sold: 21, trend: '-2%' }
+        ];
+        renderProductList('lowSellingList', sampleData, 'sold', 'danger');
+    }
+
+    function loadTopRevenue() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', revenue: 735000000, trend: '+15%' },
+            { name: 'Samsung Galaxy S24 Ultra', revenue: 594000000, trend: '+10%' },
+            { name: 'iPhone 14 Pro', revenue: 501000000, trend: '+8%' },
+            { name: 'Xiaomi 14 Pro', revenue: 268000000, trend: '+12%' },
+            { name: 'OPPO Find X7', revenue: 224000000, trend: '+5%' },
+            { name: 'Vivo X100 Pro', revenue: 196000000, trend: '+7%' },
+            { name: 'Realme GT 5', revenue: 174000000, trend: '+3%' },
+            { name: 'OnePlus 12', revenue: 152000000, trend: '+6%' },
+            { name: 'Google Pixel 8 Pro', revenue: 130000000, trend: '+4%' },
+            { name: 'Nothing Phone 2', revenue: 108000000, trend: '+2%' }
+        ];
+        renderProductList('topRevenueList', sampleData, 'revenue', 'primary');
+    }
+
+    function loadLowStock() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', stock: 3, status: 'Cần nhập gấp' },
+            { name: 'Samsung Galaxy S24 Ultra', stock: 5, status: 'Cần nhập gấp' },
+            { name: 'Xiaomi 14 Pro', stock: 7, status: 'Cảnh báo' },
+            { name: 'OPPO Find X7', stock: 8, status: 'Cảnh báo' },
+            { name: 'Vivo X100 Pro', stock: 9, status: 'Cảnh báo' }
+        ];
+        renderProductList('lowStockList', sampleData, 'stock', 'warning');
+    }
+
+    function loadHighStock() {
+        const sampleData = [
+            { name: 'Nokia XR21', stock: 245, status: 'Cần khuyến mãi' },
+            { name: 'Sony Xperia 1 V', stock: 198, status: 'Cần khuyến mãi' },
+            { name: 'Asus ROG Phone 7', stock: 167, status: 'Tồn kho cao' },
+            { name: 'Motorola Edge 40', stock: 134, status: 'Tồn kho cao' },
+            { name: 'HTC U23 Pro', stock: 112, status: 'Tồn kho cao' }
+        ];
+        renderProductList('highStockList', sampleData, 'stock', 'info');
+    }
+
+    function loadOutOfStock() {
+        const sampleData = [
+            { name: 'iPhone 14 Pro', stock: 0, status: 'Hết hàng' },
+            { name: 'Samsung Galaxy S23', stock: 0, status: 'Hết hàng' },
+            { name: 'Xiaomi 13 Pro', stock: 0, status: 'Hết hàng' },
+            { name: 'OPPO Find X6', stock: 0, status: 'Hết hàng' },
+            { name: 'Vivo X90 Pro', stock: 0, status: 'Hết hàng' }
+        ];
+        renderProductList('outOfStockList', sampleData, 'stock', 'danger');
+    }
+
+    function loadMostWishlisted() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', count: 1245, icon: 'heart-fill' },
+            { name: 'Samsung Galaxy S24 Ultra', count: 987, icon: 'heart-fill' },
+            { name: 'Xiaomi 14 Pro', count: 765, icon: 'heart-fill' },
+            { name: 'OPPO Find X7', count: 654, icon: 'heart-fill' },
+            { name: 'Vivo X100 Pro', count: 543, icon: 'heart-fill' }
+        ];
+        renderProductList('mostWishlistedList', sampleData, 'count', 'danger');
+    }
+
+    function loadMostViewed() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', count: 45678, icon: 'eye-fill' },
+            { name: 'Samsung Galaxy S24 Ultra', count: 34567, icon: 'eye-fill' },
+            { name: 'Xiaomi 14 Pro', count: 23456, icon: 'eye-fill' },
+            { name: 'OPPO Find X7', count: 19876, icon: 'eye-fill' },
+            { name: 'Vivo X100 Pro', count: 15432, icon: 'eye-fill' }
+        ];
+        renderProductList('mostViewedList', sampleData, 'count', 'primary');
+    }
+
+    function loadTopRated() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', rating: 4.9, reviews: 1234 },
+            { name: 'Samsung Galaxy S24 Ultra', rating: 4.8, reviews: 987 },
+            { name: 'Xiaomi 14 Pro', rating: 4.7, reviews: 765 },
+            { name: 'OPPO Find X7', rating: 4.6, reviews: 654 },
+            { name: 'Vivo X100 Pro', rating: 4.5, reviews: 543 }
+        ];
+        renderProductList('topRatedList', sampleData, 'rating', 'warning');
+    }
+
+    function loadMostQuestions() {
+        const sampleData = [
+            { name: 'iPhone 15 Pro Max', questions: 234, answered: 198 },
+            { name: 'Samsung Galaxy S24 Ultra', questions: 187, answered: 156 },
+            { name: 'Xiaomi 14 Pro', questions: 145, answered: 123 },
+            { name: 'OPPO Find X7', questions: 112, answered: 98 },
+            { name: 'Vivo X100 Pro', questions: 89, answered: 76 }
+        ];
+        renderProductList('mostQuestionsLis', sampleData, 'questions', 'info');
+    }
+
+    // ============= TAB 4: CHUYỂN ĐỔI & HIỆU SUẤT =============
+    let conversionChartInstance = null;
+
+    function loadConversionData() {
+        // Conversion Rate Chart
+        const conversionData = [
+            { name: 'iPhone 15 Pro Max', rate: 8.5 },
+            { name: 'Samsung S24 Ultra', rate: 7.2 },
+            { name: 'Xiaomi 14 Pro', rate: 6.8 },
+            { name: 'OPPO Find X7', rate: 5.9 },
+            { name: 'Vivo X100 Pro', rate: 5.3 },
+            { name: 'OnePlus 12', rate: 4.7 },
+            { name: 'Google Pixel 8', rate: 4.2 },
+            { name: 'Nothing Phone 2', rate: 3.8 },
+            { name: 'Realme GT 5', rate: 3.5 },
+            { name: 'Motorola Edge 40', rate: 3.1 }
+        ];
+
+        const ctx = document.getElementById('conversionChart');
+        if (ctx) {
+            if (conversionChartInstance) conversionChartInstance.destroy();
+            conversionChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: conversionData.map(d => d.name),
+                    datasets: [{
+                        label: 'Conversion Rate (%)',
+                        data: conversionData.map(d => d.rate),
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value + '%' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Low Conversion List
+        const lowConvData = [
+            { name: 'Nokia XR21', rate: 0.5 },
+            { name: 'Sony Xperia 1 V', rate: 0.7 },
+            { name: 'Asus ROG Phone 7', rate: 0.8 }
+        ];
+        renderProductList('lowConversionList', lowConvData, 'rate', 'danger');
+
+        // High AOV
+        const aovData = [
+            { name: 'iPhone 15 Pro Max', aov: 32500000 },
+            { name: 'Samsung S24 Ultra', aov: 28900000 },
+            { name: 'Google Pixel 8 Pro', aov: 24500000 }
+        ];
+        renderProductList('highAOVList', aovData, 'aov', 'primary');
+
+        // High Return Rate
+        const returnData = [
+            { name: 'Nokia XR21', returnRate: 12.5 },
+            { name: 'HTC U23 Pro', returnRate: 9.8 },
+            { name: 'LG Wing 5G', returnRate: 8.3 }
+        ];
+        renderProductList('highReturnList', returnData, 'returnRate', 'warning');
+    }
+
+    // ============= TAB 5: SO SÁNH & CẠNH TRANH =============
+    function loadComparisonData() {
+        // Most Compared
+        const comparedData = [
+            { name: 'iPhone 15 Pro Max', count: 1567 },
+            { name: 'Samsung S24 Ultra', count: 1234 },
+            { name: 'Xiaomi 14 Pro', count: 987 },
+            { name: 'OPPO Find X7', count: 765 },
+            { name: 'Vivo X100 Pro', count: 654 }
+        ];
+        renderProductList('mostComparedList', comparedData, 'count', 'info');
+
+        // Comparison Pairs
+        const pairsData = [
+            { pair: 'iPhone 15 Pro Max vs Samsung S24 Ultra', count: 456 },
+            { pair: 'Xiaomi 14 Pro vs OPPO Find X7', count: 234 },
+            { pair: 'iPhone 15 vs iPhone 14 Pro', count: 198 },
+            { pair: 'Samsung S24 vs S23 Ultra', count: 176 },
+            { pair: 'Vivo X100 vs OPPO Find X7', count: 145 }
+        ];
+        let html = '<div class="list-group list-group-flush">';
+        pairsData.forEach((item, index) => {
+            html += `
+                <div class="list-group-item border-0 bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                        <span class="badge bg-secondary rounded-circle me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">${index + 1}</span>
+                        <span class="fw-medium text-dark text-truncate" style="font-size: 0.8rem;">${item.pair}</span>
+                    </div>
+                    <span class="badge bg-purple rounded-pill">${item.count} lần</span>
+                </div>
+            `;
+        });
+        html += '</div>';
+        document.getElementById('comparisonPairsList').innerHTML = html;
+
+        // Saved to Purchased
+        const savedData = [
+            { name: 'iPhone 15 Pro Max', rate: 45.2 },
+            { name: 'Samsung S24 Ultra', rate: 38.7 },
+            { name: 'Xiaomi 14 Pro', rate: 32.5 }
+        ];
+        renderProductList('savedToPurchasedList', savedData, 'rate', 'primary');
+    }
+
+    // ============= TAB 6: THỜI GIAN & XU HƯỚNG =============
+    let growthChartInstance = null;
+
+    function loadTrendsData() {
+        // Growth Trend Chart
+        const trendData = [
+            { name: 'Xiaomi 14 Pro', growth: 45.2, decline: 0 },
+            { name: 'OPPO Find X7', growth: 38.7, decline: 0 },
+            { name: 'Vivo X100 Pro', growth: 32.5, decline: 0 },
+            { name: 'OnePlus 12', growth: 28.3, decline: 0 },
+            { name: 'Realme GT 5', growth: 22.1, decline: 0 },
+            { name: 'Nokia XR21', growth: 0, decline: -15.3 },
+            { name: 'Sony Xperia 1 V', growth: 0, decline: -12.8 },
+            { name: 'HTC U23 Pro', growth: 0, decline: -9.5 }
+        ];
+
+        const ctx = document.getElementById('growthTrendChart');
+        if (ctx) {
+            if (growthChartInstance) growthChartInstance.destroy();
+            growthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(d => d.name),
+                    datasets: [{
+                        label: 'Tăng trưởng (%)',
+                        data: trendData.map(d => d.growth || d.decline),
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { callback: value => value + '%' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fast Growing
+        const growingData = [
+            { name: 'Xiaomi 14 Pro', growth: 45.2 },
+            { name: 'OPPO Find X7', growth: 38.7 },
+            { name: 'Vivo X100 Pro', growth: 32.5 }
+        ];
+        renderProductList('fastGrowingList', growingData, 'growth', 'success');
+
+        // Declining
+        const decliningData = [
+            { name: 'Nokia XR21', decline: -15.3 },
+            { name: 'Sony Xperia 1 V', decline: -12.8 },
+            { name: 'HTC U23 Pro', decline: -9.5 }
+        ];
+        renderProductList('decliningList', decliningData, 'decline', 'danger');
+
+        // Hot Trend
+        const hotData = [
+            { name: 'Nothing Phone 2', views: 15678, increase: '+234%' },
+            { name: 'Realme GT 5', views: 12345, increase: '+189%' },
+            { name: 'OnePlus 12', views: 9876, increase: '+156%' }
+        ];
+        renderProductList('hotTrendList', hotData, 'views', 'warning');
+    }
+
+    // ============= TAB 7: KHÁCH HÀNG & PHÂN KHÚC =============
+    let segmentChartInstance = null;
+
+    function loadSegmentsData() {
+        // Customer Segment Pie Chart
+        const ctx = document.getElementById('customerSegmentChart');
+        if (ctx) {
+            if (segmentChartInstance) segmentChartInstance.destroy();
+            segmentChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Khách Mới', 'Khách VIP', 'Khách Thường'],
+                    datasets: [{
+                        data: [35, 25, 40],
+                        backgroundColor: [
+                            'rgba(13, 110, 253, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(108, 117, 125, 0.7)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // New Customer Favorites
+        const newCustomerData = [
+            { name: 'Xiaomi Redmi Note 13', percent: 45 },
+            { name: 'Realme 11 Pro', percent: 38 },
+            { name: 'OPPO A78', percent: 32 }
+        ];
+        renderProductList('newCustomerList', newCustomerData, 'percent', 'primary');
+
+        // VIP Customer Favorites
+        const vipData = [
+            { name: 'iPhone 15 Pro Max', percent: 67 },
+            { name: 'Samsung S24 Ultra', percent: 54 },
+            { name: 'Google Pixel 8 Pro', percent: 43 }
+        ];
+        renderProductList('vipCustomerList', vipData, 'percent', 'warning');
+
+        // Repeat Purchase
+        const repeatData = [
+            { name: 'AirPods Pro', repeatRate: 34.5 },
+            { name: 'Apple Watch', repeatRate: 28.7 },
+            { name: 'Samsung Buds', repeatRate: 23.2 }
+        ];
+        renderProductList('repeatPurchaseList', repeatData, 'repeatRate', 'success');
+
+        // Cross-sell
+        const crossSellData = [
+            { pair: 'iPhone 15 + AirPods Pro', count: 234 },
+            { pair: 'Samsung S24 + Galaxy Buds', count: 187 },
+            { pair: 'Xiaomi 14 + Mi Band', count: 145 }
+        ];
+        let html = '<div class="list-group list-group-flush">';
+        crossSellData.forEach((item, index) => {
+            html += `
+                <div class="list-group-item border-0 bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                        <span class="badge bg-secondary rounded-circle me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">${index + 1}</span>
+                        <span class="fw-medium text-dark text-truncate" style="font-size: 0.8rem;">${item.pair}</span>
+                    </div>
+                    <span class="badge bg-info rounded-pill">${item.count} đơn</span>
+                </div>
+            `;
+        });
+        html += '</div>';
+        document.getElementById('crossSellList').innerHTML = html;
+    }
+
+    // ============= TAB 8: RỦI RO & CẢNH BÁO =============
+    function loadRisksData() {
+        // Old Stock
+        const oldStockData = [
+            { name: 'Nokia XR21', days: 127 },
+            { name: 'LG Wing 5G', days: 98 },
+            { name: 'BlackBerry KEY3', days: 95 }
+        ];
+        renderProductList('oldStockList', oldStockData, 'days', 'danger');
+
+        // Bad Reviews
+        const badReviewsData = [
+            { name: 'HTC U23 Pro', badPercent: 42 },
+            { name: 'Sony Xperia 1 V', badPercent: 38 },
+            { name: 'Motorola Edge 40', badPercent: 35 }
+        ];
+        renderProductList('badReviewsList', badReviewsData, 'badPercent', 'danger');
+
+        // High Cancel Rate
+        const cancelData = [
+            { name: 'Nokia XR21', cancelRate: 18.5 },
+            { name: 'Sharp Aquos R8', cancelRate: 15.2 },
+            { name: 'Meizu 20 Pro', cancelRate: 12.8 }
+        ];
+        renderProductList('highCancelList', cancelData, 'cancelRate', 'warning');
+
+        // Frequent Out of Stock
+        const oosData = [
+            { name: 'iPhone 15 Pro Max', oosCount: 8 },
+            { name: 'Samsung S24 Ultra', oosCount: 6 },
+            { name: 'Xiaomi 14 Pro', oosCount: 5 }
+        ];
+        renderProductList('frequentOOSList', oosData, 'oosCount', 'danger');
+    }
+
+    function renderProductList(containerId, data, metricKey, colorClass) {
+        const container = document.getElementById(containerId);
+        if (!container || !data || data.length === 0) {
+            container.innerHTML = '<div class="text-center py-3 text-muted small">Không có dữ liệu</div>';
+            return;
+        }
+
+        let html = '<div class="list-group list-group-flush">';
+        data.forEach((item, index) => {
+            let metricDisplay = '';
+            if (metricKey === 'sold') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.sold} đã bán</span>`;
+            } else if (metricKey === 'revenue') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${(item.revenue / 1000000).toFixed(0)}M ₫</span>`;
+            } else if (metricKey === 'stock') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.stock} máy</span>`;
+            } else if (metricKey === 'count') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.count}</span>`;
+            } else if (metricKey === 'rating') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.rating} ⭐ (${item.reviews})</span>`;
+            } else if (metricKey === 'questions') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.questions} câu hỏi</span>`;
+            } else if (metricKey === 'rate') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.rate}%</span>`;
+            } else if (metricKey === 'aov') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${(item.aov / 1000000).toFixed(1)}M ₫</span>`;
+            } else if (metricKey === 'returnRate') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.returnRate}%</span>`;
+            } else if (metricKey === 'growth') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">+${item.growth}%</span>`;
+            } else if (metricKey === 'decline') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.decline}%</span>`;
+            } else if (metricKey === 'views') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.views} views ${item.increase}</span>`;
+            } else if (metricKey === 'percent') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.percent}%</span>`;
+            } else if (metricKey === 'repeatRate') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.repeatRate}%</span>`;
+            } else if (metricKey === 'days') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.days} ngày</span>`;
+            } else if (metricKey === 'badPercent') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.badPercent}% bad</span>`;
+            } else if (metricKey === 'cancelRate') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.cancelRate}%</span>`;
+            } else if (metricKey === 'oosCount') {
+                metricDisplay = `<span class="badge bg-${colorClass} rounded-pill">${item.oosCount} lần</span>`;
+            }
+
+            html += `
+                <div class="list-group-item border-0 bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
+                        <span class="badge bg-secondary rounded-circle me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">${index + 1}</span>
+                        <span class="fw-medium text-dark text-truncate" style="font-size: 0.85rem;">${item.name || item.pair}</span>
+                    </div>
+                    ${metricDisplay}
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     // Attach to form submit
     const searchForm = document.querySelector('form[action="/admin/products"]');
     if (searchForm) {
@@ -762,6 +1336,8 @@
             });
     }
 </script>
+<!-- CSRF Auto-Injection Script -->
+<th:block th:replace="~{fragments/base-scripts :: csrf-script}"></th:block>
 </body>
 </html>
 

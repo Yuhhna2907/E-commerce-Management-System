@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
@@ -46,4 +48,26 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // FIX #4: Check duplicate product name
     boolean existsByNameAndActiveTrue(String name);
+    
+    // Get top 5 active products ordered by creation date (newest first)
+    @Query("SELECT p FROM Product p WHERE p.active = :active ORDER BY p.createdAt DESC LIMIT 5")
+    java.util.List<Product> findTop5ByActiveOrderByCreatedAtDesc(@Param("active") Boolean active);
+    // --- ADVANCED ANALYTICS ---
+
+    // Hàng tồn quá lâu (>90 ngày chưa bán hoặc chỉ mới tạo nhưng không có doanh số)
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.createdAt < :threshold AND p.stock > 0")
+    java.util.List<Product> findAgedInventory(@Param("threshold") java.time.LocalDateTime threshold);
+
+    // Thống kê phân khúc giá
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.active = true AND p.price >= :min AND p.price < :max")
+    long countByPriceRange(@Param("min") java.math.BigDecimal min, @Param("max") java.math.BigDecimal max);
+
+    // Tồn kho nhiều (Slog moving)
+    List<Product> findByActiveTrueAndStockGreaterThanOrderByStockDesc(Integer threshold, org.springframework.data.domain.Pageable pageable);
+
+    // Hết hàng
+    List<Product> findByActiveTrueAndStockEquals(Integer stock);
+
+    // Sản phẩm có stock thấp hơn threshold
+    List<Product> findByActiveTrueAndStockLessThan(Integer threshold);
 }

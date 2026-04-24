@@ -2,9 +2,11 @@ package com.codegym.smartphonemanagement.configuration;
 
 import com.codegym.smartphonemanagement.config.CacheControlFilter;
 import com.codegym.smartphonemanagement.config.CustomAccessDeniedHandler;
+import com.codegym.smartphonemanagement.config.CustomAuthenticationEntryPoint;
 import com.codegym.smartphonemanagement.config.CustomAuthenticationFailureHandler;
 import com.codegym.smartphonemanagement.config.CustomAuthenticationSuccessHandler;
 import com.codegym.smartphonemanagement.config.CustomLogoutSuccessHandler;
+import com.codegym.smartphonemanagement.config.CustomInvalidSessionStrategy;
 import com.codegym.smartphonemanagement.config.CustomSessionInformationExpiredStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 import javax.sql.DataSource;
@@ -36,8 +39,10 @@ public class SecurityConfig {
     private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CacheControlFilter cacheControlFilter;
     private final CustomSessionInformationExpiredStrategy customSessionInformationExpiredStrategy;
+    private final CustomInvalidSessionStrategy customInvalidSessionStrategy;
     private final DataSource dataSource;
     
     @Value("${app.security.remember-me.key}")
@@ -80,12 +85,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        // Ignore CSRF for public API endpoints if needed
-                        .ignoringRequestMatchers("/api/public/**")
-                )
+                .csrf(csrf -> {
+                        // Fix Spring Security 6 deferred CSRF: buộc token luôn được
+                        // populate vào cookie ngay cả với public pages (permitAll).
+                        // XorCsrfTokenRequestAttributeHandler thay thế CsrfTokenRequestAttributeHandler
+                        // để tương thích với CookieCsrfTokenRepository.
+                        XorCsrfTokenRequestAttributeHandler requestHandler = new XorCsrfTokenRequestAttributeHandler();
+                        // Không set csrfRequestAttributeName = null để vẫn hỗ trợ Thymeleaf ${_csrf}
+                        csrf
+                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                            .csrfTokenRequestHandler(requestHandler)
+                            // Ignore CSRF for public API endpoints if needed
+                            .ignoringRequestMatchers("/api/public/**");
+                })
                 .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
@@ -98,6 +112,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/user/products", "/user/products/**", "/user/products/search", "/user/products/compare").permitAll()
                         // Public APIs
                         .requestMatchers("/api/products/**", "/api/categories/**", "/api/admin/setup").permitAll()
+                        // QA System (read-only for public)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/qa/products/**").permitAll()
                         // Error pages
                         .requestMatchers("/error/**").permitAll()
                         
@@ -107,13 +123,14 @@ public class SecurityConfig {
                         
                         // AUTHENTICATED ACCESS - Requires login (purchase requires login)
                         // Shopping features
-                        .requestMatchers("/user/cart/**", "/user/checkout/**", "/user/orders/**").authenticated()
+                        .requestMatchers("/user/cart/**", "/user/checkout/**", "/user/order/**", "/user/orders/**").authenticated()
                         // User features
                         .requestMatchers("/user/wishlist/**", "/user/saved/**", "/user/profile/**", 
                                 "/user/reviews/**", "/user/notifications/**", "/user/loyalty/**", 
-                                "/user/addresses/**").authenticated()
-                        // User APIs
-                        .requestMatchers("/api/user/**").authenticated()
+                                "/user/addresses/**", "/user/coupons/**").authenticated()
+                        // User APIs and QA posting
+                        .requestMatchers("/api/user/**", "/user/api/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/qa/**").authenticated()
                         
                         // DEFAULT - Deny all other requests
                         .anyRequest().denyAll()
@@ -143,7 +160,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session
                         .sessionFixation(fixation -> fixation.migrateSession()) // Migrate session on authentication
-                        .invalidSessionUrl("/login?session=expired")
+                        .invalidSessionStrategy(customInvalidSessionStrategy)
                         .maximumSessions(2)
                         .maxSessionsPreventsLogin(false) // Invalidate oldest session instead of preventing login
                         .expiredSessionStrategy(customSessionInformationExpiredStrategy)
@@ -156,7 +173,7 @@ public class SecurityConfig {
                                         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
                                         "img-src 'self' data: https: blob:; " +
                                         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
-                                        "connect-src 'self';")
+                                        "connect-src 'self' https://provinces.open-api.vn;")
                         )
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .maxAgeInSeconds(31536000)

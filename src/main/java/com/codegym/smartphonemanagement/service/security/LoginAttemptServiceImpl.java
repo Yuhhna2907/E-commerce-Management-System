@@ -1,7 +1,7 @@
 package com.codegym.smartphonemanagement.service.security;
 
-import com.codegym.smartphonemanagement.model.LoginAttempt;
-import com.codegym.smartphonemanagement.model.User;
+import com.codegym.smartphonemanagement.model.*;
+import com.codegym.smartphonemanagement.service.notification.AdminNotificationService;
 import com.codegym.smartphonemanagement.repository.LoginAttemptRepository;
 import com.codegym.smartphonemanagement.repository.user.UserRepository;
 import com.codegym.smartphonemanagement.util.SecurityAuditLogger;
@@ -27,6 +27,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private final LoginAttemptRepository loginAttemptRepository;
     private final UserRepository userRepository;
     private final SecurityAuditLogger securityAuditLogger;
+    private final AdminNotificationService adminNotificationService;
 
     @Override
     @Transactional
@@ -109,6 +110,15 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     user.getUsername(),
                     "Exceeded maximum failed login attempts (" + MAX_FAILED_ATTEMPTS + ")",
                     LOCKOUT_DURATION
+            );
+
+            // [NEW] Notify Admin
+            adminNotificationService.notify(
+                    "Cảnh báo bảo mật: Tài khoản bị khóa",
+                    "Tài khoản \"" + user.getUsername() + "\" vừa bị khóa 15 phút do nhập sai mật khẩu quá 5 lần.",
+                    AdminNotificationType.SECURITY_ALERT,
+                    NotificationPriority.CRITICAL,
+                    "/admin/users?search=" + user.getUsername()
             );
 
             log.warn("Account locked for user: {} until {}", user.getUsername(), lockUntil);
